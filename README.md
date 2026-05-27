@@ -1,5 +1,4 @@
-# Enterprise Nexus
-
+# Enterprise Nexus 
 ## Team Information
 
 | Information | Details |
@@ -60,3 +59,15 @@ The system is architected to replace the fragmented landscape of disconnected Sa
 ## Expected Outcome
 
 The system will help small and medium-sized businesses, startups, and growing enterprises automate their core operations intelligently. It will replace fragmented SaaS tools with a unified, AI-driven operating system, reduce manual work and subscription costs, improve cross-departmental decision-making, and make enterprise-grade operational intelligence accessible to organizations that previously could not afford such capabilities.
+
+## [Documentation](https://drive.google.com/drive/u/1/folders/1upj2UOXTqWkNGbovAkakPAdQGUWGtmv6)
+
+- Week 00
+  [Team Norms and Rules](https://drive.google.com/drive/folders/1VSHc7U-z2uDfwXGGZTHiEmqXk24EJNa5?usp=drive_link)
+
+- Week 01
+  [Team Formation, Idea Selection & Research](https://drive.google.com/drive/folders/1TdU3cD8FBzomIMWIhhheVZRidSBBuN_Y?usp=drive_link)
+
+- Week 02
+[Project Proposal](https://drive.google.com/drive/folders/1E4GpQZhwtQFxLB-1UWE8Pb63A4xJDYQS?usp=drive_link)
+[Initial Project Planning](https://drive.google.com/drive/folders/1E4GpQZhwtQFxLB-1UWE8Pb63A4xJDYQS?usp=drive_link)
