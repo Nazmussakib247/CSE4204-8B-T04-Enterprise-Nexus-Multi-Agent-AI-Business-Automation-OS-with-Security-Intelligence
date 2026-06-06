@@ -70,4 +70,4 @@ The system will help small and medium-sized businesses, startups, and growing en
 
 - Week 02
 -[Project Proposal](https://drive.google.com/drive/folders/1E4GpQZhwtQFxLB-1UWE8Pb63A4xJDYQS?usp=drive_link) । 
--[Initial Project Planning](https://drive.google.com/drive/folders/1E4GpQZhwtQFxLB-1UWE8Pb63A4xJDYQS?usp=drive_link)
+ [Initial Project Planning](https://drive.google.com/drive/folders/1E4GpQZhwtQFxLB-1UWE8Pb63A4xJDYQS?usp=drive_link)
