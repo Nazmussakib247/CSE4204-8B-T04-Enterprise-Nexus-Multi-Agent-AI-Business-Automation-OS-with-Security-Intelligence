@@ -63,11 +63,11 @@ The system will help small and medium-sized businesses, startups, and growing en
 ## [Documentation](https://drive.google.com/drive/u/1/folders/1upj2UOXTqWkNGbovAkakPAdQGUWGtmv6)
 
 - Week 00
-  [Team Norms and Rules](https://drive.google.com/drive/folders/1VSHc7U-z2uDfwXGGZTHiEmqXk24EJNa5?usp=drive_link)
+  -[Team Norms and Rules](https://drive.google.com/drive/folders/1VSHc7U-z2uDfwXGGZTHiEmqXk24EJNa5?usp=drive_link)
 
 - Week 01
-  [Team Formation, Idea Selection & Research](https://drive.google.com/drive/folders/1TdU3cD8FBzomIMWIhhheVZRidSBBuN_Y?usp=drive_link)
+  -[Team Formation, Idea Selection & Research](https://drive.google.com/drive/folders/1TdU3cD8FBzomIMWIhhheVZRidSBBuN_Y?usp=drive_link)
 
 - Week 02
-[Project Proposal](https://drive.google.com/drive/folders/1E4GpQZhwtQFxLB-1UWE8Pb63A4xJDYQS?usp=drive_link)
-[Initial Project Planning](https://drive.google.com/drive/folders/1E4GpQZhwtQFxLB-1UWE8Pb63A4xJDYQS?usp=drive_link)
+-[Project Proposal](https://drive.google.com/drive/folders/1E4GpQZhwtQFxLB-1UWE8Pb63A4xJDYQS?usp=drive_link) । 
+-[Initial Project Planning](https://drive.google.com/drive/folders/1E4GpQZhwtQFxLB-1UWE8Pb63A4xJDYQS?usp=drive_link)
