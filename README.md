@@ -69,4 +69,4 @@ The system will help small and medium-sized businesses, startups, and growing en
   -[Team Formation, Idea Selection & Research](https://drive.google.com/drive/folders/1TdU3cD8FBzomIMWIhhheVZRidSBBuN_Y?usp=drive_link)
 
 - Week 02
--[Project Proposal](https://drive.google.com/drive/folders/1E4GpQZhwtQFxLB-1UWE8Pb63A4xJDYQS?usp=drive_link) <br>&nbsp;&nbsp;&nbsp;&nbsp;-[Initial Project Planning](https://drive.google.com/drive/folders/1E4GpQZhwtQFxLB-1UWE8Pb63A4xJDYQS?usp=drive_link)
+-[Project Proposal](https://drive.google.com/drive/folders/1E4GpQZhwtQFxLB-1UWE8Pb63A4xJDYQS?usp=drive_link) <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[Initial Project Planning](https:///drive.google.com/drive/folers/1E44GpQZhwtQFxLB-1UWE8Pb63A4xJDYQS?usp=drive_link)
