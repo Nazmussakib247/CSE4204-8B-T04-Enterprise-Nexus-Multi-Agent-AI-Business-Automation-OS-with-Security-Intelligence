@@ -18,6 +18,22 @@
 | Frontend Developer — 1 | Most Sumiya Sanjida | 11220320874 |
 | Database Manager & Frontend Developer — 2 | Sabrina Ibrahim | 11220320895 |
 
+## Objectives
+
+Enterprise Nexus is built around six core objectives:
+
+1. **Automate Department-Level Operations** — Deploy five specialized AI agents (HR, Finance, Support, Analytics, Executive) to autonomously handle routine business workflows that traditionally require dedicated human teams.
+
+2. **Deliver Intelligent Decision Support** — Leverage Google Gemini 1.5 Flash/Pro to generate data-driven insights, candidate rankings, anomaly alerts, KPI narratives, and strategic briefings — replacing manual report generation.
+
+3. **Centralize Business Intelligence** — Unify HR, financial, support, and operational data into a single platform with a real-time dashboard, giving decision-makers a 360° view of business health without switching tools.
+
+4. **Ensure Enterprise-Grade Security** — Implement JWT-based authentication, RBAC (Admin/User roles), bcryptjs hashing, rate limiting, input sanitisation, and security headers to protect sensitive business data at every layer.
+
+5. **Enable Scalable, Cloud-Native Deployment** — Build a production-ready system using Docker, GitHub Actions CI, Vercel (frontend), Render (backend), and Supabase (PostgreSQL) — deployable by any team with zero infrastructure expertise.
+
+6. **Demonstrate Full-Stack AI Engineering** — Produce a well-documented, end-to-end software system with 37 REST API endpoints, 8 database tables, 11 frontend pages, and 5 AI agent pipelines as a complete academic deliverable for CSE 4204.
+
 ## Project Description
 
 Enterprise Nexus is a Multi-Agent AI Business Automation Operating System designed to unify and intelligently automate core business functions for small and medium enterprises, startups, and growing organizations.
