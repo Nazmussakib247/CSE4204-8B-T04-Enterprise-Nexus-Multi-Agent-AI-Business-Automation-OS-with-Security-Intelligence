@@ -91,6 +91,22 @@ Enterprise Nexus is built around six core objectives:
 - Week 03
 -[Softare Requirement Specification](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq) <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[ER Diagram PDF](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[ER Diagram JPG](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[System Architecture Diagram PDF](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[System Architecture Diagram JPG](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[Use Case Diagram PDF](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[Use Case Diagram JPG](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)
 
+## Repository Structure
 
+```
+CSE4204-8A-T01-Enterprise-Nexus/
+├── frontend/
+│   └── .gitkeep
+├── backend/
+│   └── .gitkeep
+├── database/
+│   └── .gitkeep
+├── n8n-workflows/
+│   └── .gitkeep
+├── docs/
+│   └── .gitkeep
+├── .gitignore
+└── README.md
+```
 
 ## Contact Info: 
