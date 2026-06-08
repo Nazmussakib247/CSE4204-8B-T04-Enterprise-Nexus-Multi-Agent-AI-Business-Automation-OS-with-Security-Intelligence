@@ -1,4 +1,4 @@
-# Enterprise Nexus 
+# Enterprise Nexus - Multi-Agent AI Business Automation OS with Security Intelligence
 ## Team Information
 
 | Information | Details |
