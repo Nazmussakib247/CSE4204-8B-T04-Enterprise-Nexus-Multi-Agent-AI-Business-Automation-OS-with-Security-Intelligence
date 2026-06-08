@@ -86,3 +86,10 @@ The system will help small and medium-sized businesses, startups, and growing en
 
 - Week 02
 -[Project Proposal](https://drive.google.com/drive/folders/1E4GpQZhwtQFxLB-1UWE8Pb63A4xJDYQS?usp=drive_link) <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[Initial Project Planning](https:///drive.google.com/drive/folers/1E44GpQZhwtQFxLB-1UWE8Pb63A4xJDYQS?usp=drive_link)
+
+- Week 03
+-[Softare Requirement Specification](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq) <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[ER Diagram PDF](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[ER Diagram JPG](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[System Architecture Diagram PDF](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[System Architecture Diagram JPG](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[Use Case Diagram PDF](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[Use Case Diagram JPG](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)
+
+
+
+## Contact Info: 
