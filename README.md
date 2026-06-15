@@ -98,18 +98,33 @@ Enterprise Nexus is built around six core objectives:
 
 ```
 CSE4204-8A-T01-Enterprise-Nexus/
-├── frontend/
-│   └── .gitkeep
-├── backend/
-│   └── .gitkeep
-├── database/
-│   └── .gitkeep
-├── n8n-workflows/
-│   └── .gitkeep
-├── docs/
-│   └── .gitkeep
-├── .gitignore
-└── README.md
+│   README.md
+│
+├───backend
+│       .gitkeep
+│
+├───database
+│       .gitkeep
+│
+├───Diagram
+│       CSE4204-8B-T04_ArchitectureDiagram.pdf
+│       CSE4204-8B-T04_ERDiagram.pdf
+│       CSE4204-8B-T04_UseCaseDiagram.pdf
+│       ER_Diagram.jpg
+│       System_architecture.jpg
+│       USE_case diagram.jpg
+│
+├───docs
+│       .gitkeep
+│       CSE4204-8B-T04_Proposal.pdf
+│       CSE4204-8B-T04_SRS.pdf
+│       CSE4204-8B-T04_SystemDesign.pdf
+│
+├───frontend
+│       .gitkeep
+│
+└───n8n-workflows
+        .gitkeep
 ```
 
 ## Contact Info: 
