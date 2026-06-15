@@ -91,8 +91,8 @@ Enterprise Nexus is built around six core objectives:
 - Week 03
 -[Softare Requirement Specification](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq) <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[ER Diagram PDF](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[ER Diagram JPG](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[System Architecture Diagram PDF](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[System Architecture Diagram JPG](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[Use Case Diagram PDF](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[Use Case Diagram JPG](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)
 
--Week 04
--[System Design PDF]()
+- Week 04
+-[System Design PDF](https://github.com/Nazmussakib247/CSE4204-8B-T04-Enterprise-Nexus-Multi-Agent-AI-Business-Automation-OS-with-Security-Intelligence/blob/main/docs/CSE4204-8B-T04_SystemDesign.pdf)
 
 ## Repository Structure
 
