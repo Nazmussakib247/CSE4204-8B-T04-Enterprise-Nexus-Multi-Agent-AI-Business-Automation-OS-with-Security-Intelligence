@@ -97,7 +97,7 @@ Enterprise Nexus is built around six core objectives:
 ## Repository Structure
 
 ```
-CSE4204-8A-T01-Enterprise-Nexus/
+CSE4204-8B-T04-Enterprise-Nexus/
 │   README.md
 │
 ├───backend
