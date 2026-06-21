@@ -1,0 +1,28 @@
+<svg width="640" height="160" viewBox="0 0 640 160" xmlns="http://www.w3.org/2000/svg">
+  <title>Enterprise Nexus</title>
+  <desc>Enterprise Nexus logo — hexagonal six-node agent mark with wordmark, light mode</desc>
+
+  <g transform="translate(80,80)">
+    <line x1="0" y1="-46" x2="39.84" y2="-23" stroke="#009E88" stroke-width="2.5"/>
+    <line x1="39.84" y1="-23" x2="39.84" y2="23" stroke="#009E88" stroke-width="2.5"/>
+    <line x1="39.84" y1="23" x2="0" y2="46" stroke="#009E88" stroke-width="2.5"/>
+    <line x1="0" y1="46" x2="-39.84" y2="23" stroke="#009E88" stroke-width="2.5"/>
+    <line x1="-39.84" y1="23" x2="-39.84" y2="-23" stroke="#009E88" stroke-width="2.5"/>
+    <line x1="-39.84" y1="-23" x2="0" y2="-46" stroke="#009E88" stroke-width="2.5"/>
+
+    <line x1="0" y1="-46" x2="0" y2="46" stroke="#00C2A8" stroke-width="1" opacity="0.4"/>
+    <line x1="-39.84" y1="-23" x2="39.84" y2="23" stroke="#00C2A8" stroke-width="1" opacity="0.4"/>
+    <line x1="-39.84" y1="23" x2="39.84" y2="-23" stroke="#00C2A8" stroke-width="1" opacity="0.4"/>
+
+    <circle cx="0" cy="-46" r="8" fill="#00C2A8"/>
+    <circle cx="39.84" cy="-23" r="8" fill="#00C2A8"/>
+    <circle cx="39.84" cy="23" r="8" fill="#00C2A8"/>
+    <circle cx="0" cy="46" r="8" fill="#00C2A8"/>
+    <circle cx="-39.84" cy="23" r="8" fill="#00C2A8"/>
+    <circle cx="-39.84" cy="-23" r="8" fill="#00C2A8"/>
+    <circle cx="0" cy="0" r="10" fill="#0F1117"/>
+  </g>
+
+  <text x="170" y="86" font-family="Inter, -apple-system, sans-serif" font-size="38" font-weight="800" letter-spacing="-0.5" fill="#0A0C10">Enterprise Nexus</text>
+  <text x="171" y="112" font-family="Inter, -apple-system, sans-serif" font-size="14" font-weight="600" letter-spacing="2.2" fill="#6B7280">MULTI-AGENT AI BUSINESS OS</text>
+</svg>
