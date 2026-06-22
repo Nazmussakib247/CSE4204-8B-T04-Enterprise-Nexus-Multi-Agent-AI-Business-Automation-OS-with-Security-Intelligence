@@ -1,13 +1,17 @@
-# Enterprise Nexus - Multi-Agent AI Business Automation OS with Security Intelligence
+# Enterprise NeXus
+### Multi-Agent AI Business Automation OS with Security Intelligence
+
+---
+
 ## Team Information
 
-| Information | Details |
+| Field | Details |
 |---|---|
-| Course Code | CSE4204 |
-| Section | 8B |
-| Team Number | T04 |
-| Official Team Name | CSE4204-8B-T04 |
-| Project Title | Enterprise Nexus — Multi-Agent AI Business Automation OS with Security Intelligence |
+| **Course Code** | CSE4204 |
+| **Section** | 8B |
+| **Team Number** | T04 |
+| **Official Team Name** | CSE4204-8B-T04 |
+| **Project Title** | Enterprise NeXus — Multi-Agent AI Business Automation OS with Security Intelligence |
 
 ## Team Members
 
@@ -18,14 +22,15 @@
 | Frontend Developer — 1 | Most Sumiya Sanjida | 11220320874 |
 | Database Manager & Frontend Developer — 2 | Sabrina Ibrahim | 11220320895 |
 
+---
 
 ## Project Description
 
-Enterprise Nexus is a Multi-Agent AI Business Automation Operating System designed to unify and intelligently automate core business functions for small and medium enterprises, startups, and growing organizations.
+Enterprise NeXus is a Multi-Agent AI Business Automation Operating System designed to unify and intelligently automate core business functions for small and medium enterprises, startups, and growing organizations.
 
-The platform deploys five specialized AI agents — an HR Agent, a Finance Agent, a Support Agent, an Analytics Agent, and an Executive Agent — each responsible for a distinct operational domain. These agents operate through a centralized orchestration layer powered by LangChain and CrewAI, enabling them to collaborate autonomously, delegate sub-tasks across departments, and deliver synthesized intelligence to a unified, role-based web dashboard. A dedicated Security Intelligence module monitors threats and enforces data protection across the entire system, ensuring enterprise-grade safety without requiring dedicated security infrastructure.
+The platform deploys five specialized AI agents — an HR Agent, a Finance Agent, a Support Agent, an Analytics Agent, and an Executive Agent — each responsible for a distinct operational domain. These agents operate through a centralized orchestration layer powered by LangChain and CrewAI, enabling them to collaborate autonomously, delegate sub-tasks across departments, and deliver synthesized intelligence to a unified, role-based web dashboard. A dedicated Security Intelligence module monitors threats and enforces data protection across the entire system.
 
-The system is architected to replace the fragmented landscape of disconnected SaaS tools that currently force businesses to manage HR, finance, customer support, and analytics through separate platforms with no intelligent cross-domain layer. By consolidating these functions into a single cohesive operating system, Enterprise Nexus eliminates manual data transfer, reduces subscription costs, and accelerates decision-making through real-time, AI-driven insights.
+---
 
 ## Proposed Features
 
@@ -40,91 +45,80 @@ The system is architected to replace the fragmented landscape of disconnected Sa
 - Real-Time AI-Driven Insights and Reporting
 - Document and Policy Retrieval via Vector Search
 
+---
+
 ## Technology Stack
 
-| Part | Technology |
+| Layer | Technology |
 |---|---|
-| Frontend | React.js / Next.js |
-| Styling | Tailwind CSS |
-| Backend | Node.js + Express.js |
-| Authentication | JWT + bcrypt |
-| Workflow Automation | n8n |
-| Database | PostgreSQL |
-| Vector Database | Pinecone / ChromaDB |
-| Core LLM | OpenAI GPT-4 / Google Gemini |
-| AI Framework | LangChain |
-| Multi-Agent Orchestration | CrewAI |
-| Conversational Agents | AutoGen |
-| Version Control | GitHub |
+| **Frontend** | React.js / Next.js |
+| **Styling** | Tailwind CSS |
+| **Backend** | Node.js + Express.js |
+| **Authentication** | JWT + bcrypt |
+| **Workflow Automation** | n8n |
+| **Database** | PostgreSQL |
+| **Vector Database** | Pinecone / ChromaDB |
+| **Core LLM** | OpenAI GPT-4 / Google Gemini |
+| **AI Framework** | LangChain |
+| **Multi-Agent Orchestration** | CrewAI |
+| **Conversational Agents** | AutoGen |
+| **Version Control** | GitHub |
 
-## Expected Outcome
-
-The system will help small and medium-sized businesses, startups, and growing enterprises automate their core operations intelligently. It will replace fragmented SaaS tools with a unified, AI-driven operating system, reduce manual work and subscription costs, improve cross-departmental decision-making, and make enterprise-grade operational intelligence accessible to organizations that previously could not afford such capabilities.
+---
 
 ## Objectives
 
-Enterprise Nexus is built around six core objectives:
+1. **Automate Department-Level Operations** — Deploy five specialized AI agents to autonomously handle routine business workflows.
+2. **Deliver Intelligent Decision Support** — Leverage Google Gemini to generate data-driven insights, anomaly alerts, KPI narratives, and strategic briefings.
+3. **Centralize Business Intelligence** — Unify HR, financial, support, and operational data into a single platform with a real-time dashboard.
+4. **Ensure Enterprise-Grade Security** — Implement JWT-based authentication, RBAC, bcryptjs hashing, rate limiting, and input sanitisation.
+5. **Enable Scalable, Cloud-Native Deployment** — Build a production-ready system using Docker, GitHub Actions CI, Vercel, Render, and Supabase.
+6. **Demonstrate Full-Stack AI Engineering** — Produce a well-documented, end-to-end software system as a complete academic deliverable for CSE4204.
 
-1. **Automate Department-Level Operations** — Deploy five specialized AI agents (HR, Finance, Support, Analytics, Executive) to autonomously handle routine business workflows that traditionally require dedicated human teams.
-
-2. **Deliver Intelligent Decision Support** — Leverage Google Gemini 1.5 Flash/Pro to generate data-driven insights, candidate rankings, anomaly alerts, KPI narratives, and strategic briefings — replacing manual report generation.
-
-3. **Centralize Business Intelligence** — Unify HR, financial, support, and operational data into a single platform with a real-time dashboard, giving decision-makers a 360° view of business health without switching tools.
-
-4. **Ensure Enterprise-Grade Security** — Implement JWT-based authentication, RBAC (Admin/User roles), bcryptjs hashing, rate limiting, input sanitisation, and security headers to protect sensitive business data at every layer.
-
-5. **Enable Scalable, Cloud-Native Deployment** — Build a production-ready system using Docker, GitHub Actions CI, Vercel (frontend), Render (backend), and Supabase (PostgreSQL) — deployable by any team with zero infrastructure expertise.
-
-6. **Demonstrate Full-Stack AI Engineering** — Produce a well-documented, end-to-end software system with 37 REST API endpoints, 8 database tables, 11 frontend pages, and 5 AI agent pipelines as a complete academic deliverable for CSE 4204.
-
-## [Documentation](https://drive.google.com/drive/u/1/folders/1upj2UOXTqWkNGbovAkakPAdQGUWGtmv6)
-
-- Week 00
-  -[Team Norms and Rules](https://drive.google.com/drive/folders/1VSHc7U-z2uDfwXGGZTHiEmqXk24EJNa5?usp=drive_link)
-
-- Week 01
-  -[Team Formation, Idea Selection & Research](https://drive.google.com/drive/folders/1TdU3cD8FBzomIMWIhhheVZRidSBBuN_Y?usp=drive_link)
-
-- Week 02
--[Project Proposal](https://drive.google.com/drive/folders/1E4GpQZhwtQFxLB-1UWE8Pb63A4xJDYQS?usp=drive_link) <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[Initial Project Planning](https:///drive.google.com/drive/folers/1E44GpQZhwtQFxLB-1UWE8Pb63A4xJDYQS?usp=drive_link)
-
-- Week 03
--[Softare Requirement Specification](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq) <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[ER Diagram PDF](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[ER Diagram JPG](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[System Architecture Diagram PDF](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[System Architecture Diagram JPG](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[Use Case Diagram PDF](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[Use Case Diagram JPG](https://drive.google.com/drive/u/1/folders/1wiSKgnVGr9BlORh9VlwdS7VNFUtJ_Wvq)
-
-- Week 04
--[System Design PDF](https://github.com/Nazmussakib247/CSE4204-8B-T04-Enterprise-Nexus-Multi-Agent-AI-Business-Automation-OS-with-Security-Intelligence/blob/main/docs/CSE4204-8B-T04_SystemDesign.pdf)
+---
 
 ## Repository Structure
 
 ```
-CSE4204-8B-T04-Enterprise-Nexus/
+Enterprise-NeXus/
+│   .gitignore
 │   README.md
 │
-├───backend
-│       .gitkeep
+├── assets/
+│   └── logo/
 │
-├───database
-│       .gitkeep
+├── backend/
+├── database/
+├── frontend/
+├── n8n-workflows/
 │
-├───Diagram
-│       CSE4204-8B-T04_ArchitectureDiagram.pdf
-│       CSE4204-8B-T04_ERDiagram.pdf
-│       CSE4204-8B-T04_UseCaseDiagram.pdf
-│       ER_Diagram.jpg
-│       System_architecture.jpg
-│       USE_case diagram.jpg
-│
-├───docs
-│       .gitkeep
-│       CSE4204-8B-T04_Proposal.pdf
-│       CSE4204-8B-T04_SRS.pdf
-│       CSE4204-8B-T04_SystemDesign.pdf
-│
-├───frontend
-│       .gitkeep
-│
-└───n8n-workflows
-        .gitkeep
+└── documentation/
+    ├── proposal/
+    ├── srs/
+    ├── system-design/
+    ├── diagram/
+    │   ├── ai-workflow/
+    │   ├── architecture/
+    │   ├── er-diagram/
+    │   ├── use-case-diagram/
+    │   └── user-flow/
+    └── ui-design/
+        ├── figma.md
+        ├── CSE4204-8B-T04_UIDesign.pdf
+        └── screens/           ← 41 screens (PNG + HTML per screen)
 ```
 
-## Contact Info: 
+---
+
+## Documentation
+
+| Document | Link |
+|---|---|
+| **Project Proposal** | [CSE4204-8B-T04_Proposal.pdf](documentation/proposal/CSE4204-8B-T04_Proposal.pdf) |
+| **Software Requirements Specification** | [CSE4204-8B-T04_SRS.pdf](documentation/srs/CSE4204-8B-T04_SRS.pdf) |
+| **System Design** | [CSE4204-8B-T04_SystemDesign.pdf](documentation/system-design/CSE4204-8B-T04_SystemDesign.pdf) |
+| **Architecture Diagram** | [CSE4204-8B-T04_ArchitectureDiagram.pdf](documentation/diagram/architecture/CSE4204-8B-T04_ArchitectureDiagram.pdf) |
+| **ER Diagram** | [CSE4204-8B-T04_ERDiagram.pdf](documentation/diagram/er-diagram/CSE4204-8B-T04_ERDiagram.pdf) |
+| **Use Case Diagram** | [CSE4204-8B-T04_UseCaseDiagram.pdf](documentation/diagram/use-case-diagram/CSE4204-8B-T04_UseCaseDiagram.pdf) |
+| **UI Design Prototype** | [CSE4204-8B-T04_UIDesign.pdf](documentation/ui-design/CSE4204-8B-T04_UIDesign.pdf) |
+| **Figma Prototype** | [View on Figma](documentation/ui-design/figma.md) |
