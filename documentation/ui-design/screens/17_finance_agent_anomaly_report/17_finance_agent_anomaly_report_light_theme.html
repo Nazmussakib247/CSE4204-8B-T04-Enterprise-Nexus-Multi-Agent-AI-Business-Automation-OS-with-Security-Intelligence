@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;700&amp;family=Geist:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#bbcac4",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#732ee4",
+                        "primary-fixed": "#65fade",
+                        "secondary-fixed": "#e2e2eb",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-secondary-fixed": "#191b22",
+                        "primary-fixed-dim": "#41ddc2",
+                        "error": "#ba1a1a",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#eaddff",
+                        "on-primary-fixed": "#00201b",
+                        "surface": "#f8f9fa",
+                        "tertiary-container": "#bc9bff",
+                        "inverse-on-surface": "#f0f1f2",
+                        "on-surface": "#191c1d",
+                        "surface-container-high": "#e7e8e9",
+                        "on-background": "#191c1d",
+                        "on-secondary-fixed-variant": "#45464e",
+                        "on-surface-variant": "#3c4a46",
+                        "inverse-surface": "#2e3132",
+                        "on-primary-container": "#00493e",
+                        "on-secondary-container": "#63646c",
+                        "tertiary-fixed-dim": "#d2bbff",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#41ddc2",
+                        "background": "#f8f9fa",
+                        "secondary-fixed-dim": "#c5c6ce",
+                        "secondary-container": "#e2e2eb",
+                        "surface-container-low": "#f3f4f5",
+                        "primary": "#006b5c",
+                        "on-error": "#ffffff",
+                        "on-tertiary-container": "#5200b6",
+                        "outline": "#6c7a76",
+                        "on-tertiary-fixed": "#25005a",
+                        "surface-bright": "#f8f9fa",
+                        "secondary": "#5d5e65",
+                        "surface-container": "#edeeef",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#006b5c",
+                        "on-tertiary-fixed-variant": "#5a00c6",
+                        "surface-variant": "#e1e3e4",
+                        "primary-container": "#00c2a8",
+                        "surface-dim": "#d9dadb",
+                        "on-primary-fixed-variant": "#005045",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max": "1440px",
+                        "xs": "8px",
+                        "sidebar-width": "260px",
+                        "md": "24px",
+                        "sm": "16px",
+                        "base": "4px",
+                        "xl": "48px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "label-caps": ["JetBrains Mono"],
+                        "display-lg": ["Geist"],
+                        "label-mono": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Geist"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "label-caps": ["11px", {"lineHeight": "1.2", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                        "display-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "label-mono": ["12px", {"lineHeight": "1.4", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #191c1d;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #3c4a46;
+        }
+        .chart-grid {
+            background-image: linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(90deg, #e5e7eb 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .anomaly-line {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: draw 2s ease-out forwards;
+        }
+        @keyframes draw {
+            to { stroke-dashoffset: 0; }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- Side Navigation Bar (Anchored Component) -->
+<aside class="w-[260px] h-screen fixed left-0 top-0 bg-inverse-surface dark:bg-inverse-surface border-r border-outline-variant flex flex-col h-full py-md z-50">
+<div class="px-6 mb-8 flex items-center gap-3">
+<img alt="Enterprise Nexus" class="w-10 h-10 rounded-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBN401d65yemBMA3YOjAzXOabPw_-X0QAsAv__cd6wEv9LwlOXqd48vTMuq3pGnwpGuEB0sRVN8lfF0JY0aSOUBTrK0GE8XvChAbP23pUQxuhKwqVi1iZsm1McloRehTwCHsxfwXuchOmaI9JHAlmsx5zjEWtVtN61q8dCn627MGHWN816SwyDKuSNJpI5mh8WAiomkJpFiP8sKPL-w91KYHMmVGBrW3piijVW1qVysrsKNoh4EBMW_KsxBnRMR2oAVPnUFRpydFCwh"/>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-surface-container-lowest leading-tight">Enterprise Nexus</h1>
+<p class="font-label-caps text-[10px] text-primary-fixed opacity-70 tracking-widest uppercase">MULTI-AGENT SYSTEM</p>
+</div>
+</div>
+<nav class="flex-1 px-2 space-y-1">
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-body-md">Overview</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-body-md">HR Agents</span>
+</a>
+<a class="bg-secondary dark:bg-secondary text-surface border-l-4 border-primary px-4 py-3 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-body-md">Finance</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined" data-icon="support_agent">support_agent</span>
+<span class="font-body-md">Support</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-body-md">System Status</span>
+</a>
+</nav>
+<div class="mt-auto px-4 pb-4">
+<div class="bg-secondary-fixed/10 rounded p-4 mb-6 border border-outline/20">
+<p class="font-label-caps text-[10px] text-primary-fixed mb-1 uppercase">Agent Status</p>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
+<span class="font-label-mono text-[11px] text-surface-container-lowest">SCANNING: LEDGER_ACTIVE_004</span>
+</div>
+</div>
+<button class="w-full bg-surface-container-lowest text-inverse-surface font-label-caps py-3 rounded mb-4 hover:bg-primary-container transition-colors font-bold uppercase tracking-widest text-[11px]">
+                NEW AGENT
+            </button>
+<div class="space-y-1">
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-2 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body-md">Settings</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-2 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-body-md">Docs</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Top App Bar (Anchored Component) -->
+<header class="h-16 w-full sticky top-0 z-40 bg-surface dark:bg-surface-dim border-b border-outline-variant flex justify-between items-center px-md ml-[260px] w-[calc(100%-260px)]">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-2">
+<span class="font-label-mono text-on-secondary-container uppercase tracking-widest text-[11px]">Nexus Terminal</span>
+<span class="text-outline-variant">/</span>
+<span class="font-label-mono text-on-surface font-bold text-[11px]">Finance_Agent_Delta</span>
+</div>
+<div class="hidden lg:flex items-center gap-6 border-l border-outline-variant pl-8">
+<span class="font-label-mono text-on-secondary-container text-[11px] hover:text-primary cursor-pointer">Cluster-01</span>
+<span class="font-label-mono text-on-secondary-container text-[11px] hover:text-primary cursor-pointer">Threads</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative w-64">
+<input class="w-full bg-surface-container-low border border-outline-variant px-3 py-1.5 font-label-mono text-[10px] focus:ring-1 focus:ring-primary focus:border-primary outline-none" placeholder="QUERY LEDGER..." type="text"/>
+<span class="material-symbols-outlined absolute right-2 top-1.5 text-on-surface-variant text-lg" data-icon="search">search</span>
+</div>
+<button class="bg-on-surface text-surface px-6 py-2 font-label-caps text-[11px] hover:bg-primary transition-colors">DEPLOY</button>
+<div class="flex items-center gap-3 ml-4">
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer" data-icon="account_circle">account_circle</span>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-[260px] p-md min-h-[calc(100vh-64px)] bg-surface">
+<!-- Alert Banner -->
+<div class="bg-surface-container-lowest border border-outline-variant p-4 flex flex-col md:flex-row items-center justify-between mb-8">
+<div class="flex items-center gap-4 mb-4 md:mb-0">
+<span class="bg-error text-on-error px-2 py-0.5 font-label-caps text-[10px] uppercase">CRITICAL</span>
+<div>
+<h2 class="font-label-mono text-[14px] text-on-surface font-bold">ANOMALY-4829 - High Risk</h2>
+<p class="font-label-mono text-[11px] text-on-surface-variant mt-0.5">Detected in: Corporate Travel / Q3 External Ops</p>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="border border-outline-variant px-6 py-2 font-label-caps text-[11px] hover:bg-surface-container transition-colors uppercase tracking-widest">Dismiss</button>
+<button class="border border-outline-variant px-6 py-2 font-label-caps text-[11px] hover:bg-surface-container transition-colors uppercase tracking-widest">Flag for Human Review</button>
+<button class="bg-inverse-surface text-surface px-6 py-2 font-label-caps text-[11px] hover:bg-primary transition-colors font-bold uppercase tracking-widest">Approve Payment</button>
+</div>
+</div>
+<div class="grid grid-cols-12 gap-6">
+<!-- Left Column: Chart and Data -->
+<div class="col-span-12 lg:col-span-8 space-y-6">
+<!-- Chart Card -->
+<div class="bg-surface-container-lowest border border-outline-variant p-6 h-[400px] flex flex-col">
+<div class="flex justify-between items-center mb-6">
+<div>
+<h3 class="font-label-caps text-[12px] text-on-surface tracking-[0.2em] uppercase">Expense Trend Analysis</h3>
+<p class="font-label-mono text-[10px] text-on-surface-variant mt-1">Timeline: Last 30 Days (Daily Aggregated)</p>
+</div>
+<div class="flex gap-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-outline-variant"></span>
+<span class="font-label-mono text-[10px] uppercase">Baseline</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-error"></span>
+<span class="font-label-mono text-[10px] uppercase">Anomaly</span>
+</div>
+</div>
+</div>
+<div class="flex-1 relative chart-grid border-l border-b border-outline-variant/30">
+<!-- Simplified Vector Chart -->
+<svg class="absolute inset-0 w-full h-full" preserveaspectratio="none" viewbox="0 0 1000 300">
+<path class="anomaly-line" d="M0,240 L100,230 L200,235 L300,250 L400,230 L500,210 L520,20 L580,180 L650,220 L750,215 L850,220 L1000,230" fill="none" stroke="#00C2A8" stroke-width="3"></path>
+</svg>
+<!-- Tooltip Callout -->
+<div class="absolute left-[52%] top-[10%] transform -translate-x-1/2 bg-surface-container-lowest border border-error p-3 shadow-xl z-10 before:content-[''] before:absolute before:-bottom-2 before:left-1/2 before:-translate-x-1/2 before:w-4 before:h-4 before:bg-surface-container-lowest before:border-r before:border-b before:border-error before:rotate-45">
+<p class="font-label-caps text-[9px] text-error font-bold mb-1">DETECTION SPIKE</p>
+<p class="font-headline-md text-[16px] font-bold">$12,450.00</p>
+<p class="font-label-mono text-[9px] text-on-surface-variant">2023-10-14 14:22 UTC</p>
+</div>
+</div>
+</div>
+<!-- Transaction Data Card -->
+<div class="bg-surface-container-lowest border border-outline-variant overflow-hidden flex flex-col md:flex-row min-h-[280px]">
+<div class="w-full md:w-5/12 p-6 border-r border-outline-variant border-l-[3px] border-l-error">
+<h4 class="font-label-caps text-[12px] text-on-surface mb-8 tracking-widest uppercase">Transaction Data</h4>
+<div class="space-y-6">
+<div>
+<p class="font-label-caps text-[9px] text-on-surface-variant uppercase mb-1">Merchant</p>
+<p class="font-label-mono text-[14px] font-bold text-on-surface">AEROSPACE LOGISTICS GMBH</p>
+</div>
+<div>
+<p class="font-label-caps text-[9px] text-on-surface-variant uppercase mb-1">Category</p>
+<p class="font-label-mono text-[14px] text-error">Operations / Logistics</p>
+</div>
+<div>
+<p class="font-label-caps text-[9px] text-on-surface-variant uppercase mb-1">Authorized By</p>
+<p class="font-label-mono text-[14px] text-on-surface">S. Henderson (Level 4)</p>
+</div>
+</div>
+</div>
+<div class="w-full md:w-7/12 p-6 bg-surface-container-low/30">
+<div class="flex justify-between items-start mb-6">
+<div>
+<p class="font-label-caps text-[9px] text-on-surface-variant uppercase mb-1">Status</p>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-error text-sm" data-icon="warning">warning</span>
+<span class="font-label-mono text-[11px] text-error font-bold uppercase">Unauthorized Deviation</span>
+</div>
+</div>
+<div class="text-right">
+<p class="font-label-caps text-[9px] text-on-surface-variant uppercase mb-1">Amount</p>
+<p class="font-label-mono text-[16px] text-error font-bold">$12,450.00</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 border border-outline-variant italic font-body-md text-error leading-relaxed relative">
+<span class="absolute top-2 left-2 text-2xl text-error opacity-20">"</span>
+                            The expense exceeds the historical mean for this vendor by 412%. No pre-approval ticket was found in the Jira connector for this timeframe. Recurring pattern check shows 0 matches for this amount in the last 24 months.
+                            <span class="absolute bottom-2 right-2 text-2xl text-error opacity-20">"</span>
+</div>
+</div>
+</div>
+<!-- Footer Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-surface-container-lowest border border-outline-variant p-4">
+<p class="font-label-caps text-[9px] text-on-surface-variant uppercase mb-2">Internal Ref</p>
+<div class="flex justify-between items-center">
+<span class="font-label-mono text-[13px]">NEX-OPS-AUDIT-L4</span>
+<span class="material-symbols-outlined text-sm opacity-50 cursor-pointer hover:opacity-100" data-icon="content_copy">content_copy</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-4">
+<p class="font-label-caps text-[9px] text-on-surface-variant uppercase mb-2">Detection Latency</p>
+<p class="font-label-mono text-[13px] font-bold">14ms after block confirmation</p>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-4">
+<p class="font-label-caps text-[9px] text-on-surface-variant uppercase mb-2">Audit Hash</p>
+<p class="font-label-mono text-[13px] opacity-70 truncate">8f2a...e911c7</p>
+</div>
+</div>
+</div>
+<!-- Right Column: AI Log -->
+<div class="col-span-12 lg:col-span-4 flex flex-col h-full">
+<div class="bg-surface-container-lowest border border-outline-variant flex flex-col h-full">
+<div class="p-4 border-b border-outline-variant flex justify-between items-center">
+<h3 class="font-label-caps text-[12px] text-on-surface tracking-[0.2em] uppercase">AI Investigation Log</h3>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="terminal">terminal</span>
+</div>
+<div class="flex-1 bg-inverse-surface p-6 font-label-mono text-[11px] leading-relaxed custom-scrollbar overflow-y-auto">
+<div class="space-y-4">
+<div class="flex gap-4">
+<span class="text-primary-fixed opacity-60 shrink-0">[14:22:01]</span>
+<span class="text-surface-container-lowest">Initializing DeepAudit_v4.2 for txn_id: NEX-4829...</span>
+</div>
+<div class="flex gap-4">
+<span class="text-primary-fixed opacity-60 shrink-0">[14:22:03]</span>
+<span class="text-surface-container-lowest">Fetching vendor metadata: Aerospace Logistics GmbH. Verification: COMPLETE.</span>
+</div>
+<div class="flex gap-4">
+<span class="text-primary-fixed opacity-60 shrink-0">[14:22:05]</span>
+<span class="text-surface-container-lowest">Cross-referencing ERP with TravelPolicy_2023_v2. <span class="text-error font-bold">VIOLATION DETECTED:</span> Logistics expense limit for non-exec personnel exceeded.</span>
+</div>
+<div class="flex gap-4">
+<span class="text-primary-fixed opacity-60 shrink-0">[14:22:08]</span>
+<span class="text-surface-container-lowest">Scanning related threads... Agent Delta identified duplicate request #REQ-991 but found no payout link.</span>
+</div>
+<div class="border-l-2 border-error pl-4 py-2 bg-error/10 my-4">
+<div class="flex gap-4">
+<span class="text-error font-bold shrink-0">[14:22:12]</span>
+<div>
+<p class="text-error font-bold uppercase mb-2">Anomaly Flag Triggered</p>
+<p class="text-surface-container-lowest opacity-80">Deviation coefficient: 4.8x</p>
+<p class="text-surface-container-lowest opacity-80">Confidence score: 98.4%</p>
+<p class="text-surface-container-lowest opacity-80 mt-2">Recommended action: <span class="underline">HOLD_PAYMENT</span></p>
+</div>
+</div>
+</div>
+<div class="flex gap-4 animate-pulse">
+<span class="text-primary-fixed opacity-60 shrink-0">[14:22:15]</span>
+<span class="text-primary-fixed">Awaiting supervisor response..._</span>
+</div>
+</div>
+</div>
+<div class="p-4 bg-surface-container-low border-t border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[16px]" data-icon="check_circle">check_circle</span>
+<span class="font-label-caps text-[10px] text-on-surface-variant uppercase">Security Enclave Active</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-[16px] cursor-pointer" data-icon="more_vert">more_vert</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Micro-interaction for sidebar hover scaling
+        document.querySelectorAll('nav a').forEach(item => {
+            item.addEventListener('mousedown', () => {
+                item.style.transform = 'scale(0.98)';
+            });
+            item.addEventListener('mouseup', () => {
+                item.style.transform = 'scale(1)';
+            });
+        });
+
+        // Simulating log scroll on load
+        window.addEventListener('DOMContentLoaded', () => {
+            const logContainer = document.querySelector('.custom-scrollbar');
+            logContainer.scrollTop = logContainer.scrollHeight;
+        });
+    </script>
+</body></html>

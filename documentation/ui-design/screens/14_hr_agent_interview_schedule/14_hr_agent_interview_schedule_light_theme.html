@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Enterprise Nexus - HR Agent Schedule</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;700&amp;family=Geist:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#bbcac4",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#732ee4",
+                        "primary-fixed": "#65fade",
+                        "secondary-fixed": "#e2e2eb",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-secondary-fixed": "#191b22",
+                        "primary-fixed-dim": "#41ddc2",
+                        "error": "#ba1a1a",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#eaddff",
+                        "on-primary-fixed": "#00201b",
+                        "surface": "#f8f9fa",
+                        "tertiary-container": "#bc9bff",
+                        "inverse-on-surface": "#f0f1f2",
+                        "on-surface": "#191c1d",
+                        "surface-container-high": "#e7e8e9",
+                        "on-background": "#191c1d",
+                        "on-secondary-fixed-variant": "#45464e",
+                        "on-surface-variant": "#3c4a46",
+                        "inverse-surface": "#2e3132",
+                        "on-primary-container": "#00493e",
+                        "on-secondary-container": "#63646c",
+                        "tertiary-fixed-dim": "#d2bbff",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#41ddc2",
+                        "background": "#f8f9fa",
+                        "secondary-fixed-dim": "#c5c6ce",
+                        "secondary-container": "#e2e2eb",
+                        "surface-container-low": "#f3f4f5",
+                        "primary": "#006b5c",
+                        "on-error": "#ffffff",
+                        "on-tertiary-container": "#5200b6",
+                        "outline": "#6c7a76",
+                        "on-tertiary-fixed": "#25005a",
+                        "surface-bright": "#f8f9fa",
+                        "secondary": "#5d5e65",
+                        "surface-container": "#edeeef",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#006b5c",
+                        "on-tertiary-fixed-variant": "#5a00c6",
+                        "surface-variant": "#e1e3e4",
+                        "primary-container": "#00c2a8",
+                        "surface-dim": "#d9dadb",
+                        "on-primary-fixed-variant": "#005045",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max": "1440px",
+                        "xs": "8px",
+                        "sidebar-width": "260px",
+                        "md": "24px",
+                        "sm": "16px",
+                        "lg": "32px",
+                        "base": "4px",
+                        "xl": "48px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "label-caps": ["JetBrains Mono"],
+                        "display-lg": ["Geist"],
+                        "label-mono": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Geist"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "label-caps": ["11px", {"lineHeight": "1.2", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                        "display-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "label-mono": ["12px", {"lineHeight": "1.4", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-glow {
+            box-shadow: 0 0 15px rgba(0, 194, 168, 0.2);
+        }
+        .bento-card {
+            transition: all 0.2s ease;
+        }
+        .bento-card:hover {
+            border-color: #00c2a8;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md overflow-x-hidden">
+<!-- Side Navigation Bar -->
+<aside class="bg-inverse-surface dark:bg-inverse-surface w-[260px] h-screen fixed left-0 top-0 border-r border-outline-variant flex flex-col py-md z-50">
+<div class="px-sm mb-lg flex items-center gap-3">
+<img alt="Enterprise Nexus" class="w-10 h-10 rounded-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBN401d65yemBMA3YOjAzXOabPw_-X0QAsAv__cd6wEv9LwlOXqd48vTMuq3pGnwpGuEB0sRVN8lfF0JY0aSOUBTrK0GE8XvChAbP23pUQxuhKwqVi1iZsm1McloRehTwCHsxfwXuchOmaI9JHAlmsx5zjEWtVtN61q8dCn627MGHWN816SwyDKuSNJpI5mh8WAiomkJpFiP8sKPL-w91KYHMmVGBrW3piijVW1qVysrsKNoh4EBMW_KsxBnRMR2oAVPnUFRpydFCwh"/>
+<div class="flex flex-col">
+<span class="font-headline-md text-[20px] font-bold text-surface-container-lowest leading-none">Enterprise Nexus</span>
+<span class="font-label-mono text-[10px] text-primary-fixed opacity-70 tracking-tighter">MULTI-AGENT SYSTEM</span>
+</div>
+</div>
+<button class="mx-sm mb-md bg-primary-container text-on-primary-container font-label-caps py-3 rounded-lg flex items-center justify-center gap-2 transition-transform active:scale-95">
+<span class="material-symbols-outlined text-[18px]">add</span>
+            NEW AGENT
+        </button>
+<nav class="flex-1 space-y-1">
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 hover:bg-secondary/50 px-4 py-3 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-body-md text-body-md">Overview</span>
+</a>
+<!-- Active Tab: HR Agents -->
+<a class="bg-secondary dark:bg-secondary text-surface border-l-4 border-primary px-4 py-3 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-body-md text-body-md">HR Agents</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 hover:bg-secondary/50 px-4 py-3 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-body-md text-body-md">Finance</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 hover:bg-secondary/50 px-4 py-3 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="support_agent">support_agent</span>
+<span class="font-body-md text-body-md">Support</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 hover:bg-secondary/50 px-4 py-3 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-body-md text-body-md">System Status</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-outline-variant/20 pt-sm">
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 hover:bg-secondary/50 px-4 py-2 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 hover:bg-secondary/50 px-4 py-2 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-body-md text-body-md">Docs</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-[260px] min-h-screen">
+<!-- Top App Bar -->
+<header class="h-16 w-full sticky top-0 z-40 bg-surface dark:bg-surface-dim border-b border-outline-variant flex justify-between items-center px-md">
+<div class="flex items-center gap-2 font-label-mono text-on-secondary-container">
+<span class="hover:text-primary cursor-pointer transition-colors">Agents</span>
+<span class="text-outline-variant">/</span>
+<span class="text-on-surface font-bold">HR Agent - Interview Schedule</span>
+</div>
+<div class="flex items-center gap-sm">
+<div class="relative group">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline-variant text-[20px]">search</span>
+<input class="bg-surface-container-low border-none rounded-full pl-10 pr-4 py-1.5 text-sm focus:ring-1 focus:ring-primary w-64 transition-all" placeholder="Global Search..." type="text"/>
+</div>
+<div class="flex items-center gap-3 border-l border-outline-variant pl-4">
+<button class="relative p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<div class="flex items-center gap-2 cursor-pointer group">
+<div class="text-right">
+<p class="font-body-md text-[12px] font-bold leading-tight">Admin User</p>
+<p class="font-label-mono text-[10px] opacity-60">Enterprise Admin</p>
+</div>
+<img class="w-8 h-8 rounded-full border border-outline-variant" data-alt="A professional headshot of a mature male executive in a sharp navy suit, looking directly at the camera with a confident expression. The lighting is studio-quality with soft shadows, set against a clean, neutral office backdrop that matches the light-mode technical minimalist aesthetic of the dashboard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWVSaWeurQGgOJz_jjGqonWiSYmFvk1MWPRx3zKXac0lWM8byBgNEpc4Z_HW5l_EQLLfrGOLsWWJegtd3teztUdBOhGb5r9VXAj6zXUTf2PP97zAEljfONEuJD0qDy14FmGWVSdf8hgLYxrsAi5jJR2Zog2-BFTsdZuNfLURilFQThkYA_e0br8OtL0ZwAe3N7h6RmGDYURe1uPj2tjdKWEcX5AzsW6ukzPyDCzzWama7yCxoWFSQr8EXsJnaR4PN1deFhFWTVhxgz"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Dashboard Content -->
+<div class="p-md max-w-container-max mx-auto">
+<!-- Agent Intro Header -->
+<div class="flex items-start justify-between mb-lg">
+<div class="flex gap-4">
+<div class="w-16 h-16 bg-tertiary-container rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-[32px] text-on-tertiary-container" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-1">
+<h1 class="font-headline-md text-display-lg text-on-surface">Recruitment Coordinator</h1>
+<span class="bg-tertiary/10 text-tertiary font-label-mono text-[10px] px-2 py-0.5 rounded border border-tertiary/20">HR AGENT ACTIVE</span>
+</div>
+<p class="text-on-surface-variant max-w-xl">Managing high-volume technical screening and leadership interviews across 12 departments. Autonomous rescheduling enabled.</p>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="bg-surface-container-lowest border border-outline-variant px-4 py-2 rounded-lg font-label-caps text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+                        Calendar View
+                    </button>
+<button class="bg-primary-container text-on-primary-container px-4 py-2 rounded-lg font-label-caps hover:brightness-95 transition-all flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">bolt</span>
+                        Optimize Slots
+                    </button>
+</div>
+</div>
+<!-- Main Layout Grid -->
+<div class="grid grid-cols-12 gap-md">
+<!-- Left: Upcoming Interviews -->
+<div class="col-span-8 flex flex-col gap-md">
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden bento-card">
+<div class="p-md border-b border-outline-variant flex justify-between items-center bg-white">
+<div class="flex items-center gap-3">
+<h2 class="font-label-caps text-on-surface">UPCOMING INTERVIEWS</h2>
+<span class="bg-surface-container text-secondary font-label-mono text-[10px] px-2 py-0.5 rounded">24 PENDING</span>
+</div>
+<div class="flex -space-x-2">
+<img class="w-6 h-6 rounded-full border-2 border-white" data-alt="Close-up portrait of a diverse team member with a warm, professional smile, set against a soft blurred office background that maintains the clean, airy, light-mode palette of the Enterprise Nexus brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCmIQp0XVWWXD8Tagsc_FHy33GGyFNgcGlMgNOVQdND4HFnmeaRz7hKG-rOSS2PKlNMkKeaLqevV3xCnMni98cfa3oSumY1ga9BIDo2jiDIX4gfjMzXmkZM5OZCqnUVgaWIv-Cb1ksvLBlJehMmgf-NzGMi5Lemgj8glUTiWfE38u1BnUJ-LT3VQ3IWbkV7LlDtMWegmBwQMF6EnJeOtBTWMI1JgMFGmnTDyEtwewjvAnYTDHRtni9VLdhbW89n81DYpas1Q8WzVi6n"/>
+<img class="w-6 h-6 rounded-full border-2 border-white" data-alt="Modern professional headshot of a female executive with clear glasses and a friendly demeanor, lit with soft natural daylight to evoke a transparent and efficient corporate culture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKVwWlpmd2nbjnCmsn5b4g8PzgeRSIEmrHBH-1OJK8hDhtUKiD9aqNpb8M5gjtOHQxIpIkrs6jLqB0dgfmM_aD82ZXb-n4Hw-qyrCsSX-vJYypW6UaYPWbdyisHQ0b_QyrUHi9WZutkfHyj1uvt_TdMSiLI6-YdZ3eWbHLhrhhhWNr6pH4xCV_KkMQPK6icpy2mI8j4OLuDViU4bcg_Q-_HxQzTwLyx_Qpp2daaeJrio-z56CAyRf70IEqQ5zXBcJUJBn7kJqPufUe"/>
+<div class="w-6 h-6 rounded-full bg-surface-container border-2 border-white flex items-center justify-center font-label-mono text-[9px] text-on-surface-variant">+4</div>
+</div>
+</div>
+<div class="divide-y divide-outline-variant/30">
+<!-- List Item 1 -->
+<div class="p-md flex items-center justify-between hover:bg-surface-container-low transition-colors group">
+<div class="flex items-center gap-4">
+<img class="w-12 h-12 rounded-lg object-cover" data-alt="Professional studio portrait of a young male candidate in a business casual shirt, featuring clean lines and high-contrast lighting that fits the system's technical modernist aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYO4TfqEnGctQ-bqIthOoTFsEi0pjarnKiN4P7sVcx2cy5yij790SEWCxtOaB_V694f2eN1dk0uPxkoylY0g10ESBaDRlKNBU1ZRdX8yX1Hq03jvXkPRdWRx7F5Ml-5gl4m-KrLJjgiJ6mqDexhkG2qPLYEjMi3khvh5stlp6MdFOXCY0ba6SD0udoP3_cjk_Ncf5wxfiu5b4ebTDqNuVmNJ5ycy0H2LYvACgT2JKoLVuvMiQW7hDhfctruwvPt-5RXUyN26NOFJ6W"/>
+<div>
+<p class="font-body-md font-bold text-on-surface">Alex Rivera</p>
+<p class="font-label-mono text-on-surface-variant text-[11px]">Senior Cloud Architect • Round 3 (Technical)</p>
+</div>
+</div>
+<div class="flex items-center gap-12">
+<div class="text-right">
+<p class="font-label-caps text-on-surface">TODAY, 14:00</p>
+<div class="flex items-center justify-end gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">video_chat</span>
+<span class="font-label-mono text-[10px]">Nexus Meet</span>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface-variant hover:bg-primary-container hover:text-on-primary-container transition-all">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</button>
+<button class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface-variant hover:bg-error/10 hover:text-error transition-all">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+</div>
+</div>
+<!-- List Item 2 -->
+<div class="p-md flex items-center justify-between hover:bg-surface-container-low transition-colors group">
+<div class="flex items-center gap-4">
+<img class="w-12 h-12 rounded-lg object-cover" data-alt="Close-up headshot of a confident female professional with a bright smile, captured in soft morning light that emphasizes a modern, transparent workplace environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEVX4djcf_E5A1UWomCss-orBRgXrBudh_43DNdXtsX7p1mhGX7pGAfhwRsj_YH7hurPyo18N1F8Zt2DfXQTSPjVVUsWdCLJus3qgXea27tIs5F6oAzbE1CpxGdjY_B71eJ5aApxVywcFcDyvJU3LMo3JMoyMWWIT0JcUTn0B5AF8smrgi4LHiilgdcJr9l2ghg9NFGxneqE6yNstq_XthUTZNW16cE1kHllbZaYIdh55lCVeYbGsYs5dO3Hhb79NliUty7OUdPwkM"/>
+<div>
+<p class="font-body-md font-bold text-on-surface">Maya Jensen</p>
+<p class="font-label-mono text-on-surface-variant text-[11px]">Director of Operations • Round 2 (Strategy)</p>
+</div>
+</div>
+<div class="flex items-center gap-12">
+<div class="text-right">
+<p class="font-label-caps text-on-surface">TODAY, 16:30</p>
+<div class="flex items-center justify-end gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">meeting_room</span>
+<span class="font-label-mono text-[10px]">Conference Room B</span>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface-variant hover:bg-primary-container hover:text-on-primary-container transition-all">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</button>
+<button class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface-variant hover:bg-error/10 hover:text-error transition-all">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+</div>
+</div>
+<!-- List Item 3 -->
+<div class="p-md flex items-center justify-between hover:bg-surface-container-low transition-colors group">
+<div class="flex items-center gap-4">
+<img class="w-12 h-12 rounded-lg object-cover" data-alt="High-quality professional headshot of a male professional in a gray sweater, set against a minimal architectural backdrop with subtle shadows, reflecting a refined and high-density enterprise UI style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbdPdu6j-L2l0vwKZtyK_o5QoE8qaW07pnPfIoBUpVyEmsT30TbuCmwT3d4ncaiUPXTTZK9a1krfWh86m8WRTybmdT18BUJfuJfl-uUEFUfLHfGydvCnhUz0x0BleBqyKGTQJbpy_hOMBO-vGhsH_pL89jKc5Q6C6-Y3D-SScjLKQlekJRIg-PmOiI-oc3d81jHhzSg03XXdL_QijhSMJoFRH6DGSY4VN6LrgrvM8ZYiR5NOspaj4wk20rUm1Hko9C6Za0Rkfl7Ch7"/>
+<div>
+<p class="font-body-md font-bold text-on-surface">David Chen</p>
+<p class="font-label-mono text-on-surface-variant text-[11px]">Fullstack Lead • Screening Call</p>
+</div>
+</div>
+<div class="flex items-center gap-12">
+<div class="text-right">
+<p class="font-label-caps text-on-surface">TOMORROW, 09:15</p>
+<div class="flex items-center justify-end gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">phone</span>
+<span class="font-label-mono text-[10px]">Audio Only</span>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface-variant hover:bg-primary-container hover:text-on-primary-container transition-all">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</button>
+<button class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface-variant hover:bg-error/10 hover:text-error transition-all">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<button class="w-full py-4 bg-white border-t border-outline-variant font-label-caps text-[11px] text-primary hover:bg-surface-container-low transition-all tracking-widest">
+                            VIEW ALL SCHEDULED ITEMS
+                        </button>
+</section>
+<!-- Stats Row -->
+<div class="grid grid-cols-3 gap-md">
+<div class="bg-surface-container-lowest border border-outline-variant p-md rounded-xl flex items-center gap-4 bento-card">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person_check</span>
+</div>
+<div>
+<p class="font-label-caps text-[10px] text-on-surface-variant mb-0.5">ACCEPTED</p>
+<p class="font-headline-md text-on-surface">182</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-md rounded-xl flex items-center gap-4 bento-card">
+<div class="w-10 h-10 rounded-lg bg-secondary-container flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">schedule</span>
+</div>
+<div>
+<p class="font-label-caps text-[10px] text-on-surface-variant mb-0.5">WAITING</p>
+<p class="font-headline-md text-on-surface">42</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-md rounded-xl flex items-center gap-4 bento-card">
+<div class="w-10 h-10 rounded-lg bg-tertiary/10 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">psychology</span>
+</div>
+<div>
+<p class="font-label-caps text-[10px] text-on-surface-variant mb-0.5">AGENT ACTIONS</p>
+<p class="font-headline-md text-on-surface">1,204</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Right: Insights and Activity -->
+<div class="col-span-4 flex flex-col gap-md">
+<!-- Agent Insights -->
+<section class="bg-inverse-surface text-surface rounded-xl overflow-hidden shadow-lg p-md">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary-fixed">auto_awesome</span>
+<h2 class="font-label-caps text-[12px] tracking-widest">AGENT INSIGHTS</h2>
+</div>
+<div class="space-y-4">
+<div class="bg-secondary/40 rounded-lg p-4 border-l-2 border-primary-fixed">
+<p class="text-[13px] leading-relaxed mb-3 opacity-90">
+                                    "Detected scheduling conflict for <span class="text-primary-fixed font-bold">David Chen</span>. Multiple interviewers have overlapping deep-work blocks. Suggesting relocation to 11:30 AM."
+                                </p>
+<button class="flex items-center gap-1 font-label-caps text-[10px] text-primary-fixed hover:underline">
+                                    AUTO-RESCHEDULE
+                                    <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+<div class="bg-secondary/20 rounded-lg p-4 border-l-2 border-outline-variant/30">
+<p class="text-[13px] leading-relaxed opacity-90">
+                                    "3 Candidates for the <span class="font-bold">DevOps Lead</span> role haven't confirmed within the 24h window. Escalating reminder priority."
+                                </p>
+</div>
+</div>
+</section>
+<!-- Availability Map (Calendar Placeholder) -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md bento-card">
+<div class="flex justify-between items-center mb-4">
+<h2 class="font-label-caps text-on-surface">AVAILABILITY MAP</h2>
+<span class="font-label-mono text-[10px] opacity-60">OCT 2023</span>
+</div>
+<div class="grid grid-cols-7 gap-2 text-center mb-4">
+<div class="font-label-mono text-[10px] opacity-40">S</div>
+<div class="font-label-mono text-[10px] opacity-40">M</div>
+<div class="font-label-mono text-[10px] opacity-40">T</div>
+<div class="font-label-mono text-[10px] opacity-40">W</div>
+<div class="font-label-mono text-[10px] opacity-40">T</div>
+<div class="font-label-mono text-[10px] opacity-40">F</div>
+<div class="font-label-mono text-[10px] opacity-40">S</div>
+<div class="text-[12px] opacity-20">28</div>
+<div class="text-[12px] opacity-20">29</div>
+<div class="text-[12px] opacity-20">30</div>
+<div class="text-[12px]">1</div>
+<div class="text-[12px]">2</div>
+<div class="text-[12px]">3</div>
+<div class="text-[12px]">4</div>
+<div class="relative text-[12px] w-8 h-8 flex items-center justify-center bg-tertiary/10 rounded-md text-tertiary font-bold">
+                                5
+                                <span class="absolute bottom-1 w-1 h-1 bg-tertiary rounded-full"></span>
+</div>
+<div class="text-[12px]">6</div>
+<div class="text-[12px] w-8 h-8 flex items-center justify-center bg-primary rounded-md text-white font-bold">7</div>
+<div class="text-[12px]">8</div>
+<div class="text-[12px]">9</div>
+<div class="text-[12px] w-8 h-8 flex items-center justify-center bg-primary/10 rounded-md text-primary">10</div>
+<div class="text-[12px]">11</div>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg border border-outline-variant/30">
+<div class="flex items-center gap-2 mb-1">
+<span class="w-2 h-2 bg-primary rounded-full"></span>
+<p class="font-label-caps text-[9px] text-on-surface">CURRENT VIEW</p>
+</div>
+<p class="text-[11px] text-on-surface-variant">8 Interviews scheduled for today across 4 locations.</p>
+</div>
+</section>
+<!-- Recent Activity -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex-1 bento-card relative">
+<div class="flex justify-between items-center mb-4">
+<h2 class="font-label-caps text-on-surface">RECENT ACTIVITY</h2>
+<button class="material-symbols-outlined text-outline-variant">more_horiz</button>
+</div>
+<div class="space-y-6 relative">
+<div class="absolute left-[7px] top-2 bottom-2 w-px bg-outline-variant/30"></div>
+<div class="flex gap-4 relative z-10">
+<div class="w-4 h-4 rounded-full bg-primary flex-shrink-0 mt-1 border-4 border-surface-container-lowest"></div>
+<div>
+<p class="text-[13px] font-bold text-on-surface">Interview Confirmed</p>
+<p class="text-[11px] text-on-surface-variant">Elena G. • 2m ago</p>
+</div>
+</div>
+<div class="flex gap-4 relative z-10">
+<div class="w-4 h-4 rounded-full bg-tertiary flex-shrink-0 mt-1 border-4 border-surface-container-lowest"></div>
+<div>
+<p class="text-[13px] font-bold text-on-surface">Agent Rescheduled</p>
+<p class="text-[11px] text-on-surface-variant">Marcus L. • 15m ago</p>
+</div>
+</div>
+<div class="flex gap-4 relative z-10">
+<div class="w-4 h-4 rounded-full bg-secondary-fixed flex-shrink-0 mt-1 border-4 border-surface-container-lowest"></div>
+<div>
+<p class="text-[13px] font-bold text-on-surface">Feedback Logged</p>
+<p class="text-[11px] text-on-surface-variant">Tech Panel • 1h ago</p>
+</div>
+</div>
+</div>
+<!-- Floating Action Button -->
+<button class="absolute -bottom-4 -right-2 w-14 h-14 bg-primary-container text-on-primary-container rounded-2xl flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">calendar_add_on</span>
+</button>
+</section>
+</div>
+</div>
+</div>
+</main>
+<!-- Custom Cursor Atmospheric Effect -->
+<div class="fixed pointer-events-none w-64 h-64 bg-primary/5 rounded-full blur-[100px] z-0 transition-opacity duration-300 opacity-0" id="glow-cursor"></div>
+<script>
+        const cursor = document.getElementById('glow-cursor');
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX - 128 + 'px';
+            cursor.style.top = e.clientY - 128 + 'px';
+            cursor.style.opacity = '1';
+        });
+
+        // Micro-interactions for buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('mousedown', () => {
+                btn.style.transform = 'scale(0.96)';
+            });
+            btn.addEventListener('mouseup', () => {
+                btn.style.transform = 'scale(1)';
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.style.transform = 'scale(1)';
+            });
+        });
+    </script>
+</body></html>

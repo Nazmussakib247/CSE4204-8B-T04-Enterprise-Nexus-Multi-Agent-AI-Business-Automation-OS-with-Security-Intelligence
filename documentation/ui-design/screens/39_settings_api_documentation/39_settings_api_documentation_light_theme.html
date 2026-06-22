@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Enterprise Nexus - API Documentation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=JetBrains+Mono:wght@100..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#141313",
+                        "tertiary-fixed-dim": "#c6c6c7",
+                        "tertiary-fixed": "#e2e2e2",
+                        "surface-bright": "#3a3939",
+                        "primary-fixed-dim": "#c6c6c7",
+                        "on-primary-container": "#636565",
+                        "on-secondary": "#313030",
+                        "on-primary-fixed-variant": "#454747",
+                        "accent-blue": "#00C2A8",
+                        "tertiary": "#ffffff",
+                        "primary": "#ffffff",
+                        "on-secondary-container": "#bab8b7",
+                        "tertiary-container": "#e2e2e2",
+                        "border": "#E5E7EB",
+                        "inverse-on-surface": "#313030",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "on-background": "#e5e2e1",
+                        "surface": "#0A0A0A",
+                        "secondary-fixed": "#e5e2e1",
+                        "on-primary-fixed": "#1a1c1c",
+                        "outline-variant": "#E5E7EB",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-low": "#1c1b1b",
+                        "error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#474646",
+                        "surface-container-highest": "#353434",
+                        "primary-fixed": "#e2e2e2",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "secondary": "#c8c6c5",
+                        "error": "#ffb4ab",
+                        "primary-container": "#e2e2e2",
+                        "outline": "#8e9192",
+                        "surface-tint": "#c6c6c7",
+                        "on-tertiary-container": "#636565",
+                        "on-surface-variant": "#c4c7c8",
+                        "on-primary": "#2f3131",
+                        "inverse-primary": "#5d5f5f",
+                        "on-error": "#690005",
+                        "background": "#000000",
+                        "on-tertiary": "#2f3131",
+                        "on-surface": "#111827",
+                        "on-tertiary-fixed-variant": "#454747",
+                        "on-tertiary-fixed": "#1a1c1c",
+                        "secondary-container": "#4a4949",
+                        "success-green": "#00C2A8",
+                        "inverse-surface": "#e5e2e1",
+                        "text-muted": "#6B7280",
+                        "surface-variant": "#353434",
+                        "surface-container-high": "#2a2a2a",
+                        "surface-container": "#201f1f",
+                        "surface-container-lowest": "#0e0e0e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0px",
+                        "lg": "0px",
+                        "xl": "0px",
+                        "full": "0px"
+                    },
+                    "spacing": {
+                        "margin-mobile": "12px",
+                        "margin-desktop": "24px",
+                        "max-width": "1440px",
+                        "unit": "4px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Geist"],
+                        "headline-md": ["Geist"],
+                        "headline-lg": ["Geist"],
+                        "body-md": ["Geist"],
+                        "code-md": ["JetBrains Mono"],
+                        "label-caps": ["JetBrains Mono"],
+                        "display": ["Geist"],
+                        "body-sm": ["Geist"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "headline-md": ["20px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                        "headline-lg": ["28px", {"lineHeight": "1.1", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "code-md": ["13px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "label-caps": ["11px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "display": ["40px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "body-sm": ["13px", {"lineHeight": "1.5", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Geist', sans-serif; background-color: #FFFFFF; color: #111827; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20; }
+        .sidebar-pulse { position: absolute; left: 0; width: 2px; height: 100%; background: #00C2A8; }
+        .code-key { color: #00C2A8; }
+        .code-value { color: #A5D6A7; }
+        .code-string { color: #CE9178; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #E5E7EB; }
+        pre, code { font-family: 'JetBrains Mono', monospace !important; }
+        table th { font-family: 'JetBrains Mono', monospace !important; text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em; }
+        .mono-ui { font-family: 'JetBrains Mono', monospace !important; }
+    </style>
+</head>
+<body class="overflow-hidden">
+<!-- Sidebar Shell -->
+<aside class="fixed left-0 top-0 h-screen w-60 bg-[#0F1117] flex flex-col py-4 px-3 z-50">
+<div class="flex items-center gap-2 px-2 mb-8">
+<div class="w-7 h-7 bg-white rounded-none flex items-center justify-center">
+<span class="material-symbols-outlined text-[#0F1117]" style="font-variation-settings: 'FILL' 1;">hub</span>
+</div>
+<div>
+<h1 class="font-headline-md text-[18px] font-bold text-white leading-none">Enterprise Nexus</h1>
+<p class="font-label-caps text-[9px] text-[#6B7280] tracking-widest mt-1">API MANAGEMENT</p>
+</div>
+</div>
+<nav class="flex-1 space-y-0.5">
+<div class="group flex items-center gap-3 px-3 py-1.5 text-[#6B7280] font-body-md cursor-pointer hover:bg-white/5 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[18px]">dashboard</span>
+<span>Dashboard</span>
+</div>
+<div class="relative group flex items-center gap-3 px-3 py-1.5 bg-white/10 text-white font-medium cursor-pointer transition-colors">
+<div class="sidebar-pulse"></div>
+<span class="material-symbols-outlined text-[18px]">api</span>
+<span>API Reference</span>
+</div>
+<div class="group flex items-center gap-3 px-3 py-1.5 text-[#6B7280] font-body-md cursor-pointer hover:bg-white/5 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[18px]">anchor</span>
+<span>Webhooks</span>
+</div>
+<div class="group flex items-center gap-3 px-3 py-1.5 text-[#6B7280] font-body-md cursor-pointer hover:bg-white/5 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[18px]">security</span>
+<span>Security</span>
+</div>
+<div class="group flex items-center gap-3 px-3 py-1.5 text-[#6B7280] font-body-md cursor-pointer hover:bg-white/5 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[18px]">terminal</span>
+<span>Logs</span>
+</div>
+</nav>
+<div class="mt-auto pt-4 border-t border-white/5 space-y-0.5">
+<div class="group flex items-center gap-3 px-3 py-1.5 text-[#6B7280] font-body-md cursor-pointer hover:bg-white/5 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[18px]">settings</span>
+<span>Settings</span>
+</div>
+<div class="group flex items-center gap-3 px-3 py-1.5 text-[#6B7280] font-body-md cursor-pointer hover:bg-white/5 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[18px]">help</span>
+<span>Support</span>
+</div>
+<div class="mt-3 px-3">
+<button class="w-full py-2 bg-white/5 border border-white/10 text-[#6B7280] font-label-caps text-[9px] hover:bg-white/10 transition-all">
+                DOCUMENTATION V2.4
+            </button>
+</div>
+</div>
+</aside>
+<!-- Main Wrapper -->
+<div class="pl-60 h-screen flex flex-col bg-white">
+<!-- TopAppBar Shell -->
+<header class="h-12 bg-white border-b border-[#E5E7EB] flex items-center justify-between px-6 z-40">
+<div class="flex items-center gap-4">
+<nav class="flex items-center text-[12px] text-[#6B7280] mono-ui">
+<span class="hover:text-[#111827] cursor-pointer">Settings</span>
+<span class="material-symbols-outlined text-[14px] mx-1">chevron_right</span>
+<span class="text-[#111827] font-medium">API Documentation</span>
+</nav>
+</div>
+<div class="flex items-center gap-5">
+<div class="hidden md:flex items-center gap-5 font-label-caps text-[10px] tracking-wider text-[#6B7280]">
+<span class="hover:text-black transition-opacity cursor-pointer">DOCS</span>
+<span class="hover:text-black transition-opacity cursor-pointer">GUIDES</span>
+<span class="hover:text-black transition-opacity cursor-pointer">SUPPORT</span>
+<span class="hover:text-black transition-opacity cursor-pointer">CHANGELOG</span>
+</div>
+<div class="h-4 w-[1px] bg-[#E5E7EB]"></div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#6B7280] text-[18px] cursor-pointer hover:text-[#111827]">notifications</span>
+<span class="material-symbols-outlined text-[#6B7280] text-[18px] cursor-pointer hover:text-[#111827]">account_circle</span>
+<button class="ml-1 px-3 py-1 bg-[#111827] text-white font-label-caps text-[10px] hover:bg-black transition-all">
+                    DEPLOY
+                </button>
+</div>
+</div>
+</header>
+<!-- Content Area -->
+<div class="flex-1 flex overflow-hidden">
+<!-- Left Doc-Nav -->
+<nav class="w-[240px] bg-[#F9FAFB] border-r border-[#E5E7EB] overflow-y-auto py-6">
+<div class="px-4 mb-4">
+<h3 class="font-label-caps text-[#9CA3AF] text-[9px] mb-3">CORE ENDPOINTS</h3>
+<ul class="space-y-0.5">
+<li class="flex items-center gap-2 px-3 py-1.5 text-body-sm text-[#4B5563] hover:bg-white border border-transparent hover:border-[#E5E7EB] cursor-pointer group transition-all">
+<span class="material-symbols-outlined text-[16px]">lock</span>
+                        Authentication
+                    </li>
+<li>
+<div class="flex items-center gap-2 px-3 py-1.5 text-body-sm text-[#111827] font-semibold bg-white border border-[#E5E7EB] border-b-0 cursor-pointer">
+<span class="material-symbols-outlined text-[16px] text-accent-blue">person_search</span>
+                            HR Agent
+                        </div>
+<ul class="border-l border-[#E5E7EB] ml-5 bg-white/50 border-r border-[#E5E7EB] border-b">
+<li class="px-4 py-1.5 text-body-sm font-medium text-accent-blue border-l-2 border-accent-blue -ml-[1px] cursor-pointer bg-[#F0FFFD]">List Candidates</li>
+<li class="px-4 py-1.5 text-body-sm text-[#6B7280] hover:text-[#111827] cursor-pointer transition-colors">Get Candidate Detail</li>
+<li class="px-4 py-1.5 text-body-sm text-[#6B7280] hover:text-[#111827] cursor-pointer transition-colors">Upload CV</li>
+<li class="px-4 py-1.5 text-body-sm text-[#6B7280] hover:text-[#111827] cursor-pointer transition-colors">Update Job Role</li>
+</ul>
+</li>
+<li class="flex items-center gap-2 px-3 py-1.5 text-body-sm text-[#4B5563] hover:bg-white border border-transparent hover:border-[#E5E7EB] cursor-pointer transition-all">
+<span class="material-symbols-outlined text-[16px]">payments</span>
+                        Finance Agent
+                    </li>
+<li class="flex items-center gap-2 px-3 py-1.5 text-body-sm text-[#4B5563] hover:bg-white border border-transparent hover:border-[#E5E7EB] cursor-pointer transition-all">
+<span class="material-symbols-outlined text-[16px]">support_agent</span>
+                        Support Agent
+                    </li>
+<li class="flex items-center gap-2 px-3 py-1.5 text-body-sm text-[#4B5563] hover:bg-white border border-transparent hover:border-[#E5E7EB] cursor-pointer transition-all">
+<span class="material-symbols-outlined text-[16px]">analytics</span>
+                        Analytics Agent
+                    </li>
+<li class="flex items-center gap-2 px-3 py-1.5 text-body-sm text-[#4B5563] hover:bg-white border border-transparent hover:border-[#E5E7EB] cursor-pointer transition-all">
+<span class="material-symbols-outlined text-[16px]">admin_panel_settings</span>
+                        Executive Agent
+                    </li>
+<li class="flex items-center gap-2 px-3 py-1.5 text-body-sm text-[#4B5563] hover:bg-white border border-transparent hover:border-[#E5E7EB] cursor-pointer transition-all">
+<span class="material-symbols-outlined text-[16px]">webhook</span>
+                        Webhooks
+                    </li>
+</ul>
+</div>
+</nav>
+<!-- Main Documentation Area -->
+<main class="flex-1 overflow-y-auto bg-white">
+<div class="max-w-[760px] mx-auto px-8 py-10">
+<!-- Doc Header -->
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-4">
+<h2 class="font-headline-lg text-[#111827]">List Candidates</h2>
+<span class="px-2 py-0.5 border border-accent-blue/30 text-accent-blue mono-ui text-[10px] font-bold">POST</span>
+</div>
+<button class="flex items-center gap-2 px-3 py-1.5 border border-[#111827] bg-white text-[#111827] font-label-caps text-[11px] hover:bg-[#F9FAFB] transition-all active:scale-95">
+<span class="material-symbols-outlined text-[16px]">play_arrow</span>
+                        TRY IT OUT
+                    </button>
+</div>
+<!-- Endpoint Bar -->
+<div class="bg-[#F9FAFB] border border-[#E5E7EB] px-4 py-2 mb-8 flex items-center justify-between">
+<code class="text-code-md text-[#374151]">/api/v1/hr/candidates</code>
+<span class="material-symbols-outlined text-[#9CA3AF] text-[18px] cursor-pointer hover:text-[#111827]">content_copy</span>
+</div>
+<!-- Description -->
+<div class="mb-10">
+<p class="font-body-md text-[#4B5563] leading-relaxed">
+                        Retrieve a paginated list of candidates analyzed by the HR Agent. Supports filtering by score, experience, and skills. This endpoint uses advanced vector search to return the most relevant candidates based on the role requirements.
+                    </p>
+</div>
+<!-- Parameters Table -->
+<div class="mb-8">
+<h4 class="font-label-caps text-[#9CA3AF] text-[9px] mb-3">QUERY PARAMETERS</h4>
+<div class="border border-[#E5E7EB]">
+<table class="w-full text-left font-body-sm">
+<thead class="bg-[#F9FAFB] border-b border-[#E5E7EB] text-[#6B7280]">
+<tr>
+<th class="px-4 py-2 font-medium">Name</th>
+<th class="px-4 py-2 font-medium">Type</th>
+<th class="px-4 py-2 font-medium">Required</th>
+<th class="px-4 py-2 font-medium">Description</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#E5E7EB] text-[#374151]">
+<tr>
+<td class="px-4 py-3 font-code-md text-[#111827]">page</td>
+<td class="px-4 py-3 italic text-[#6B7280] text-[12px]">Integer</td>
+<td class="px-4 py-3 text-[12px]">No</td>
+<td class="px-4 py-3 text-[13px]">The page number for pagination (defaults to 1).</td>
+</tr>
+<tr>
+<td class="px-4 py-3 font-code-md text-[#111827]">limit</td>
+<td class="px-4 py-3 italic text-[#6B7280] text-[12px]">Integer</td>
+<td class="px-4 py-3 text-[12px]">No</td>
+<td class="px-4 py-3 text-[13px]">Number of results per page (max 100).</td>
+</tr>
+<tr class="bg-[#F0FFFD]/30">
+<td class="px-4 py-3 font-code-md text-[#111827]">role_id</td>
+<td class="px-4 py-3 italic text-[#6B7280] text-[12px]">String</td>
+<td class="px-4 py-3 text-accent-blue font-bold text-[12px]">Yes</td>
+<td class="px-4 py-3 text-[13px]">The unique identifier of the job role to filter against.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Single Column Inline Code Sections -->
+<div class="space-y-10">
+<!-- Example Request -->
+<div class="space-y-3">
+<h4 class="font-label-caps text-[#9CA3AF] text-[9px]">EXAMPLE REQUEST</h4>
+<div class="bg-[#0F1117] p-5 font-code-md text-code-md text-white overflow-x-auto border border-white/5">
+<pre><code><span class="text-[#89DDFF] mono-ui">curl</span> <span class="text-[#C792EA] mono-ui">-X</span> POST \
+  https://api.nexus.ai/v1/hr/candidates \
+  <span class="text-[#C792EA] mono-ui">-H</span> <span class="code-string">'Authorization: Bearer <span class="text-[#B2CCD6]">TOKEN</span>'</span> \
+  <span class="text-[#C792EA] mono-ui">-H</span> <span class="code-string">'Content-Type: application/json'</span> \
+  <span class="text-[#C792EA] mono-ui">-d</span> <span class="code-string">'{
+    "role_id": "role_8821x",
+    "min_score": 85
+  }'</span></code></pre>
+</div>
+</div>
+<!-- Example Response -->
+<div class="space-y-3">
+<h4 class="font-label-caps text-[#9CA3AF] text-[9px]">EXAMPLE RESPONSE</h4>
+<div class="bg-[#0F1117] p-5 font-code-md text-code-md text-white overflow-x-auto border border-white/5">
+<pre><code>{
+  <span class="code-key">"status"</span>: <span class="code-value">"success"</span>,
+  <span class="code-key">"data"</span>: {
+    <span class="code-key">"candidates"</span>: [
+      {
+        <span class="code-key">"id"</span>: <span class="code-string">"cand_01"</span>,
+        <span class="code-key">"name"</span>: <span class="code-string">"Sarah Chen"</span>,
+        <span class="code-key">"score"</span>: <span class="code-value">94.2</span>,
+        <span class="code-key">"skills"</span>: [<span class="code-string">"Rust"</span>, <span class="code-string">"AI"</span>]
+      }
+    ],
+    <span class="code-key">"pagination"</span>: {
+      <span class="code-key">"total"</span>: <span class="code-value">124</span>,
+      <span class="code-key">"page"</span>: <span class="code-value">1</span>
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+<!-- Success State Notice -->
+<div class="mt-10 p-4 border border-accent-blue/20 bg-[#F0FFFD] flex gap-3">
+<span class="material-symbols-outlined text-accent-blue text-[20px]">info</span>
+<div class="text-body-sm text-[#0D6B5E]">
+<p class="font-bold mb-1 mono-ui text-[11px]">AUTHORIZATION REQUIRED</p>
+<p>This endpoint requires a valid API key with <code class="font-code-md bg-white/50 px-1">hr.read</code> scope. Key rotation is recommended every 90 days.</p>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+<!-- Micro-interaction Script -->
+<script>
+    document.querySelectorAll('.material-symbols-outlined').forEach(icon => {
+        icon.addEventListener('click', function() {
+            if(this.innerText === 'content_copy') {
+                this.innerText = 'check';
+                this.style.color = '#00C2A8';
+                setTimeout(() => {
+                    this.innerText = 'content_copy';
+                    this.style.color = '';
+                }, 2000);
+            }
+        });
+    });
+</script>
+</body></html>

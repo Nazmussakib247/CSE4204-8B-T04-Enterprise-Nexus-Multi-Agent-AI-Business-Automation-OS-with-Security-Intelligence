@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Enterprise Nexus - Billing & Subscription</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;700&family=Geist:wght@400;600&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Inter:wght@100..900&family=JetBrains+Mono:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-nav-indicator {
+            position: absolute;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: #00c2a8;
+        }
+        body {
+            background-color: #f8f9fa;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#bbcac4",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#732ee4",
+                        "primary-fixed": "#65fade",
+                        "secondary-fixed": "#e2e2eb",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-secondary-fixed": "#191b22",
+                        "primary-fixed-dim": "#41ddc2",
+                        "error": "#ba1a1a",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#eaddff",
+                        "on-primary-fixed": "#00201b",
+                        "surface": "#f8f9fa",
+                        "tertiary-container": "#bc9bff",
+                        "inverse-on-surface": "#f0f1f2",
+                        "on-surface": "#191c1d",
+                        "surface-container-high": "#e7e8e9",
+                        "on-background": "#191c1d",
+                        "on-secondary-fixed-variant": "#45464e",
+                        "on-surface-variant": "#3c4a46",
+                        "inverse-surface": "#2e3132",
+                        "on-primary-container": "#00493e",
+                        "on-secondary-container": "#63646c",
+                        "tertiary-fixed-dim": "#d2bbff",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#41ddc2",
+                        "background": "#f8f9fa",
+                        "secondary-fixed-dim": "#c5c6ce",
+                        "secondary-container": "#e2e2eb",
+                        "surface-container-low": "#f3f4f5",
+                        "primary": "#006b5c",
+                        "on-error": "#ffffff",
+                        "on-tertiary-container": "#5200b6",
+                        "outline": "#6c7a76",
+                        "on-tertiary-fixed": "#25005a",
+                        "surface-bright": "#f8f9fa",
+                        "secondary": "#5d5e65",
+                        "surface-container": "#edeeef",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#006b5c",
+                        "on-tertiary-fixed-variant": "#5a00c6",
+                        "surface-variant": "#e1e3e4",
+                        "primary-container": "#00c2a8",
+                        "surface-dim": "#d9dadb",
+                        "on-primary-fixed-variant": "#005045",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max": "1440px",
+                        "xs": "8px",
+                        "sidebar-width": "260px",
+                        "md": "24px",
+                        "sm": "16px",
+                        "lg": "32px",
+                        "base": "4px",
+                        "xl": "48px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "label-caps": ["JetBrains Mono"],
+                        "display-lg": ["Geist"],
+                        "label-mono": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Geist"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "label-caps": ["11px", {"lineHeight": "1.2", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                        "display-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "label-mono": ["12px", {"lineHeight": "1.4", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="font-body-md text-on-surface">
+<!-- Sidebar Navigation -->
+<aside class="bg-inverse-surface dark:bg-inverse-surface w-[260px] h-screen fixed left-0 top-0 border-r border-outline-variant flex flex-col py-md z-50">
+<div class="px-md mb-lg">
+<div class="flex items-center gap-3 mb-1">
+<img alt="Enterprise Nexus Icon" class="w-8 h-8 rounded-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBN401d65yemBMA3YOjAzXOabPw_-X0QAsAv__cd6wEv9LwlOXqd48vTMuq3pGnwpGuEB0sRVN8lfF0JY0aSOUBTrK0GE8XvChAbP23pUQxuhKwqVi1iZsm1McloRehTwCHsxfwXuchOmaI9JHAlmsx5zjEWtVtN61q8dCn627MGHWN816SwyDKuSNJpI5mh8WAiomkJpFiP8sKPL-w91KYHMmVGBrW3piijVW1qVysrsKNoh4EBMW_KsxBnRMR2oAVPnUFRpydFCwh"/>
+<span class="font-headline-md text-headline-md font-bold text-surface-container-lowest">Enterprise Nexus</span>
+</div>
+<span class="font-label-mono text-[10px] tracking-widest text-primary-fixed uppercase opacity-80">MULTI-AGENT SYSTEM</span>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 hover:bg-secondary/50 px-4 py-3 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Overview</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 hover:bg-secondary/50 px-4 py-3 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span>HR Agents</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 hover:bg-secondary/50 px-4 py-3 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span>Finance</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 hover:bg-secondary/50 px-4 py-3 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span>System Status</span>
+</a>
+<a class="bg-secondary dark:bg-secondary text-surface border-l-4 border-primary px-4 py-3 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 hover:bg-secondary/50 px-4 py-3 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="support_agent">support_agent</span>
+<span>Support</span>
+</a>
+</nav>
+<div class="mt-auto px-md pt-md space-y-4">
+<button class="w-full bg-primary-container text-on-primary-container font-label-mono font-bold py-3 rounded-lg hover:brightness-110 active:scale-95 transition-all text-xs tracking-wider">
+                NEW AGENT
+            </button>
+<div class="border-t border-outline-variant/30 pt-4 space-y-1">
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-2 flex items-center gap-3 text-sm" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="description">description</span>
+<span>Docs</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Header Section -->
+<header class="h-16 w-[calc(100%-260px)] ml-[260px] sticky top-0 z-40 bg-surface dark:bg-surface-dim border-b border-outline-variant flex justify-between items-center px-md">
+<div class="flex items-center gap-2 font-label-mono text-label-mono">
+<span class="text-on-secondary-container">Settings</span>
+<span class="text-on-secondary-container">/</span>
+<span class="text-on-surface font-bold">Billing</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 text-secondary">
+<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors" data-icon="account_circle">account_circle</span>
+</div>
+<button class="bg-primary-container text-on-primary-container px-6 py-2 rounded font-label-mono text-[12px] font-bold tracking-wider hover:brightness-105 active:scale-95 transition-all">
+                SAVE CHANGES
+            </button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="ml-[260px] p-md min-h-[calc(100vh-64px)] grid grid-cols-12 gap-md">
+<!-- Local Sub-Navigation -->
+<nav class="col-span-3 space-y-8 pr-md">
+<div>
+<p class="font-label-caps text-on-surface-variant mb-4">ACCOUNT SETTINGS</p>
+<div class="space-y-1">
+<a class="block px-4 py-2 rounded text-on-secondary-container hover:bg-surface-container-low transition-colors" href="#">General</a>
+<a class="block px-4 py-2 rounded text-on-secondary-container hover:bg-surface-container-low transition-colors" href="#">Team & Permissions</a>
+<a class="block px-4 py-2 rounded text-on-secondary-container hover:bg-surface-container-low transition-colors" href="#">API & Integrations</a>
+<a class="block px-4 py-2 rounded text-on-secondary-container hover:bg-surface-container-low transition-colors" href="#">My Profile</a>
+<a class="block px-4 py-2 rounded bg-primary/10 text-primary font-medium flex justify-between items-center" href="#">
+                        Billing
+                        <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+</a>
+</div>
+</div>
+<div>
+<p class="font-label-caps text-on-surface-variant mb-4">SECURITY</p>
+<div class="space-y-1">
+<a class="block px-4 py-2 rounded text-on-secondary-container hover:bg-surface-container-low transition-colors" href="#">Password & Auth</a>
+<a class="block px-4 py-2 rounded text-on-secondary-container hover:bg-surface-container-low transition-colors" href="#">Access Logs</a>
+</div>
+</div>
+</nav>
+<!-- Main Settings Panel -->
+<div class="col-span-9 space-y-md">
+<!-- Usage Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-lg relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary-container"></div>
+<div class="flex justify-between items-start mb-8">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-1">Monthly Usage</h2>
+<p class="font-label-mono text-xs text-on-surface-variant uppercase tracking-wider">Enterprise Plan</p>
+</div>
+<div class="text-right">
+<p class="font-label-mono text-[10px] text-on-secondary-container uppercase tracking-widest">BILLING CYCLE</p>
+<p class="font-label-mono text-label-mono font-bold">JUNE 19 - JULY 19</p>
+</div>
+</div>
+<div class="space-y-8">
+<div>
+<div class="flex justify-between items-end mb-2">
+<span class="font-body-md text-on-surface font-medium">AI Agent Calls</span>
+<span class="font-label-mono text-label-mono"><strong class="text-on-surface">42,000</strong> / 100,000</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[42%] transition-all duration-1000 ease-out"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-end mb-2">
+<span class="font-body-md text-on-surface font-medium">Storage Used</span>
+<span class="font-label-mono text-label-mono"><strong class="text-on-surface">1.2TB</strong> / 5.0TB</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[24%] transition-all duration-1000 ease-out"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-end mb-2">
+<span class="font-body-md text-on-surface font-medium">Active Users</span>
+<span class="font-label-mono text-label-mono"><strong class="text-on-surface">18</strong> / 50</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[36%] transition-all duration-1000 ease-out"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Payment Method Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-lg">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-6">Payment Method</h2>
+<div class="border border-outline-variant/50 p-4 rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-8 bg-surface-container rounded flex items-center justify-center border border-outline-variant/30">
+<span class="material-symbols-outlined text-secondary" data-icon="credit_card">credit_card</span>
+</div>
+<div>
+<p class="font-label-mono text-label-mono text-on-surface font-bold">**** **** **** 8842</p>
+<p class="font-label-mono text-[10px] text-on-secondary-container">Expires 12/2028</p>
+</div>
+</div>
+<button class="text-primary font-label-mono text-[11px] font-bold uppercase tracking-widest hover:underline">UPDATE PAYMENT METHOD</button>
+</div>
+</div>
+<!-- Billing History Table -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded">
+<div class="p-lg border-b border-outline-variant/30">
+<h2 class="font-headline-md text-headline-md text-on-surface">Billing History</h2>
+</div>
+<table class="w-full">
+<thead class="bg-surface-container-low border-b border-outline-variant/30">
+<tr>
+<th class="text-left font-label-caps text-on-surface-variant p-4">DATE</th>
+<th class="text-left font-label-caps text-on-surface-variant p-4">DESCRIPTION</th>
+<th class="text-left font-label-caps text-on-surface-variant p-4">AMOUNT</th>
+<th class="text-left font-label-caps text-on-surface-variant p-4">STATUS</th>
+<th class="text-right font-label-caps text-on-surface-variant p-4">INVOICE</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/20">
+<tr class="hover:bg-surface-container-lowest/50 transition-colors">
+<td class="p-4 font-body-md text-on-secondary-container">June 19, 2026</td>
+<td class="p-4 font-body-md font-medium text-on-surface">Subscription Fee - June 2026</td>
+<td class="p-4 font-label-mono font-bold text-on-surface">$499.00</td>
+<td class="p-4">
+<span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-tight">Paid</span>
+</td>
+<td class="p-4 text-right">
+<button class="material-symbols-outlined text-on-secondary-container hover:text-primary transition-colors" data-icon="download">download</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest/50 transition-colors">
+<td class="p-4 font-body-md text-on-secondary-container">May 24, 2026</td>
+<td class="p-4 font-body-md font-medium text-on-surface">Usage Overage - May 2026</td>
+<td class="p-4 font-label-mono font-bold text-on-surface">$12.40</td>
+<td class="p-4">
+<span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-tight">Paid</span>
+</td>
+<td class="p-4 text-right">
+<button class="material-symbols-outlined text-on-secondary-container hover:text-primary transition-colors" data-icon="download">download</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest/50 transition-colors">
+<td class="p-4 font-body-md text-on-secondary-container">May 19, 2026</td>
+<td class="p-4 font-body-md font-medium text-on-surface">Subscription Fee - May 2026</td>
+<td class="p-4 font-label-mono font-bold text-on-surface">$499.00</td>
+<td class="p-4">
+<span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-tight">Paid</span>
+</td>
+<td class="p-4 text-right">
+<button class="material-symbols-outlined text-on-secondary-container hover:text-primary transition-colors" data-icon="download">download</button>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="p-4 text-center border-t border-outline-variant/30 bg-surface-container-lowest">
+<button class="font-label-mono text-[11px] font-bold text-on-secondary-container hover:text-primary uppercase tracking-widest transition-colors">VIEW ALL TRANSACTION HISTORY</button>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Simple micro-interaction for active nav links and progress bar loading state
+        document.addEventListener('DOMContentLoaded', () => {
+            const bars = document.querySelectorAll('.h-full.bg-primary-container');
+            bars.forEach(bar => {
+                const targetWidth = bar.style.width;
+                bar.style.width = '0';
+                setTimeout(() => {
+                    bar.style.width = targetWidth;
+                }, 100);
+            });
+        });
+    </script>
+</body></html>
