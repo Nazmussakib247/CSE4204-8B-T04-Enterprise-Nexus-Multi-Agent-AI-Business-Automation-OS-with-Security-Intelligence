@@ -1,0 +1,139 @@
+{
+  "name": "02 · Finance Anomaly Alert",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "finance-anomaly",
+        "options": {}
+      },
+      "id": "n1-webhook-finance",
+      "name": "Finance Anomaly Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "finance-anomaly"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false },
+          "conditions": [
+            {
+              "id": "cond-critical",
+              "leftValue": "={{ $json.severity }}",
+              "rightValue": "critical",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "n2-if-critical",
+      "name": "Is Critical?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format alert message\nconst body = $input.first().json;\nconst flags = (body.anomaly_flags || []).join(', ') || 'none';\nreturn [{\n  json: {\n    alert_title: `🚨 CRITICAL Finance Anomaly Detected`,\n    amount: body.amount,\n    category: body.category,\n    date: body.expense_date,\n    analysis: body.ai_analysis,\n    flags: flags,\n    user_id: body.user_id,\n    record_id: body.record_id,\n    message: `CRITICAL anomaly in ${body.category}: ৳${Number(body.amount).toLocaleString()} on ${body.expense_date}. ${body.ai_analysis}. Flags: ${flags}.`\n  }\n}];"
+      },
+      "id": "n3-format-critical",
+      "name": "Format Critical Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format high severity alert\nconst body = $input.first().json;\nreturn [{\n  json: {\n    alert_title: `⚠️ HIGH Severity Finance Alert`,\n    amount: body.amount,\n    category: body.category,\n    date: body.expense_date,\n    analysis: body.ai_analysis,\n    user_id: body.user_id,\n    record_id: body.record_id,\n    message: `High severity transaction in ${body.category}: ৳${Number(body.amount).toLocaleString()} on ${body.expense_date}. ${body.ai_analysis}`\n  }\n}];"
+      },
+      "id": "n4-format-high",
+      "name": "Format High Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NEXUS_API_URL }}/webhook/task-update",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-nexus-secret", "value": "={{ $env.N8N_SECRET }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "task_id", "value": "={{ $('Finance Anomaly Webhook').first().json.task_id || '' }}" },
+            { "name": "status", "value": "completed" },
+            { "name": "result", "value": "={{ JSON.stringify({ alert_sent: true, severity: 'critical', record_id: $json.record_id }) }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n5-log-critical",
+      "name": "Log Critical to Backend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NEXUS_API_URL }}/webhook/task-update",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-nexus-secret", "value": "={{ $env.N8N_SECRET }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "task_id", "value": "={{ $('Finance Anomaly Webhook').first().json.task_id || '' }}" },
+            { "name": "status", "value": "completed" },
+            { "name": "result", "value": "={{ JSON.stringify({ alert_sent: true, severity: 'high', record_id: $json.record_id }) }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n6-log-high",
+      "name": "Log High to Backend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 400]
+    }
+  ],
+  "connections": {
+    "Finance Anomaly Webhook": {
+      "main": [[{ "node": "Is Critical?", "type": "main", "index": 0 }]]
+    },
+    "Is Critical?": {
+      "main": [
+        [{ "node": "Format Critical Alert", "type": "main", "index": 0 }],
+        [{ "node": "Format High Alert", "type": "main", "index": 0 }]
+      ]
+    },
+    "Format Critical Alert": {
+      "main": [[{ "node": "Log Critical to Backend", "type": "main", "index": 0 }]]
+    },
+    "Format High Alert": {
+      "main": [[{ "node": "Log High to Backend", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": {
+    "templateId": "nexus-finance-alert",
+    "instanceId": "enterprise-nexus"
+  },
+  "id": "wf-finance-alert-002",
+  "tags": [{ "name": "Finance" }, { "name": "Enterprise NeXus" }]
+}
