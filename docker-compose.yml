@@ -1,0 +1,105 @@
+# ============================================================
+#  Enterprise NeXus — Local Development Stack
+#  Usage: docker compose up -d
+#
+#  Services:
+#    frontend → http://localhost:3000
+#    backend  → http://localhost:5000
+#    n8n      → http://localhost:5678  (admin/changeme)
+#
+#  Prerequisites:
+#    • Docker Desktop ≥ 4.x
+#    • Copy backend/.env.example → backend/.env and fill in values
+#    • frontend/.env.local should have NEXT_PUBLIC_* values filled in
+# ============================================================
+
+version: "3.9"
+
+services:
+
+  # ── Backend (Node/Express) ────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nexus-backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      NODE_ENV: development
+      PORT: 5000
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend/src:/app/src          # hot-reload source
+      - /app/node_modules               # preserve installed deps
+    depends_on:
+      - n8n
+    networks:
+      - nexus-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ── Frontend (Next.js) ────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nexus-frontend
+    restart: unless-stopped
+    env_file:
+      - ./frontend/.env.local
+    environment:
+      NODE_ENV: development
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/src:/app/src        # hot-reload source
+      - /app/node_modules              # preserve installed deps
+      - /app/.next                     # preserve build cache
+    depends_on:
+      - backend
+    networks:
+      - nexus-net
+
+  # ── n8n Workflow Automation ───────────────────────────────
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: nexus-n8n
+    restart: unless-stopped
+    environment:
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: admin
+      N8N_BASIC_AUTH_PASSWORD: changeme        # change in production
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: http://localhost:5678/      # used by backend WEBHOOK_URL env var
+      GENERIC_TIMEZONE: UTC
+      N8N_LOG_LEVEL: warn
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n-workflows:/home/node/workflows   # pre-load exported workflows
+    networks:
+      - nexus-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  n8n_data:
+    driver: local
+
+networks:
+  nexus-net:
+    driver: bridge

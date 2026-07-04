@@ -77,6 +77,33 @@ The platform deploys five specialized AI agents — an HR Agent, a Finance Agent
 
 ---
 
+## Development Roadmap
+
+| Week | Development Phase | Main Activities |
+|---|---|---|
+| Week 06 | Backend Development | JWT auth, PostgreSQL migration, REST APIs, n8n workflow setup |
+| Week 07 | Frontend Development | Next.js screens, routing, backend API integration |
+| Week 08 | AI Integration | Gemini API, LangChain, CrewAI agents, pgvector, RAG setup |
+| Week 09 | Feature Completion | UI polish, Socket.io real-time, cross-agent communication |
+| Week 10 | Testing & Debugging | Functional, API, UI testing and bug fixes |
+| Week 11 | Deployment | Vercel, Render, Docker, production tests |
+| Week 12 | Documentation | Final report, user manual, API docs |
+| Week 13 | Presentation Prep | Slides, demo rehearsal, backup video |
+| Week 14 | Evaluation & Viva | Demo and viva |
+
+---
+
+## Team Task Distribution
+
+| Team Member | Role | Main Responsibilities |
+|---|---|---|
+| Nazmus Sakib | Team Leader & AI Integration Lead | System architecture, Gemini API, LangChain, CrewAI multi-agent setup, n8n workflow automation, HR Agent, Finance Agent, Security Intelligence module |
+| Shoeb Shariar Mashuk | Backend Developer | REST APIs, JWT authentication, PostgreSQL, backend deployment |
+| Most Sumiya Sanjida | Frontend Developer | Next.js UI screens, routing, backend API integration, Support Agent, Executive Agent UI |
+| Sabrina Ibrahim | Frontend Developer | Figma design review, React frontend verification, responsive testing, and frontend contribution |
+
+---
+
 ## Repository Structure
 
 ```
