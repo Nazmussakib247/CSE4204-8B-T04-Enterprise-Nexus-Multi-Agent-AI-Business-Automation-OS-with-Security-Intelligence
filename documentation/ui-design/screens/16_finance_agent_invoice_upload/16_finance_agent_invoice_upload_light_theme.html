@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Enterprise Nexus - Invoice Upload</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;700&amp;family=Geist:wght@400;600;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .sidebar-active-pill {
+            position: relative;
+        }
+        .sidebar-active-pill::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: #00C2A8;
+        }
+        .dashed-border {
+            background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' stroke='%2300C2A8' stroke-width='2' stroke-dasharray='8%2c 8' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+        }
+        body {
+            background-color: #F7F8FA;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#f8f9fa",
+                        "primary-fixed-dim": "#41ddc2",
+                        "error-container": "#ffdad6",
+                        "error": "#ba1a1a",
+                        "surface-variant": "#e1e3e4",
+                        "on-surface-variant": "#3c4a46",
+                        "on-primary-fixed": "#00201b",
+                        "surface-container-lowest": "#ffffff",
+                        "outline-variant": "#bbcac4",
+                        "surface": "#f8f9fa",
+                        "on-tertiary-fixed": "#25005a",
+                        "on-error": "#ffffff",
+                        "inverse-on-surface": "#f0f1f2",
+                        "on-secondary-fixed": "#191b22",
+                        "tertiary-fixed-dim": "#d2bbff",
+                        "on-surface": "#191c1d",
+                        "on-primary-fixed-variant": "#005045",
+                        "inverse-surface": "#2e3132",
+                        "on-tertiary-fixed-variant": "#5a00c6",
+                        "surface-container-highest": "#e1e3e4",
+                        "primary-fixed": "#65fade",
+                        "on-tertiary": "#ffffff",
+                        "secondary-container": "#e2e2eb",
+                        "surface-container-high": "#e7e8e9",
+                        "on-secondary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "primary-container": "#00c2a8",
+                        "primary": "#006b5c",
+                        "surface-dim": "#d9dadb",
+                        "tertiary": "#732ee4",
+                        "on-primary-container": "#00493e",
+                        "background": "#f8f9fa",
+                        "on-secondary-fixed-variant": "#45464e",
+                        "tertiary-fixed": "#eaddff",
+                        "surface-tint": "#006b5c",
+                        "surface-container-low": "#f3f4f5",
+                        "secondary-fixed-dim": "#c5c6ce",
+                        "secondary": "#5d5e65",
+                        "outline": "#6c7a76",
+                        "on-background": "#191c1d",
+                        "surface-container": "#edeeef",
+                        "on-primary": "#ffffff",
+                        "inverse-primary": "#41ddc2",
+                        "on-secondary-container": "#63646c",
+                        "tertiary-container": "#bc9bff",
+                        "secondary-fixed": "#e2e2eb",
+                        "on-tertiary-container": "#5200b6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "xl": "48px",
+                        "sidebar-width": "260px",
+                        "base": "4px",
+                        "xs": "8px",
+                        "lg": "32px",
+                        "container-max": "1440px",
+                        "sm": "16px",
+                        "md": "24px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["JetBrains Mono"],
+                        "body-lg": ["Inter"],
+                        "display-lg-mobile": ["Geist"],
+                        "headline-md": ["Geist"],
+                        "body-md": ["Inter"],
+                        "display-lg": ["Geist"],
+                        "label-mono": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["11px", {"lineHeight": "1.2", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "display-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "display-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "label-mono": ["12px", {"lineHeight": "1.4", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="font-body-md text-on-surface overflow-x-hidden">
+<!-- SideNavBar -->
+<aside class="bg-inverse-surface dark:bg-inverse-surface w-[260px] h-screen fixed left-0 top-0 border-r border-outline-variant flex flex-col py-md z-50">
+<div class="px-md mb-xl">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container flex items-center justify-center rounded">
+<span class="material-symbols-outlined text-on-primary-container" style="font-variation-settings: 'FILL' 1;">hexagon</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-surface-container-lowest leading-none">Enterprise Nexus</h1>
+<p class="font-label-mono text-[10px] tracking-widest text-primary-fixed opacity-80 mt-1">MULTI-AGENT SYSTEM</p>
+</div>
+</div>
+</div>
+<nav class="flex-grow">
+<div class="space-y-1">
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-md py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md">Overview</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-md py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-body-md">HR Agents</span>
+</a>
+<!-- Active Item: Finance -->
+<a class="bg-secondary dark:bg-secondary text-surface border-l-4 border-primary px-md py-3 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">payments</span>
+<span class="font-body-md">Finance</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-md py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined">support_agent</span>
+<span class="font-body-md">Support</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-md py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-body-md">System Status</span>
+</a>
+</div>
+<div class="mt-xl px-md">
+<button class="w-full bg-primary py-3 rounded text-on-primary font-label-caps flex items-center justify-center gap-2 transition-transform active:scale-95">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                    NEW AGENT
+                </button>
+</div>
+</nav>
+<div class="mt-auto border-t border-outline-variant/20 pt-md">
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-md py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md">Settings</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-md py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-body-md">Docs</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-[260px] min-h-screen">
+<!-- TopAppBar -->
+<header class="h-16 w-full sticky top-0 z-40 bg-surface dark:bg-surface-dim border-b border-outline-variant flex justify-between items-center px-md">
+<div class="flex items-center gap-4">
+<span class="font-label-mono text-label-mono text-on-surface font-bold">FINANCE AGENT / INVOICE UPLOAD</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative group">
+<input class="bg-surface-container border border-outline-variant rounded-full px-4 py-1.5 text-label-mono focus:ring-1 focus:ring-primary focus:outline-none w-64 transition-all" placeholder="Search system logs..." type="text"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[18px] text-outline">search</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-secondary-container hover:text-primary cursor-pointer transition-colors">notifications</span>
+<div class="flex items-center gap-2 cursor-pointer group">
+<img class="w-8 h-8 rounded-full border border-outline-variant group-hover:border-primary transition-colors" data-alt="A professional headshot of a software engineer in a high-tech corporate office environment, soft natural lighting, minimalist aesthetic, blurred server racks in the background, sharp focus on facial features, neutral expression." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsToufMVMBbgZ_DC2rAh_-_B7HxIXrmQFLIuVyFmLzwEG0J_2qG4qZmmK2AyYj1AZrnBCyTwhD3zD-z7tL-n2e8ZEDiYn8zEMbpytN0iXUWjSD5aikbZ9c_831cgVakWiK0NzS7MsSAIXI29wekKHAXte18qrfycxYFfUOopYTQQ9r8E4Cv1QzlYASfMaTqcpSqw6OcXz96nPtzVL7xS6_BLZnvZVtXucv25SRzlPd8_EwAhpgr2u755DRHpMDnFmUxiOIOi4E_dsU"/>
+<span class="material-symbols-outlined text-on-secondary-container group-hover:text-primary">account_circle</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Dashboard Content -->
+<div class="p-md max-w-screen-2xl mx-auto space-y-md">
+<div class="grid grid-cols-12 gap-md">
+<!-- Left Content: Upload & Table (Span 8) -->
+<div class="col-span-12 lg:col-span-8 space-y-md">
+<!-- Central Upload Zone -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-lg relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary-container"></div>
+<div class="flex flex-col items-center justify-center py-xl dashed-border rounded-xl cursor-pointer hover:bg-primary-container/5 transition-colors">
+<div class="w-16 h-16 rounded-full bg-primary-container/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[40px] text-primary" style="font-variation-settings: 'FILL' 1;">upload_file</span>
+</div>
+<h2 class="font-headline-md text-headline-md mb-2">Drop invoices here for OCR processing</h2>
+<p class="font-body-md text-on-surface-variant text-center max-w-sm">Support for PDF, JPG, PNG and multi-page documents. Automatic extraction starts immediately.</p>
+<div class="mt-8 flex items-center gap-3 px-4 py-2 bg-surface-container rounded-full border border-outline-variant">
+<div class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></div>
+<span class="font-label-mono text-label-mono text-primary font-bold">OCR ENGINE ACTIVE</span>
+</div>
+</div>
+</section>
+<!-- Processed Invoices Table -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden">
+<div class="px-md py-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant">RECENTLY PROCESSED INVOICES</h3>
+<button class="text-primary hover:underline font-label-mono text-[11px] flex items-center gap-1">
+                                VIEW ALL <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-lowest border-b border-outline-variant text-on-secondary-fixed-variant">
+<tr>
+<th class="px-md py-3 font-label-mono text-label-mono uppercase tracking-tighter">Vendor</th>
+<th class="px-md py-3 font-label-mono text-label-mono uppercase tracking-tighter">Amount</th>
+<th class="px-md py-3 font-label-mono text-label-mono uppercase tracking-tighter">Date</th>
+<th class="px-md py-3 font-label-mono text-label-mono uppercase tracking-tighter">OCR Confidence</th>
+<th class="px-md py-3 font-label-mono text-label-mono uppercase tracking-tighter">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30">
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-md py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center font-bold text-xs text-secondary">A</div>
+<span class="font-medium">AWS Cloud Services</span>
+</div>
+</td>
+<td class="px-md py-4 font-label-mono">$12,450.00</td>
+<td class="px-md py-4 font-label-mono text-on-secondary-fixed-variant">Oct 24, 2023</td>
+<td class="px-md py-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-primary-container/10 text-primary border border-primary/20">99.8%</span>
+</td>
+<td class="px-md py-4">
+<span class="flex items-center gap-2 text-primary font-medium text-[13px]">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                                Processed
+                                            </span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-md py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center font-bold text-xs text-secondary">S</div>
+<span class="font-medium">Slack Technologies</span>
+</div>
+</td>
+<td class="px-md py-4 font-label-mono">$3,200.00</td>
+<td class="px-md py-4 font-label-mono text-on-secondary-fixed-variant">Oct 23, 2023</td>
+<td class="px-md py-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-primary-container/10 text-primary border border-primary/20">98.2%</span>
+</td>
+<td class="px-md py-4">
+<span class="flex items-center gap-2 text-primary font-medium text-[13px]">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                                Processed
+                                            </span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-md py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center font-bold text-xs text-secondary">G</div>
+<span class="font-medium">G-Suite Enterprise</span>
+</div>
+</td>
+<td class="px-md py-4 font-label-mono">$1,150.40</td>
+<td class="px-md py-4 font-label-mono text-on-secondary-fixed-variant">Oct 23, 2023</td>
+<td class="px-md py-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200">74.5%</span>
+</td>
+<td class="px-md py-4">
+<span class="flex items-center gap-2 text-amber-600 font-medium text-[13px]">
+<span class="material-symbols-outlined text-[16px]">info</span>
+                                                Needs Review
+                                            </span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-md py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center font-bold text-xs text-secondary">F</div>
+<span class="font-medium">Figma Pro Teams</span>
+</div>
+</td>
+<td class="px-md py-4 font-label-mono">$450.00</td>
+<td class="px-md py-4 font-label-mono text-on-secondary-fixed-variant">Oct 22, 2023</td>
+<td class="px-md py-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-primary-container/10 text-primary border border-primary/20">99.1%</span>
+</td>
+<td class="px-md py-4">
+<span class="flex items-center gap-2 text-error font-medium text-[13px]">
+<span class="material-symbols-outlined text-[16px]">warning</span>
+                                                Duplicate Flagged
+                                            </span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+<!-- Right Panel: Processing Stats (Span 4) -->
+<div class="col-span-12 lg:col-span-4 space-y-md">
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-md relative">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-tertiary"></div>
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-6">PROCESSING STATS</h3>
+<div class="space-y-6">
+<div class="flex items-end justify-between border-b border-outline-variant/30 pb-4">
+<div>
+<p class="text-on-secondary-fixed-variant font-label-mono text-[11px] mb-1">INVOICES PROCESSED TODAY</p>
+<p class="text-[40px] font-bold leading-none tracking-tight">42</p>
+</div>
+<div class="text-primary flex flex-col items-end">
+<span class="material-symbols-outlined">trending_up</span>
+<span class="text-[10px] font-bold">+12% vs avg</span>
+</div>
+</div>
+<div class="flex items-end justify-between border-b border-outline-variant/30 pb-4">
+<div>
+<p class="text-on-secondary-fixed-variant font-label-mono text-[11px] mb-1">AVG OCR ACCURACY</p>
+<p class="text-[40px] font-bold leading-none tracking-tight">99.2%</p>
+</div>
+<div class="w-16 h-1 bg-surface-container rounded-full overflow-hidden mb-2">
+<div class="h-full bg-primary-container" style="width: 99%"></div>
+</div>
+</div>
+<div class="flex items-end justify-between pb-2">
+<div>
+<p class="text-on-secondary-fixed-variant font-label-mono text-[11px] mb-1">FLAGGED FOR REVIEW</p>
+<p class="text-[40px] font-bold leading-none tracking-tight text-error">03</p>
+</div>
+<button class="bg-surface-container px-3 py-1.5 rounded text-label-caps text-[10px] border border-outline-variant hover:bg-outline-variant/10 transition-colors">RESOLVE NOW</button>
+</div>
+</div>
+</section>
+<!-- Real-time Feed -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-md">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-4">LIVE SYSTEM LOGS</h3>
+<div class="space-y-4">
+<div class="flex gap-3 relative">
+<div class="absolute left-1.5 top-5 bottom-0 w-px bg-outline-variant/30"></div>
+<div class="w-3 h-3 rounded-full bg-primary-container mt-1 shrink-0"></div>
+<div>
+<p class="font-label-mono text-[12px] font-bold">OCR_STREAM_01: EXTRACTION COMPLETE</p>
+<p class="text-[11px] text-on-surface-variant">Vendor: Slack | Conf: 99.8% | ID: #9921</p>
+<span class="text-[10px] font-label-mono opacity-50">2 MINUTES AGO</span>
+</div>
+</div>
+<div class="flex gap-3 relative">
+<div class="absolute left-1.5 top-5 bottom-0 w-px bg-outline-variant/30"></div>
+<div class="w-3 h-3 rounded-full bg-tertiary mt-1 shrink-0 animate-pulse"></div>
+<div>
+<p class="font-label-mono text-[12px] font-bold">FILE_MONITOR: NEW UPLOAD DETECTED</p>
+<p class="text-[11px] text-on-surface-variant">invoice_q4_aws_revised.pdf (4.2 MB)</p>
+<span class="text-[10px] font-label-mono opacity-50">JUST NOW</span>
+</div>
+</div>
+<div class="flex gap-3">
+<div class="w-3 h-3 rounded-full bg-error mt-1 shrink-0"></div>
+<div>
+<p class="font-label-mono text-[12px] font-bold">VALIDATION_AGENT: DUPLICATE ALERT</p>
+<p class="text-[11px] text-on-surface-variant">Reference #FX-102 matched #FX-099</p>
+<span class="text-[10px] font-label-mono opacity-50">14 MINUTES AGO</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Micro-interaction for file upload hover
+        const uploadZone = document.querySelector('.dashed-border');
+        if (uploadZone) {
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.classList.add('bg-primary-container/10');
+            });
+            uploadZone.addEventListener('dragleave', () => {
+                uploadZone.classList.remove('bg-primary-container/10');
+            });
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('bg-primary-container/10');
+                alert('OCR Processing Started: ' + e.dataTransfer.files.length + ' files added.');
+            });
+        }
+    </script>
+</body></html>

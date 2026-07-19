@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Enterprise Nexus - Workflow Trigger Configuration</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;700&family=Geist:wght@400;600;700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Inter:wght@100..900&family=JetBrains+Mono:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#bbcac4",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#732ee4",
+                        "primary-fixed": "#65fade",
+                        "secondary-fixed": "#e2e2eb",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-secondary-fixed": "#191b22",
+                        "primary-fixed-dim": "#41ddc2",
+                        "error": "#ba1a1a",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#eaddff",
+                        "on-primary-fixed": "#00201b",
+                        "surface": "#f8f9fa",
+                        "tertiary-container": "#bc9bff",
+                        "inverse-on-surface": "#f0f1f2",
+                        "on-surface": "#191c1d",
+                        "surface-container-high": "#e7e8e9",
+                        "on-background": "#191c1d",
+                        "on-secondary-fixed-variant": "#45464e",
+                        "on-surface-variant": "#3c4a46",
+                        "inverse-surface": "#2e3132",
+                        "on-primary-container": "#00493e",
+                        "on-secondary-container": "#63646c",
+                        "tertiary-fixed-dim": "#d2bbff",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#41ddc2",
+                        "background": "#f8f9fa",
+                        "secondary-fixed-dim": "#c5c6ce",
+                        "secondary-container": "#e2e2eb",
+                        "surface-container-low": "#f3f4f5",
+                        "primary": "#006b5c",
+                        "on-error": "#ffffff",
+                        "on-tertiary-container": "#5200b6",
+                        "outline": "#6c7a76",
+                        "on-tertiary-fixed": "#25005a",
+                        "surface-bright": "#f8f9fa",
+                        "secondary": "#5d5e65",
+                        "surface-container": "#edeeef",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#006b5c",
+                        "on-tertiary-fixed-variant": "#5a00c6",
+                        "surface-variant": "#e1e3e4",
+                        "primary-container": "#00c2a8",
+                        "surface-dim": "#d9dadb",
+                        "on-primary-fixed-variant": "#005045",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max": "1440px",
+                        "xs": "8px",
+                        "sidebar-width": "260px",
+                        "md": "24px",
+                        "sm": "16px",
+                        "base": "4px",
+                        "xl": "48px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "label-caps": ["JetBrains Mono"],
+                        "display-lg": ["Geist"],
+                        "label-mono": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Geist"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "label-caps": ["11px", {"lineHeight": "1.2", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                        "display-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "label-mono": ["12px", {"lineHeight": "1.4", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #45464e;
+            border-radius: 10px;
+        }
+        .transition-soft { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-x-hidden">
+<!-- Sidebar Navigation Shell -->
+<aside class="bg-inverse-surface dark:bg-inverse-surface w-[260px] h-screen fixed left-0 top-0 border-r border-outline-variant flex flex-col py-md z-50">
+<div class="px-md mb-xl">
+<div class="flex items-center gap-3">
+<img alt="Enterprise Nexus Logo" class="w-10 h-10 object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBN401d65yemBMA3YOjAzXOabPw_-X0QAsAv__cd6wEv9LwlOXqd48vTMuq3pGnwpGuEB0sRVN8lfF0JY0aSOUBTrK0GE8XvChAbP23pUQxuhKwqVi1iZsm1McloRehTwCHsxfwXuchOmaI9JHAlmsx5zjEWtVtN61q8dCn627MGHWN816SwyDKuSNJpI5mh8WAiomkJpFiP8sKPL-w91KYHMmVGBrW3piijVW1qVysrsKNoh4EBMW_KsxBnRMR2oAVPnUFRpydFCwh"/>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-surface-container-lowest leading-none">Enterprise Nexus</h1>
+<p class="font-label-mono text-[10px] text-primary-fixed tracking-widest mt-1">MULTI-AGENT SYSTEM</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 px-sm space-y-1 custom-scrollbar overflow-y-auto">
+<div class="font-label-caps text-surface-container-highest opacity-50 px-md py-2 text-[10px]">MAIN OPERATIONS</div>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="dashboard">dashboard</span>
+<span class="font-body-md text-body-md">Overview</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="groups">groups</span>
+<span class="font-body-md text-body-md">HR Agents</span>
+</a>
+<!-- Active State: Workflow Engine (Mapped from context) -->
+<a class="bg-secondary dark:bg-secondary text-surface border-l-4 border-primary px-4 py-3 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="engineering" style="font-variation-settings: 'FILL' 1;">engineering</span>
+<span class="font-body-md text-body-md">Workflow Engine</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="payments">payments</span>
+<span class="font-body-md text-body-md">Finance</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="support_agent">support_agent</span>
+<span class="font-body-md text-body-md">Support</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="analytics">analytics</span>
+<span class="font-body-md text-body-md">System Status</span>
+</a>
+</nav>
+<div class="px-sm pt-4 border-t border-white/10 space-y-1">
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="description">description</span>
+<span class="font-body-md text-body-md">Docs</span>
+</a>
+</div>
+</aside>
+<!-- Top App Bar -->
+<header class="h-16 w-[calc(100%-260px)] ml-[260px] sticky top-0 z-40 bg-surface border-b border-outline-variant flex justify-between items-center px-md">
+<div class="flex items-center gap-2">
+<span class="font-label-mono text-label-mono text-on-secondary-container">Enterprise Nexus</span>
+<span class="material-symbols-outlined text-[16px] text-outline" data-icon="chevron_right">chevron_right</span>
+<span class="font-label-mono text-label-mono text-on-surface font-bold">Workflow - Trigger Configuration</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+<input class="bg-surface-container-low border-none rounded-full pl-10 pr-4 py-2 text-sm w-64 focus:ring-1 focus:ring-primary" placeholder="Global Search..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<button class="relative text-on-secondary-container hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<div class="flex items-center gap-2 cursor-pointer hover:bg-surface-container-high p-1 rounded-lg transition-colors">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional studio portrait of a corporate executive with a clean, modern aesthetic. The lighting is soft and professional, with a neutral gray background. He is wearing a dark charcoal suit and subtle glasses, representing the authoritative and precise personality of Enterprise Nexus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLNJ4mQT8wxt9PGlYAsLKf5WH0RjDYoo28tDgjlO8kBg-wGRull54mnJ6BoJLLQdhxDM22HGX9LqaR1-oxs4xf0Q0X0J4j-e2GO77wwNwwegNt1rNYp2eFNBpGE1IFxwKEVkQx8dBW1ZqT-wLsUdlgWV6mbBk9PKS-dogD3Wkjh0AQ0a1gCoUMueNabqFHcGceoiebGDOgtJaXLzAFmanquTIi8CEIe6d8qqezYe4gSclXSY4u4dk-c7EP_RHwt4nbUHq_pfAxjOFt"/>
+</div>
+<span class="material-symbols-outlined text-outline" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Workspace Canvas -->
+<main class="ml-[260px] p-md space-y-md min-h-[calc(100vh-64px)] pb-24">
+<!-- Header Actions Area -->
+<section class="flex justify-between items-end mb-8">
+<div>
+<h2 class="font-headline-md text-[32px] font-bold text-on-surface">Workflow - Trigger Configuration</h2>
+<p class="text-on-surface-variant font-body-md mt-1">Define the mechanical origin of this automated multi-agent sequence.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-6 py-2.5 rounded-lg font-label-caps text-on-secondary-container border border-outline-variant hover:bg-surface-container-high transition-soft">Discard Draft</button>
+<button class="px-6 py-2.5 rounded-lg font-label-caps bg-primary-container text-on-primary-container font-bold flex items-center gap-2 hover:brightness-110 shadow-sm transition-soft">
+                    Activate Engine
+                    <span class="material-symbols-outlined text-[18px]" data-icon="bolt" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</button>
+</div>
+</section>
+<!-- Bento Layout Content -->
+<div class="grid grid-cols-12 gap-md items-start">
+<!-- Left Column: Trigger Selection & Status -->
+<div class="col-span-12 lg:col-span-4 space-y-md">
+<!-- Trigger Method Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm relative overflow-hidden">
+<div class="absolute left-0 top-0 w-1 h-full bg-primary-container"></div>
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-primary" data-icon="alt_route">alt_route</span>
+<h3 class="font-label-caps text-on-surface-variant">TRIGGER METHOD</h3>
+</div>
+<div class="space-y-3">
+<!-- Option 1 (Active) -->
+<div class="border-2 border-primary-container bg-primary-container/5 rounded-xl p-4 flex items-center justify-between cursor-pointer transition-soft">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-lowest rounded-lg border border-outline-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[28px]" data-icon="schedule">schedule</span>
+</div>
+<div>
+<p class="font-bold text-on-surface">Scheduled (CRON)</p>
+<p class="text-xs text-on-surface-variant">Execute at specific intervals</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<!-- Option 2 -->
+<div class="border border-outline-variant bg-surface hover:bg-surface-container-low rounded-xl p-4 flex items-center justify-between cursor-pointer transition-soft opacity-70">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-lowest rounded-lg border border-outline-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-[28px]" data-icon="webhook">webhook</span>
+</div>
+<div>
+<p class="font-bold text-on-surface">Webhook Entry</p>
+<p class="text-xs text-on-surface-variant">External HTTP POST request</p>
+</div>
+</div>
+</div>
+<!-- Option 3 -->
+<div class="border border-outline-variant bg-surface hover:bg-surface-container-low rounded-xl p-4 flex items-center justify-between cursor-pointer transition-soft opacity-70">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-lowest rounded-lg border border-outline-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-[28px]" data-icon="account_tree">account_tree</span>
+</div>
+<div>
+<p class="font-bold text-on-surface">System Event</p>
+<p class="text-xs text-on-surface-variant">Internal Nexus activity trigger</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Runtime Context Monitor -->
+<div class="bg-inverse-surface rounded-xl p-6 text-white overflow-hidden relative group">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-label-caps text-primary-fixed text-[10px]">RUNTIME CONTEXT</h3>
+<div class="flex items-center gap-2">
+<span class="text-[10px] font-label-caps text-primary-fixed">LIVE</span>
+<span class="w-2 h-2 bg-primary-container rounded-full animate-pulse shadow-[0_0_8px_rgba(0,194,168,0.8)]"></span>
+</div>
+</div>
+<div class="space-y-4">
+<div class="bg-secondary/30 p-4 rounded-lg border border-white/5">
+<p class="font-label-caps text-[10px] opacity-60 mb-1">ENGINE ID</p>
+<p class="font-label-mono text-sm tracking-widest text-primary-fixed">WFL-7729-ALPHA-X</p>
+</div>
+<div class="bg-secondary/30 p-4 rounded-lg border border-white/5">
+<p class="font-label-caps text-[10px] opacity-60 mb-1">WORKER PRIORITY</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="w-1.5 h-1.5 bg-primary-container rounded-full"></span>
+<p class="font-label-mono text-sm">Tier-1 High Availability</p>
+</div>
+</div>
+</div>
+<!-- Decorative hairline grid for tech aesthetic -->
+<div class="absolute inset-0 pointer-events-none opacity-5 overflow-hidden">
+<div class="w-full h-full" style="background-image: radial-gradient(circle, #65fade 1px, transparent 1px); background-size: 20px 20px;"></div>
+</div>
+</div>
+</div>
+<!-- Right Column: Form Settings -->
+<div class="col-span-12 lg:col-span-8 space-y-md">
+<!-- Logic Settings: CRON Configuration -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-container-low/50">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="code">code</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Logic Settings: CRON Configuration</h3>
+</div>
+<span class="bg-primary/10 text-primary text-[10px] font-label-caps px-2 py-1 rounded-sm border border-primary/20">ALPHA V2.4</span>
+</div>
+<div class="p-8 space-y-8">
+<!-- Cron Expression Input -->
+<div class="space-y-3">
+<div class="flex justify-between items-center">
+<label class="font-bold text-on-surface text-sm">CRON Expression</label>
+<a class="text-xs text-primary flex items-center gap-1 hover:underline" href="#">
+<span class="material-symbols-outlined text-[14px]" data-icon="help">help</span>
+                                    Expression Syntax Help
+                                </a>
+</div>
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 w-1 bg-primary-container rounded-l-lg"></div>
+<div class="bg-surface border border-outline-variant rounded-lg p-6 flex items-center justify-between transition-soft group-focus-within:border-primary-container shadow-inner">
+<code class="text-2xl font-label-mono text-on-primary-container tracking-widest">
+                                        0 0/15 * * * ?
+                                    </code>
+<div class="flex items-center gap-3">
+<button class="p-2 hover:bg-surface-container-high rounded-md transition-soft" title="Copy expression">
+<span class="material-symbols-outlined text-outline" data-icon="content_copy">content_copy</span>
+</button>
+<button class="p-2 hover:bg-surface-container-high rounded-md transition-soft" title="Reset expression">
+<span class="material-symbols-outlined text-outline" data-icon="refresh">refresh</span>
+</button>
+</div>
+</div>
+</div>
+<p class="italic text-on-surface-variant text-xs mt-2">"Executes every 15 minutes, starting at minute 0 of every hour."</p>
+</div>
+<!-- Dropdowns and Checkboxes -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="space-y-3">
+<label class="font-bold text-on-surface text-sm">Timezone</label>
+<div class="relative">
+<select class="w-full bg-surface-container-low border border-outline-variant rounded-lg py-3 px-4 appearance-none focus:ring-1 focus:ring-primary focus:border-primary">
+<option>UTC (Coordinated Universal Time)</option>
+<option>EST (Eastern Standard Time)</option>
+<option>PST (Pacific Standard Time)</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+<div class="space-y-3">
+<label class="font-bold text-on-surface text-sm">Retry Policy</label>
+<div class="flex items-center gap-3 mt-3 h-[48px]">
+<label class="relative flex items-center cursor-pointer">
+<input checked="" class="w-5 h-5 rounded border-outline text-primary focus:ring-primary" type="checkbox"/>
+<span class="ml-3 font-body-md text-on-surface">Exponential Backoff</span>
+</label>
+</div>
+</div>
+</div>
+<!-- Execution Forecast -->
+<div class="pt-4 space-y-4">
+<label class="font-bold text-on-surface text-sm">Execution Forecast (Next 24h)</label>
+<div class="relative h-20 bg-surface-container-low rounded-lg border border-outline-variant/30 flex items-end px-4 pb-4 overflow-hidden">
+<!-- Minimalist bar chart -->
+<div class="flex-1 flex items-end justify-between h-full gap-1">
+<div class="w-px h-full bg-primary-container/40"></div>
+<div class="flex-1 h-[2px] bg-outline-variant/30 self-center"></div>
+<div class="w-px h-full bg-primary-container/40"></div>
+<div class="flex-1 h-[2px] bg-outline-variant/30 self-center"></div>
+<div class="w-px h-full bg-primary-container/40"></div>
+<div class="flex-1 h-[2px] bg-outline-variant/30 self-center"></div>
+<div class="w-px h-full bg-primary-container/40"></div>
+<div class="flex-1 h-[2px] bg-outline-variant/30 self-center"></div>
+<div class="w-px h-full bg-primary-container/40"></div>
+</div>
+<div class="absolute bottom-2 left-4 right-4 flex justify-between text-[10px] font-label-mono text-outline uppercase">
+<span>NOW</span>
+<span>+6H</span>
+<span>+12H</span>
+<span>+18H</span>
+<span>+24H</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Warning Footer -->
+<div class="bg-error-container/10 p-4 border-t border-error/10 flex justify-between items-center">
+<div class="flex items-center gap-2 text-on-error-container">
+<span class="material-symbols-outlined text-[20px]" data-icon="warning">warning</span>
+<p class="text-sm">Overlaps with <span class="font-bold">"Financial Reconciliation"</span> workflow detected.</p>
+</div>
+<button class="text-primary font-bold text-sm hover:underline">Manage Collisions</button>
+</div>
+</div>
+<!-- Initial Payload Parameters -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="payload">variable_insert</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Initial Payload Parameters</h3>
+</div>
+<button class="text-primary font-bold text-sm flex items-center gap-1 hover:bg-primary/5 px-3 py-2 rounded-lg transition-soft">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+                            Add Param
+                        </button>
+</div>
+<div class="p-6">
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-surface-container text-on-surface-variant font-label-caps text-[10px]">
+<tr>
+<th class="py-3 px-4 rounded-l-lg">KEY</th>
+<th class="py-3 px-4">TYPE</th>
+<th class="py-3 px-4">DEFAULT VALUE</th>
+<th class="py-3 px-4 text-right rounded-r-lg">ACTIONS</th>
+</tr>
+</thead>
+<tbody class="font-body-md">
+<tr class="border-b border-outline-variant/30 hover:bg-surface-container-low transition-colors group">
+<td class="py-4 px-4">
+<span class="bg-surface-container-high px-2 py-1 rounded font-label-mono text-xs text-on-secondary-fixed-variant">source_origin</span>
+</td>
+<td class="py-4 px-4 font-label-caps text-[10px] text-outline">STRING</td>
+<td class="py-4 px-4 font-label-mono text-sm">"internal_nexus_cron"</td>
+<td class="py-4 px-4 text-right">
+<button class="text-outline hover:text-error opacity-0 group-hover:opacity-100 transition-soft">
+<span class="material-symbols-outlined" data-icon="delete">delete</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="py-4 px-4">
+<span class="bg-surface-container-high px-2 py-1 rounded font-label-mono text-xs text-on-secondary-fixed-variant">execution_depth</span>
+</td>
+<td class="py-4 px-4 font-label-caps text-[10px] text-outline">INTEGER</td>
+<td class="py-4 px-4 font-label-mono text-sm">12</td>
+<td class="py-4 px-4 text-right">
+<button class="text-outline hover:text-error opacity-0 group-hover:opacity-100 transition-soft">
+<span class="material-symbols-outlined" data-icon="delete">delete</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Global Status Footer -->
+<footer class="fixed bottom-0 right-0 w-[calc(100%-260px)] h-8 bg-surface-container-lowest border-t border-outline-variant px-md flex items-center justify-between z-40 text-[10px] font-label-mono text-outline">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+<span>ENGINE: ONLINE</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[12px]" data-icon="memory">memory</span>
+<span>ALLOCATED: 512MB RAM</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[12px]" data-icon="sync">sync</span>
+<span>SYNC: 14ms</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<span>VERSION: 8.4.1-STABLE</span>
+<div class="flex items-center gap-1 font-bold text-primary cursor-pointer hover:underline">
+<span class="material-symbols-outlined text-[12px]" data-icon="terminal">terminal</span>
+<span>SYSLOG: OK</span>
+</div>
+</div>
+</footer>
+<!-- Interactive Layer for Micro-Interactions -->
+<script>
+        // Simple scale effect on interactive elements
+        const buttons = document.querySelectorAll('button, .cursor-pointer');
+        buttons.forEach(btn => {
+            btn.addEventListener('mousedown', () => btn.classList.add('scale-[0.98]'));
+            btn.addEventListener('mouseup', () => btn.classList.remove('scale-[0.98]'));
+            btn.addEventListener('mouseleave', () => btn.classList.remove('scale-[0.98]'));
+        });
+
+        // Search bar focus effect
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('ring-1', 'ring-primary');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('ring-1', 'ring-primary');
+        });
+    </script>
+</body></html>

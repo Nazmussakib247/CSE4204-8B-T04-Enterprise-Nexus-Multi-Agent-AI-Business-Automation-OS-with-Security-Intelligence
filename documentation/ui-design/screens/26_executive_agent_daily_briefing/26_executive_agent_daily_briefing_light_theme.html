@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Enterprise Nexus - Intelligence Briefing</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;700&amp;family=Geist:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#bbcac4",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#732ee4",
+                        "primary-fixed": "#65fade",
+                        "secondary-fixed": "#e2e2eb",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-secondary-fixed": "#191b22",
+                        "primary-fixed-dim": "#41ddc2",
+                        "error": "#ba1a1a",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#eaddff",
+                        "on-primary-fixed": "#00201b",
+                        "surface": "#f8f9fa",
+                        "tertiary-container": "#bc9bff",
+                        "inverse-on-surface": "#f0f1f2",
+                        "on-surface": "#191c1d",
+                        "surface-container-high": "#e7e8e9",
+                        "on-background": "#191c1d",
+                        "on-secondary-fixed-variant": "#45464e",
+                        "on-surface-variant": "#3c4a46",
+                        "inverse-surface": "#2e3132",
+                        "on-primary-container": "#00493e",
+                        "on-secondary-container": "#63646c",
+                        "tertiary-fixed-dim": "#d2bbff",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#41ddc2",
+                        "background": "#f8f9fa",
+                        "secondary-fixed-dim": "#c5c6ce",
+                        "secondary-container": "#e2e2eb",
+                        "surface-container-low": "#f3f4f5",
+                        "primary": "#006b5c",
+                        "on-error": "#ffffff",
+                        "on-tertiary-container": "#5200b6",
+                        "outline": "#6c7a76",
+                        "on-tertiary-fixed": "#25005a",
+                        "surface-bright": "#f8f9fa",
+                        "secondary": "#5d5e65",
+                        "surface-container": "#edeeef",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#006b5c",
+                        "on-tertiary-fixed-variant": "#5a00c6",
+                        "surface-variant": "#e1e3e4",
+                        "primary-container": "#00c2a8",
+                        "surface-dim": "#d9dadb",
+                        "on-primary-fixed-variant": "#005045",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max": "1440px",
+                        "xs": "8px",
+                        "sidebar-width": "260px",
+                        "md": "24px",
+                        "sm": "16px",
+                        "lg": "32px",
+                        "base": "4px",
+                        "xl": "48px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "label-caps": ["JetBrains Mono"],
+                        "display-lg-mobile": ["Geist"],
+                        "display-lg": ["Geist"],
+                        "label-mono": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Geist"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "label-caps": ["11px", {"lineHeight": "1.2", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                        "display-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                        "display-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "label-mono": ["12px", {"lineHeight": "1.4", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .intelligence-card {
+            border-left: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .intelligence-card:hover {
+            border-left-color: #00C2A8;
+        }
+        .data-grid-pattern {
+            background-image: radial-gradient(circle, #bbcac4 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0.1;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-hidden">
+<!-- SideNavBar -->
+<aside class="w-[260px] h-screen fixed left-0 top-0 bg-inverse-surface flex flex-col py-md border-r border-outline-variant z-50">
+<div class="px-md mb-xl flex items-center gap-sm">
+<img alt="Enterprise Nexus Hexagonal Brand Icon" class="w-10 h-10 object-contain rounded-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBN401d65yemBMA3YOjAzXOabPw_-X0QAsAv__cd6wEv9LwlOXqd48vTMuq3pGnwpGuEB0sRVN8lfF0JY0aSOUBTrK0GE8XvChAbP23pUQxuhKwqVi1iZsm1McloRehTwCHsxfwXuchOmaI9JHAlmsx5zjEWtVtN61q8dCn627MGHWN816SwyDKuSNJpI5mh8WAiomkJpFiP8sKPL-w91KYHMmVGBrW3piijVW1qVysrsKNoh4EBMW_KsxBnRMR2oAVPnUFRpydFCwh"/>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-surface-container-lowest leading-tight">Enterprise Nexus</h1>
+<p class="font-label-mono text-[10px] text-primary-fixed tracking-widest opacity-80 uppercase">MULTI-AGENT SYSTEM</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Active: Overview -->
+<a class="bg-secondary text-surface border-l-4 border-primary px-4 py-3 flex items-center gap-3 transition-all scale-98 active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined text-primary" data-icon="dashboard">dashboard</span>
+<span class="font-body-md text-body-md">Overview</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-3 flex items-center gap-3 transition-all hover:bg-secondary/50 active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-body-md text-body-md">HR Agents</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-3 flex items-center gap-3 transition-all hover:bg-secondary/50 active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-body-md text-body-md">Finance</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-3 flex items-center gap-3 transition-all hover:bg-secondary/50 active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="support_agent">support_agent</span>
+<span class="font-body-md text-body-md">Support</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-3 flex items-center gap-3 transition-all hover:bg-secondary/50 active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-body-md text-body-md">System Status</span>
+</a>
+</nav>
+<div class="px-md mt-auto">
+<button class="w-full bg-primary-container text-on-primary-container font-label-mono text-label-mono font-bold py-sm rounded tracking-widest uppercase hover:opacity-90 transition-opacity">
+                NEW AGENT
+            </button>
+<div class="mt-lg space-y-1">
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-2 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="settings">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-2 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="description">description</span>
+<span class="font-body-md text-body-md">Docs</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- TopAppBar -->
+<header class="h-16 w-full sticky top-0 z-40 bg-surface border-b border-outline-variant flex justify-between items-center px-md ml-[260px] w-[calc(100%-260px)]">
+<div class="flex items-center gap-sm">
+<span class="font-label-mono text-label-mono text-on-secondary-container">Path: /briefings/current</span>
+<span class="text-outline-variant">|</span>
+<span class="font-headline-md text-headline-md text-on-surface font-bold">Enterprise Nexus</span>
+</div>
+<div class="flex items-center gap-lg">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-outline" data-icon="search">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border border-outline-variant rounded-lg text-label-mono w-64 focus:ring-1 focus:ring-primary outline-none" placeholder="Global Search..." type="text"/>
+</div>
+<div class="flex items-center gap-sm">
+<button class="w-10 h-10 flex items-center justify-center text-on-secondary-container hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<div class="flex items-center gap-2 px-2 py-1 rounded-full border border-outline-variant bg-surface-container-lowest cursor-pointer hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-on-surface" data-icon="account_circle">account_circle</span>
+<span class="font-label-mono text-[10px] pr-2">ADMIN_USER</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-[260px] h-[calc(100vh-64px)] overflow-y-auto scrollbar-hide bg-surface p-xl">
+<div class="max-w-[1100px] mx-auto grid grid-cols-12 gap-lg">
+<!-- Executive Intelligence Briefing Section -->
+<div class="col-span-8 space-y-xl">
+<header class="space-y-sm">
+<div class="flex items-center gap-3">
+<span class="bg-error-container text-error font-label-mono text-[10px] px-2 py-0.5 rounded tracking-widest font-bold">CONFIDENTIAL</span>
+<span class="font-label-mono text-[10px] text-outline tracking-widest uppercase">Nexus-Level Clearance Required</span>
+</div>
+<h2 class="font-display-lg text-display-lg text-on-surface leading-tight">Executive Intelligence Briefing — 19 June 2026</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
+                        A consolidated daily analysis of cross-departmental operations, high-priority risk vectors, and autonomous agent resolutions within the Enterprise Nexus ecosystem.
+                    </p>
+</header>
+<!-- Document Body -->
+<div class="space-y-lg">
+<!-- Human Capital & Talent -->
+<section class="intelligence-card p-sm bg-surface-container-lowest border border-outline-variant rounded-lg space-y-sm">
+<div class="flex justify-between items-center">
+<h3 class="font-headline-md text-[20px] text-on-surface font-semibold flex items-center gap-2">
+                                Human Capital &amp; Talent
+                            </h3>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
+<span class="font-label-mono text-[10px] text-primary uppercase tracking-tighter">Active Monitoring</span>
+</div>
+</div>
+<p class="font-body-md text-on-surface-variant">
+                            The HR Agent Cluster has detected a 14% increase in specialized engineering churn risk across the APAC region. In response, Agent 4-Delta has preemptively adjusted retention incentives for 22 key personnel.
+                        </p>
+<ul class="space-y-2 font-label-mono text-label-mono text-on-surface">
+<li class="flex gap-2">
+<span class="text-primary font-bold">01.</span> Successfully closed 12 high-priority AI-Safety roles in the London hub via autonomous negotiation.
+                            </li>
+<li class="flex gap-2">
+<span class="text-primary font-bold">02.</span> Conflict resolution protocol initiated for the Research &amp; Development leadership team.
+                            </li>
+</ul>
+</section>
+<!-- Financial Operations -->
+<section class="intelligence-card p-sm bg-surface-container-lowest border border-outline-variant rounded-lg space-y-sm">
+<div class="flex justify-between items-center">
+<h3 class="font-headline-md text-[20px] text-on-surface font-semibold">Financial Operations</h3>
+<span class="font-label-mono text-[10px] text-tertiary uppercase tracking-tighter">● Optimizing</span>
+</div>
+<p class="font-body-md text-on-surface-variant">
+                            Compute cost arbitrage achieved a 4.2% reduction in cloud overhead since 04:00 UTC. Finance Agent Omega is currently liquidating under-utilized GPU reservations across the Azure North sub-region.
+                        </p>
+<div class="grid grid-cols-2 gap-md pt-2">
+<div class="p-4 border border-outline-variant rounded bg-surface-container">
+<p class="font-label-caps text-label-caps text-outline mb-1 uppercase">Operational Savings</p>
+<p class="font-display-lg text-primary text-2xl font-bold">$1.4M</p>
+</div>
+<div class="p-4 border border-outline-variant rounded bg-surface-container">
+<p class="font-label-caps text-label-caps text-outline mb-1 uppercase">Capital Flux</p>
+<p class="font-display-lg text-on-surface text-2xl font-bold">+0.82%</p>
+</div>
+</div>
+</section>
+<!-- Enterprise Support Nexus -->
+<section class="intelligence-card p-sm bg-surface-container-lowest border border-outline-variant rounded-lg space-y-sm">
+<h3 class="font-headline-md text-[20px] text-on-surface font-semibold">Enterprise Support Nexus</h3>
+<p class="font-body-md text-on-surface-variant">
+                            First-contact resolution rate remains steady at 98.4%. The Support Agents have successfully diverted 1,200 tickets related to the v2.4 API rollout through the immediate generation of dynamic technical documentation and personalized code snippets for enterprise partners.
+                        </p>
+</section>
+<!-- Market Sentiment & Analytics -->
+<section class="intelligence-card p-sm bg-surface-container-lowest border border-outline-variant rounded-lg space-y-sm">
+<h3 class="font-headline-md text-[20px] text-on-surface font-semibold">Market Sentiment &amp; Analytics</h3>
+<p class="font-body-md text-on-surface-variant">
+                            Global brand sentiment has shifted slightly positive (+2.1%) following the CEO's keynote on decentralized intelligence. Competitor analysis indicates a slow reaction time to our latest agent-mesh deployment.
+                        </p>
+<div class="relative h-24 w-full bg-surface-container border border-outline-variant rounded overflow-hidden flex items-center justify-center">
+<div class="absolute inset-0 data-grid-pattern"></div>
+<p class="relative z-10 font-label-mono text-[10px] text-outline-variant tracking-widest uppercase">Real-time data stream active</p>
+<!-- Visual noise simulated via CSS gradient -->
+<div class="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-primary via-tertiary to-error opacity-50"></div>
+</div>
+</section>
+<!-- Action Button -->
+<div class="flex justify-center pt-md pb-xl">
+<button class="flex items-center gap-2 bg-primary text-on-primary font-label-mono text-label-mono font-bold px-lg py-sm rounded-full shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="refresh">refresh</span>
+                            REGENERATE BRIEFING
+                        </button>
+</div>
+</div>
+</div>
+<!-- Side Recommendations Column -->
+<div class="col-span-4 space-y-lg">
+<div class="sticky top-md">
+<div class="flex items-center gap-2 mb-md">
+<span class="material-symbols-outlined text-primary text-lg" data-icon="bolt">bolt</span>
+<h4 class="font-label-caps text-label-caps text-primary uppercase">Action Recommendations</h4>
+</div>
+<div class="space-y-6">
+<!-- Rec 1 -->
+<div class="group border-l-2 border-outline-variant pl-4 hover:border-primary transition-colors">
+<span class="font-label-mono text-label-mono text-outline group-hover:text-primary">01</span>
+<h5 class="font-body-md font-bold mt-1">Approve APAC Retention Package</h5>
+<p class="text-on-surface-variant text-sm mt-2 leading-relaxed">
+                                Authorize the $2.4M allocation for Tier-1 engineering incentives to mitigate flight risk.
+                            </p>
+<button class="mt-3 font-label-mono text-[10px] text-primary border-b border-primary/30 hover:border-primary tracking-widest uppercase transition-all">
+                                EXECUTE IMMEDIATELY
+                            </button>
+</div>
+<!-- Rec 2 -->
+<div class="group border-l-2 border-outline-variant pl-4 hover:border-primary transition-colors">
+<span class="font-label-mono text-label-mono text-outline group-hover:text-primary">02</span>
+<h5 class="font-body-md font-bold mt-1">Review Compute Arbitrage Logs</h5>
+<p class="text-on-surface-variant text-sm mt-2 leading-relaxed">
+                                Agent Omega requests human sign-off on shifting primary compute to renewable zones in Scandinavia.
+                            </p>
+<button class="mt-3 font-label-mono text-[10px] text-primary border-b border-primary/30 hover:border-primary tracking-widest uppercase transition-all">
+                                OPEN LOG FILE
+                            </button>
+</div>
+<!-- Rec 3 -->
+<div class="group border-l-2 border-outline-variant pl-4 hover:border-primary transition-colors">
+<span class="font-label-mono text-label-mono text-outline group-hover:text-primary">03</span>
+<h5 class="font-body-md font-bold mt-1">Internal R&amp;D Memo</h5>
+<p class="text-on-surface-variant text-sm mt-2 leading-relaxed">
+                                Distribute the synthesized findings from the Support Agent ticket trends to the core dev team.
+                            </p>
+<button class="mt-3 font-label-mono text-[10px] text-primary border-b border-primary/30 hover:border-primary tracking-widest uppercase transition-all">
+                                DRAFT MEMO
+                            </button>
+</div>
+<!-- Rec 4 -->
+<div class="group border-l-2 border-outline-variant pl-4 hover:border-primary transition-colors">
+<span class="font-label-mono text-label-mono text-outline group-hover:text-primary">04</span>
+<h5 class="font-body-md font-bold mt-1">Risk Mitigation: Competitor X</h5>
+<p class="text-on-surface-variant text-sm mt-2 leading-relaxed">
+                                Increase sentiment monitoring frequency for the North American market segment.
+                            </p>
+<button class="mt-3 font-label-mono text-[10px] text-primary border-b border-primary/30 hover:border-primary tracking-widest uppercase transition-all">
+                                ADJUST THRESHOLDS
+                            </button>
+</div>
+</div>
+<!-- Verification Widget -->
+<div class="mt-xl p-sm bg-surface-container border border-outline-variant rounded-lg">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span class="font-label-caps text-[9px] uppercase tracking-widest font-bold">Nexus Verification</span>
+</div>
+<p class="text-[11px] text-on-surface-variant font-label-mono leading-relaxed opacity-80">
+                            This document was synthesized from 1.4TB of telemetry data. Accuracy confidence: 99.82%.
+                        </p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- FAB (Suppressed on Details as per instruction, but shown for Home/Dashboard context) -->
+<!-- Not rendered here to prioritize content focus -->
+<script>
+        // Micro-interaction for real-time vibe
+        document.addEventListener('DOMContentLoaded', () => {
+            const numbers = document.querySelectorAll('.font-display-lg');
+            numbers.forEach(num => {
+                num.addEventListener('mouseenter', () => {
+                    num.classList.add('text-primary-container');
+                    setTimeout(() => num.classList.remove('text-primary-container'), 1000);
+                });
+            });
+        });
+    </script>
+</body></html>

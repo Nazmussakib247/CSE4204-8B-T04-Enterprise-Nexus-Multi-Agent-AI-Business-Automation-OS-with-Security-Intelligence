@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Enterprise Nexus - Support Ticket Board</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;700&amp;family=Geist:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#bbcac4",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#732ee4",
+                        "primary-fixed": "#65fade",
+                        "secondary-fixed": "#e2e2eb",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-secondary-fixed": "#191b22",
+                        "primary-fixed-dim": "#41ddc2",
+                        "error": "#ba1a1a",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#eaddff",
+                        "on-primary-fixed": "#00201b",
+                        "surface": "#f8f9fa",
+                        "tertiary-container": "#bc9bff",
+                        "inverse-on-surface": "#f0f1f2",
+                        "on-surface": "#191c1d",
+                        "surface-container-high": "#e7e8e9",
+                        "on-background": "#191c1d",
+                        "on-secondary-fixed-variant": "#45464e",
+                        "on-surface-variant": "#3c4a46",
+                        "inverse-surface": "#2e3132",
+                        "on-primary-container": "#00493e",
+                        "on-secondary-container": "#63646c",
+                        "tertiary-fixed-dim": "#d2bbff",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#41ddc2",
+                        "background": "#f8f9fa",
+                        "secondary-fixed-dim": "#c5c6ce",
+                        "secondary-container": "#e2e2eb",
+                        "surface-container-low": "#f3f4f5",
+                        "primary": "#006b5c",
+                        "on-error": "#ffffff",
+                        "on-tertiary-container": "#5200b6",
+                        "outline": "#6c7a76",
+                        "on-tertiary-fixed": "#25005a",
+                        "surface-bright": "#f8f9fa",
+                        "secondary": "#5d5e65",
+                        "surface-container": "#edeeef",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#006b5c",
+                        "on-tertiary-fixed-variant": "#5a00c6",
+                        "surface-variant": "#e1e3e4",
+                        "primary-container": "#00c2a8",
+                        "surface-dim": "#d9dadb",
+                        "on-primary-fixed-variant": "#005045",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max": "1440px",
+                        "xs": "8px",
+                        "sidebar-width": "260px",
+                        "md": "24px",
+                        "sm": "16px",
+                        "lg": "32px",
+                        "base": "4px",
+                        "xl": "48px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "label-caps": ["JetBrains Mono"],
+                        "display-lg": ["Geist"],
+                        "label-mono": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Geist"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "label-caps": ["11px", {"lineHeight": "1.2", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                        "display-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "label-mono": ["12px", {"lineHeight": "1.4", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .sidebar-active { background-color: #5d5e65; border-left-width: 4px; border-color: #006b5c; }
+        .ticket-card { transition: transform 0.2s, box-shadow 0.2s; border-left: 3px solid transparent; }
+        .ticket-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .status-critical { border-left-color: #ba1a1a; }
+        .status-medium { border-left-color: #732ee4; }
+        .status-low { border-left-color: #006b5c; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="text-on-surface">
+<!-- Side Navigation Bar -->
+<aside class="w-[260px] h-screen fixed left-0 top-0 bg-inverse-surface dark:bg-inverse-surface flex flex-col py-md border-r border-outline-variant z-50">
+<div class="px-md mb-xl">
+<div class="flex items-center gap-3 mb-2">
+<img alt="Enterprise Nexus Logo" class="w-8 h-8 rounded-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBN401d65yemBMA3YOjAzXOabPw_-X0QAsAv__cd6wEv9LwlOXqd48vTMuq3pGnwpGuEB0sRVN8lfF0JY0aSOUBTrK0GE8XvChAbP23pUQxuhKwqVi1iZsm1McloRehTwCHsxfwXuchOmaI9JHAlmsx5zjEWtVtN61q8dCn627MGHWN816SwyDKuSNJpI5mh8WAiomkJpFiP8sKPL-w91KYHMmVGBrW3piijVW1qVysrsKNoh4EBMW_KsxBnRMR2oAVPnUFRpydFCwh"/>
+<h1 class="font-headline-md text-headline-md font-bold text-surface-container-lowest">Enterprise Nexus</h1>
+</div>
+<p class="font-label-mono text-label-mono text-primary uppercase tracking-widest opacity-80">MULTI-AGENT SYSTEM</p>
+</div>
+<nav class="flex-grow flex flex-col">
+<!-- Navigation Items Mapping -->
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md text-body-md">Overview</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-body-md text-body-md">HR Agents</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-body-md text-body-md">Finance</span>
+</a>
+<!-- Active Tab: Support -->
+<a class="bg-secondary dark:bg-secondary text-surface border-l-4 border-primary px-4 py-3 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined">support_agent</span>
+<span class="font-body-md text-body-md">Support</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-body-md text-body-md">System Status</span>
+</a>
+<div class="mt-auto px-md space-y-2">
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 py-2 flex items-center gap-3 transition-all font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 py-2 flex items-center gap-3 transition-all font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">description</span>
+<span>Docs</span>
+</a>
+<button class="w-full mt-4 bg-primary text-on-primary py-3 px-4 rounded font-label-caps uppercase tracking-widest text-center active:scale-95 transition-transform">
+                    NEW AGENT
+                </button>
+</div>
+</nav>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-[260px] min-h-screen flex flex-col">
+<!-- Top App Bar -->
+<header class="h-16 w-full sticky top-0 z-40 bg-surface border-b border-outline-variant flex justify-between items-center px-md">
+<div class="flex items-center gap-2 font-label-mono text-label-mono">
+<span class="text-on-secondary-container">Support</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-on-surface font-bold">Ticket Board</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="bg-surface-container-low border-none rounded-full py-1.5 pl-10 pr-4 w-64 text-sm focus:ring-1 focus:ring-primary" placeholder="Global Search..." type="text"/>
+</div>
+<div class="flex items-center gap-4 text-on-secondary-container">
+<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors">notifications</span>
+<div class="flex items-center gap-2 cursor-pointer group">
+<div class="w-8 h-8 rounded-full bg-cover bg-center" data-alt="Close-up studio portrait of a futuristic female support technician with subtle holographic interface elements reflecting on her face, warm and professional lighting." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAYtv0Ezdxtfu2h4J8fsg-wLlrGtBnwUQLzlYUHik1JNhHcJJM70g6E3KlLCrCl3BYwoGNL52HuDIT_mLZDMRVDFWx1HCIHY_5HHn9uozPG1bSCLSjjs91C2Sv4JLE246sUvyozJEmZdZFxxdabDzvJt5IE382otzL_Xal9lR8zvPVo-JMs1Bd5s8CG5l0rjbp8_xdvhLb0U_sxCf9NKGJMLdzxjx7GRzXrTX3FLHjPlzEdmuRD5mgz40jHIwMsi14teziehmT5GIOQ')"></div>
+<span class="material-symbols-outlined">account_circle</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Contextual Quick Stats Bar -->
+<section class="bg-surface px-md py-4 border-b border-outline-variant grid grid-cols-4 gap-4">
+<div class="flex items-center gap-3 px-4">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+<span class="font-label-caps text-on-surface-variant">ACTIVE AGENTS: <span class="text-on-surface">14</span></span>
+</div>
+<div class="flex items-center gap-3 px-4">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span class="font-label-caps text-on-surface-variant">AGENT-AURA: <span class="text-on-surface">98% EFFICIENCY</span></span>
+</div>
+<div class="flex items-center gap-3 px-4">
+<span class="material-symbols-outlined text-tertiary text-sm">monitor_heart</span>
+<span class="font-label-caps text-on-surface-variant">LOAD: <span class="text-on-surface">LOW</span></span>
+</div>
+<div class="flex items-center gap-3 px-4">
+<span class="material-symbols-outlined text-outline text-sm">schedule</span>
+<span class="font-label-caps text-on-surface-variant">AVG RESPONSE: <span class="text-on-surface">1.2M</span></span>
+</div>
+</section>
+<!-- Kanban Board Content -->
+<div class="flex-grow p-md grid grid-cols-3 gap-md overflow-x-auto scrollbar-hide">
+<!-- Column: New -->
+<div class="flex flex-col gap-sm">
+<div class="flex items-center justify-between px-2 mb-2">
+<div class="flex items-center gap-2">
+<h2 class="font-headline-md text-lg text-on-surface">New</h2>
+<span class="bg-surface-container-highest text-on-surface-variant px-2 py-0.5 rounded text-xs font-bold">4</span>
+</div>
+<span class="material-symbols-outlined text-outline cursor-pointer">more_horiz</span>
+</div>
+<div class="space-y-sm">
+<!-- Ticket Card 1 -->
+<div class="ticket-card status-critical bg-surface-container-lowest p-sm border border-outline-variant shadow-sm flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<h3 class="font-semibold text-on-surface">Sarah Jenkins</h3>
+<span class="font-label-mono text-[10px] text-outline">2m ago</span>
+</div>
+<p class="text-body-md text-on-surface-variant leading-relaxed">
+                            "System crash on production node. Urgent assistance required for DB cluster recovery..."
+                        </p>
+<div class="flex justify-between items-center mt-2">
+<span class="bg-error-container text-on-error-container font-label-caps px-2 py-0.5 text-[9px] rounded uppercase">CRITICAL</span>
+<div class="w-5 h-5 rounded-full bg-surface-container-high border border-outline-variant"></div>
+</div>
+</div>
+<!-- Ticket Card 2 -->
+<div class="ticket-card status-low bg-surface-container-lowest p-sm border border-outline-variant shadow-sm flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<h3 class="font-semibold text-on-surface">David Chen</h3>
+<span class="font-label-mono text-[10px] text-outline">15m ago</span>
+</div>
+<p class="text-body-md text-on-surface-variant leading-relaxed">
+                            "Question regarding API rate limits for the enterprise tier. Documentation seems unclear."
+                        </p>
+<div class="flex justify-between items-center mt-2">
+<span class="bg-surface-container-high text-on-surface-variant font-label-caps px-2 py-0.5 text-[9px] rounded uppercase">LOW</span>
+<span class="material-symbols-outlined text-outline text-lg">person_add</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Column: In Progress -->
+<div class="flex flex-col gap-sm">
+<div class="flex items-center justify-between px-2 mb-2">
+<div class="flex items-center gap-2">
+<h2 class="font-headline-md text-lg text-on-surface">In Progress</h2>
+<span class="bg-surface-container-highest text-on-surface-variant px-2 py-0.5 rounded text-xs font-bold">2</span>
+</div>
+<span class="material-symbols-outlined text-outline cursor-pointer">more_horiz</span>
+</div>
+<div class="space-y-sm">
+<!-- Ticket Card 3 -->
+<div class="ticket-card status-medium bg-surface-container-lowest p-sm border border-outline-variant shadow-sm flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<h3 class="font-semibold text-on-surface">Aria Vance</h3>
+<span class="font-label-mono text-[10px] text-outline">1h ago</span>
+</div>
+<p class="text-body-md text-on-surface-variant leading-relaxed italic">
+                            "The new integration works great, just need to finalize the webhook endpoint security tokens..."
+                        </p>
+<div class="flex justify-between items-center mt-2">
+<span class="bg-primary-container/20 text-primary font-label-caps px-2 py-0.5 text-[9px] rounded uppercase">MEDIUM</span>
+<div class="flex items-center gap-2">
+<span class="font-label-mono text-[10px] text-outline">Agent-01</span>
+<span class="material-symbols-outlined text-on-surface text-lg" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Column: Resolved -->
+<div class="flex flex-col gap-sm">
+<div class="flex items-center justify-between px-2 mb-2">
+<div class="flex items-center gap-2">
+<h2 class="font-headline-md text-lg text-on-surface">Resolved</h2>
+<span class="bg-surface-container-highest text-on-surface-variant px-2 py-0.5 rounded text-xs font-bold">12</span>
+</div>
+<span class="material-symbols-outlined text-outline cursor-pointer">more_horiz</span>
+</div>
+<div class="space-y-sm">
+<!-- Ticket Card 4 -->
+<div class="ticket-card bg-surface-container-low p-sm border border-outline-variant shadow-none opacity-60 flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<h3 class="font-semibold text-on-surface">Robert Miller</h3>
+<div class="text-right">
+<div class="font-label-mono text-[9px] text-primary uppercase font-bold">RESOLVED</div>
+<span class="font-label-mono text-[10px] text-outline">3h ago</span>
+</div>
+</div>
+<p class="text-body-md text-on-surface-variant leading-relaxed">
+                            "Password reset link was not arriving. Resolved via manual credential dispatch."
+                        </p>
+<div class="flex justify-between items-center mt-2">
+<span class="bg-surface-container-highest text-outline font-label-caps px-2 py-0.5 text-[9px] rounded uppercase">LOW</span>
+<span class="material-symbols-outlined text-primary text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sticky Footer Summary Bar -->
+<footer class="h-10 border-t border-outline-variant bg-surface px-md flex items-center justify-between mt-auto">
+<div class="flex gap-6">
+<span class="font-label-mono text-[11px] text-outline uppercase">TOTAL TICKETS: <span class="text-on-surface font-bold">21</span></span>
+<span class="font-label-mono text-[11px] text-outline uppercase">MTTR: <span class="text-on-surface font-bold">48M</span></span>
+<span class="font-label-mono text-[11px] text-outline uppercase">SLO: <span class="text-primary font-bold">99.8% MET</span></span>
+</div>
+<div class="flex gap-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="font-label-mono text-[10px] text-on-surface-variant">POSITIVE 65%</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-outline-variant"></span>
+<span class="font-label-mono text-[10px] text-on-surface-variant">NEUTRAL 25%</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span class="font-label-mono text-[10px] text-on-surface-variant">NEGATIVE 10%</span>
+</div>
+</div>
+</footer>
+</main>
+<script>
+        // Micro-interactions for ticket cards
+        document.querySelectorAll('.ticket-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.borderColor = '#00c2a8';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.borderColor = '#bbcac4';
+            });
+        });
+
+        // Simple search filter simulation
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            document.querySelectorAll('.ticket-card').forEach(card => {
+                const text = card.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body></html>

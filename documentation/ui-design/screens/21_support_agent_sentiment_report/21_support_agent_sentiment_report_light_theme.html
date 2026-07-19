@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Enterprise Nexus - Support Sentiment Report</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;700&amp;family=Geist:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#bbcac4",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#732ee4",
+                        "primary-fixed": "#65fade",
+                        "secondary-fixed": "#e2e2eb",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-secondary-fixed": "#191b22",
+                        "primary-fixed-dim": "#41ddc2",
+                        "error": "#ba1a1a",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#eaddff",
+                        "on-primary-fixed": "#00201b",
+                        "surface": "#f8f9fa",
+                        "tertiary-container": "#bc9bff",
+                        "inverse-on-surface": "#f0f1f2",
+                        "on-surface": "#191c1d",
+                        "surface-container-high": "#e7e8e9",
+                        "on-background": "#191c1d",
+                        "on-secondary-fixed-variant": "#45464e",
+                        "on-surface-variant": "#3c4a46",
+                        "inverse-surface": "#2e3132",
+                        "on-primary-container": "#00493e",
+                        "on-secondary-container": "#63646c",
+                        "tertiary-fixed-dim": "#d2bbff",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#41ddc2",
+                        "background": "#f8f9fa",
+                        "secondary-fixed-dim": "#c5c6ce",
+                        "secondary-container": "#e2e2eb",
+                        "surface-container-low": "#f3f4f5",
+                        "primary": "#006b5c",
+                        "on-error": "#ffffff",
+                        "on-tertiary-container": "#5200b6",
+                        "outline": "#6c7a76",
+                        "on-tertiary-fixed": "#25005a",
+                        "surface-bright": "#f8f9fa",
+                        "secondary": "#5d5e65",
+                        "surface-container": "#edeeef",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#006b5c",
+                        "on-tertiary-fixed-variant": "#5a00c6",
+                        "surface-variant": "#e1e3e4",
+                        "primary-container": "#00c2a8",
+                        "surface-dim": "#d9dadb",
+                        "on-primary-fixed-variant": "#005045",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max": "1440px",
+                        "xs": "8px",
+                        "sidebar-width": "260px",
+                        "md": "24px",
+                        "sm": "16px",
+                        "lg": "32px",
+                        "base": "4px",
+                        "xl": "48px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "label-caps": ["JetBrains Mono"],
+                        "display-lg-mobile": ["Geist"],
+                        "display-lg": ["Geist"],
+                        "label-mono": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Geist"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "label-caps": ["11px", {"lineHeight": "1.2", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                        "display-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                        "display-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "label-mono": ["12px", {"lineHeight": "1.4", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #f8f9fa;
+            color: #191c1d;
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .card-status-accent {
+            border-left: 3px solid #00C2A8;
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 24px;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #bbcac4;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="flex">
+<!-- SideNavBar -->
+<nav class="bg-inverse-surface dark:bg-inverse-surface w-[260px] h-screen fixed left-0 top-0 border-r border-outline-variant flex flex-col h-full py-md z-50">
+<div class="px-sm mb-lg flex flex-col gap-2">
+<div class="flex items-center gap-3">
+<img alt="Enterprise Nexus" class="w-10 h-10 rounded-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBN401d65yemBMA3YOjAzXOabPw_-X0QAsAv__cd6wEv9LwlOXqd48vTMuq3pGnwpGuEB0sRVN8lfF0JY0aSOUBTrK0GE8XvChAbP23pUQxuhKwqVi1iZsm1McloRehTwCHsxfwXuchOmaI9JHAlmsx5zjEWtVtN61q8dCn627MGHWN816SwyDKuSNJpI5mh8WAiomkJpFiP8sKPL-w91KYHMmVGBrW3piijVW1qVysrsKNoh4EBMW_KsxBnRMR2oAVPnUFRpydFCwh"/>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-surface-container-lowest leading-tight">Enterprise Nexus</h1>
+<p class="font-label-mono text-[10px] tracking-widest text-primary-fixed uppercase">MULTI-AGENT SYSTEM</p>
+</div>
+</div>
+</div>
+<div class="flex-grow flex flex-col gap-1 overflow-y-auto custom-scrollbar">
+<!-- Nav Items -->
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-body-md text-body-md">Overview</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-body-md text-body-md">HR Agents</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-body-md text-body-md">Finance</span>
+</a>
+<!-- Active State: Support -->
+<a class="bg-secondary dark:bg-secondary text-surface border-l-4 border-primary px-4 py-3 flex items-center gap-3 transition-all scale-98 active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="support_agent" style="font-variation-settings: 'FILL' 1;">support_agent</span>
+<span class="font-body-md text-body-md">Support</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-4 py-3 flex items-center gap-3 transition-all hover:bg-secondary/50" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-body-md text-body-md">System Status</span>
+</a>
+</div>
+<div class="mt-auto px-4 py-6 border-t border-secondary/30 flex flex-col gap-4">
+<button class="bg-primary-container text-on-primary-container font-label-caps py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-transform active:scale-95">
+<span class="material-symbols-outlined text-sm">add</span>
+                NEW AGENT
+            </button>
+<div class="flex flex-col gap-1">
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-2 py-2 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="settings">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+<a class="text-surface-container-highest opacity-70 hover:opacity-100 px-2 py-2 flex items-center gap-3 transition-all" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="description">description</span>
+<span class="font-body-md text-body-md">Docs</span>
+</a>
+</div>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="ml-[260px] w-[calc(100%-260px)] min-h-screen">
+<!-- TopAppBar -->
+<header class="bg-surface h-16 w-full sticky top-0 z-40 border-b border-outline-variant flex justify-between items-center px-md">
+<div class="flex items-center gap-2">
+<span class="font-label-mono text-label-mono text-on-secondary-container uppercase opacity-60">SUPPORT / ANALYTICS / SENTIMENT</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative w-64">
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-full px-10 py-1.5 text-sm focus:ring-1 focus:ring-primary-container focus:border-primary-container outline-none transition-all" placeholder="Global Search..." type="text"/>
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">search</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-secondary-container hover:text-primary transition-colors cursor-pointer relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border-2 border-surface"></span>
+</button>
+<button class="text-on-secondary-container hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Dashboard Workspace -->
+<div class="p-md space-y-md">
+<!-- Metrics Row (Top Row) -->
+<div class="grid grid-cols-3 gap-md">
+<!-- Overall Sentiment -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md card-status-accent relative overflow-hidden group">
+<div class="flex justify-between items-start">
+<div>
+<p class="font-label-caps text-on-surface-variant mb-2">OVERALL SENTIMENT</p>
+<h2 class="font-display-lg text-display-lg text-primary-container">Positive</h2>
+<p class="font-label-mono text-label-mono text-primary mt-2 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+                                +12.4% vs last 30d
+                            </p>
+</div>
+<div class="opacity-10 absolute right-[-10px] bottom-[-10px]">
+<span class="material-symbols-outlined text-[120px]" style="font-variation-settings: 'wght' 200;">sentiment_very_satisfied</span>
+</div>
+</div>
+</div>
+<!-- CSAT Score -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md card-status-accent">
+<p class="font-label-caps text-on-surface-variant mb-2">CSAT SCORE</p>
+<div class="flex items-baseline gap-1">
+<h2 class="font-display-lg text-display-lg">4.82</h2>
+<span class="text-on-surface-variant font-label-mono">/5.0</span>
+</div>
+<div class="mt-4 h-1 w-full bg-surface-container-high rounded-full">
+<div class="h-full bg-primary-container rounded-full" style="width: 96.4%"></div>
+</div>
+<p class="font-label-mono text-label-mono text-on-surface-variant mt-2">96.4% Satisfaction Rate</p>
+</div>
+<!-- Resolution Rate -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md card-status-accent">
+<p class="font-label-caps text-on-surface-variant mb-2">RESOLUTION RATE</p>
+<div class="flex items-baseline gap-1">
+<h2 class="font-display-lg text-display-lg">89.1%</h2>
+</div>
+<p class="font-label-mono text-label-mono text-error mt-2 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">trending_down</span>
+                        -2.1% <span class="text-on-surface-variant opacity-60">Average 4.2h TTC</span>
+</p>
+</div>
+</div>
+<!-- Visualization Row (Center) -->
+<div class="grid grid-cols-12 gap-md">
+<!-- Bar Chart: Ticket Volume -->
+<div class="col-span-8 bg-surface-container-lowest border border-outline-variant rounded-xl p-md">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-label-caps text-headline-md uppercase tracking-tight">Ticket Status Volume</h3>
+<div class="flex gap-4">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-sm bg-primary-container"></span>
+<span class="font-label-mono text-[10px]">Resolved</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-sm bg-surface-container-high"></span>
+<span class="font-label-mono text-[10px]">Open</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-sm bg-tertiary-container"></span>
+<span class="font-label-mono text-[10px]">Escalated</span>
+</div>
+</div>
+</div>
+<div class="h-64 flex items-end justify-between px-xs gap-4 border-b border-outline-variant pb-xs">
+<!-- MON -->
+<div class="flex-grow flex flex-col-reverse h-full max-w-[40px] group">
+<div class="bg-primary-container h-[40%] rounded-t-sm"></div>
+<div class="bg-surface-container-high h-[30%]"></div>
+<div class="bg-tertiary-container h-[10%]"></div>
+</div>
+<!-- TUE -->
+<div class="flex-grow flex flex-col-reverse h-full max-w-[40px] group">
+<div class="bg-primary-container h-[60%] rounded-t-sm"></div>
+<div class="bg-surface-container-high h-[20%]"></div>
+<div class="bg-tertiary-container h-[5%]"></div>
+</div>
+<!-- WED -->
+<div class="flex-grow flex flex-col-reverse h-full max-w-[40px] group">
+<div class="bg-primary-container h-[30%] rounded-t-sm"></div>
+<div class="bg-surface-container-high h-[40%]"></div>
+<div class="bg-tertiary-container h-[20%]"></div>
+</div>
+<!-- THU -->
+<div class="flex-grow flex flex-col-reverse h-full max-w-[40px] group">
+<div class="bg-primary-container h-[80%] rounded-t-sm"></div>
+<div class="bg-surface-container-high h-[5%]"></div>
+<div class="bg-tertiary-container h-[5%]"></div>
+</div>
+<!-- FRI -->
+<div class="flex-grow flex flex-col-reverse h-full max-w-[40px] group">
+<div class="bg-primary-container h-[75%] rounded-t-sm"></div>
+<div class="bg-surface-container-high h-[15%]"></div>
+<div class="bg-tertiary-container h-[5%]"></div>
+</div>
+<!-- SAT -->
+<div class="flex-grow flex flex-col-reverse h-full max-w-[40px] group">
+<div class="bg-primary-container h-[20%] rounded-t-sm"></div>
+<div class="bg-surface-container-high h-[10%]"></div>
+<div class="bg-tertiary-container h-[5%]"></div>
+</div>
+<!-- SUN -->
+<div class="flex-grow flex flex-col-reverse h-full max-w-[40px] group">
+<div class="bg-primary-container h-[15%] rounded-t-sm"></div>
+<div class="bg-surface-container-high h-[5%]"></div>
+<div class="bg-tertiary-container h-[2%]"></div>
+</div>
+</div>
+<div class="flex justify-between mt-2 px-xs">
+<span class="font-label-mono text-[10px] text-on-surface-variant opacity-60">MON</span>
+<span class="font-label-mono text-[10px] text-on-surface-variant opacity-60">TUE</span>
+<span class="font-label-mono text-[10px] text-on-surface-variant opacity-60">WED</span>
+<span class="font-label-mono text-[10px] text-on-surface-variant opacity-60">THU</span>
+<span class="font-label-mono text-[10px] text-on-surface-variant opacity-60">FRI</span>
+<span class="font-label-mono text-[10px] text-on-surface-variant opacity-60">SAT</span>
+<span class="font-label-mono text-[10px] text-on-surface-variant opacity-60">SUN</span>
+</div>
+</div>
+<!-- Donut Chart: Sentiment Split -->
+<div class="col-span-4 bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col items-center justify-between">
+<h3 class="font-label-caps text-headline-md uppercase tracking-tight self-start mb-4">Sentiment Split</h3>
+<div class="relative w-48 h-48">
+<!-- Simplified Donut via SVG -->
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
+<path class="text-surface-container-highest" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="100, 100" stroke-width="4"></path>
+<path class="text-primary-container" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="72, 100" stroke-width="4"></path>
+<path class="text-tertiary-container" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="18, 100" stroke-dashoffset="-72" stroke-width="4"></path>
+<path class="text-error" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="10, 100" stroke-dashoffset="-90" stroke-width="4"></path>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="font-display-lg text-display-lg text-on-surface">72%</span>
+<span class="font-label-mono text-[10px] text-on-surface-variant uppercase">Positive</span>
+</div>
+</div>
+<div class="flex justify-between w-full mt-6 px-xs">
+<div class="text-center">
+<p class="font-body-md text-primary font-bold">72%</p>
+<p class="font-label-mono text-[10px] text-on-surface-variant">POS</p>
+</div>
+<div class="text-center">
+<p class="font-body-md text-tertiary font-bold">18%</p>
+<p class="font-label-mono text-[10px] text-on-surface-variant">NEU</p>
+</div>
+<div class="text-center">
+<p class="font-body-md text-error font-bold">10%</p>
+<p class="font-label-mono text-[10px] text-on-surface-variant">NEG</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Table Section (Bottom) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden">
+<div class="p-md border-b border-outline-variant flex justify-between items-center bg-surface-container-low/50">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-container">psychology</span>
+</div>
+<h3 class="font-label-caps text-headline-md uppercase">AI-Identified Sentiment Drivers</h3>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
+<span class="font-label-mono text-[10px] text-on-surface-variant uppercase tracking-widest">Real-time engine active</span>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/30 border-b border-outline-variant">
+<th class="px-md py-4 font-label-mono text-xs text-on-surface-variant uppercase">Driver Category</th>
+<th class="px-md py-4 font-label-mono text-xs text-on-surface-variant uppercase">Impact Score</th>
+<th class="px-md py-4 font-label-mono text-xs text-on-surface-variant uppercase">Primary Keyword Clusters</th>
+<th class="px-md py-4 font-label-mono text-xs text-on-surface-variant uppercase">Trend</th>
+<th class="px-md py-4 font-label-mono text-xs text-on-surface-variant uppercase">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/50">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-md py-4">
+<span class="font-body-md font-semibold text-on-surface">API Response Latency</span>
+</td>
+<td class="px-md py-4 font-label-mono">-0.42</td>
+<td class="px-md py-4">
+<div class="flex gap-2">
+<span class="px-2 py-0.5 bg-secondary-container text-on-secondary-container text-[10px] font-label-mono rounded">slow</span>
+<span class="px-2 py-0.5 bg-secondary-container text-on-secondary-container text-[10px] font-label-mono rounded">timeout</span>
+<span class="px-2 py-0.5 bg-secondary-container text-on-secondary-container text-[10px] font-label-mono rounded">v3/endpoint</span>
+</div>
+</td>
+<td class="px-md py-4">
+<div class="flex items-center gap-2 text-error font-label-mono">
+<span class="material-symbols-outlined text-sm">trending_down</span>
+                                        Worsening
+                                    </div>
+</td>
+<td class="px-md py-4">
+<span class="px-2 py-0.5 bg-error-container text-on-error-container text-[9px] font-label-caps border border-error/20 rounded">CRITICAL</span>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-md py-4">
+<span class="font-body-md font-semibold text-on-surface">Onboarding Ease</span>
+</td>
+<td class="px-md py-4 font-label-mono">+0.88</td>
+<td class="px-md py-4">
+<div class="flex gap-2">
+<span class="px-2 py-0.5 bg-secondary-container text-on-secondary-container text-[10px] font-label-mono rounded">fast</span>
+<span class="px-2 py-0.5 bg-secondary-container text-on-secondary-container text-[10px] font-label-mono rounded">intuitive</span>
+<span class="px-2 py-0.5 bg-secondary-container text-on-secondary-container text-[10px] font-label-mono rounded">setup</span>
+</div>
+</td>
+<td class="px-md py-4">
+<div class="flex items-center gap-2 text-primary font-label-mono">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+                                        Improving
+                                    </div>
+</td>
+<td class="px-md py-4">
+<span class="px-2 py-0.5 bg-surface-container-highest text-on-surface-variant text-[9px] font-label-caps border border-outline-variant/30 rounded">MONITORED</span>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-md py-4">
+<span class="font-body-md font-semibold text-on-surface">Documentation Clarity</span>
+</td>
+<td class="px-md py-4 font-label-mono">+0.15</td>
+<td class="px-md py-4">
+<div class="flex gap-2">
+<span class="px-2 py-0.5 bg-secondary-container text-on-secondary-container text-[10px] font-label-mono rounded">searchable</span>
+<span class="px-2 py-0.5 bg-secondary-container text-on-secondary-container text-[10px] font-label-mono rounded">examples</span>
+</div>
+</td>
+<td class="px-md py-4">
+<div class="flex items-center gap-2 text-on-surface-variant font-label-mono opacity-60">
+<span class="material-symbols-outlined text-sm">remove</span>
+                                        Stable
+                                    </div>
+</td>
+<td class="px-md py-4">
+<span class="px-2 py-0.5 bg-surface-container-highest text-on-surface-variant text-[9px] font-label-caps border border-outline-variant/30 rounded">MONITORED</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+<!-- Side Tools Anchor (Right Floating Strip) -->
+<div class="fixed right-0 top-0 h-screen w-12 bg-inverse-surface border-l border-outline-variant flex flex-col items-center py-6 gap-6 z-50">
+<button class="text-surface-container-highest opacity-50 hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined">timer</span>
+</button>
+<button class="text-surface-container-highest opacity-50 hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined">bolt</span>
+</button>
+<button class="text-surface-container-highest opacity-50 hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined">chat_bubble</span>
+</button>
+<button class="text-surface-container-highest opacity-50 hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined">history</span>
+</button>
+<div class="mt-auto rotate-90 mb-12 origin-center whitespace-nowrap">
+<span class="font-label-mono text-[9px] text-surface-container-highest opacity-30 tracking-[0.3em]">V.4.2.0-STABLE</span>
+</div>
+</div>
+<script>
+        // Micro-interactions
+        document.querySelectorAll('.scale-98').forEach(el => {
+            el.addEventListener('mousedown', () => el.classList.add('scale-95'));
+            el.addEventListener('mouseup', () => el.classList.remove('scale-95'));
+            el.addEventListener('mouseleave', () => el.classList.remove('scale-95'));
+        });
+    </script>
+</body></html>
