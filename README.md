@@ -143,32 +143,174 @@ flowchart TD
 ## Repository Structure
 
 ```
-Enterprise-NeXus/
-│   .gitignore
-│   README.md
-│
 ├── assets/
 │   └── logo/
-│
+│       ├── enterprise-nexus-icon-32.png
+│       ├── enterprise-nexus-icon-64.png
+│       ├── enterprise-nexus-icon-192.png
+│       ├── enterprise-nexus-icon-512.png
+│       ├── enterprise-nexus-icon.svg
+│       ├── enterprise-nexus-logo-dark.png
+│       ├── enterprise-nexus-logo-dark.svg
+│       ├── enterprise-nexus-logo-light.png
+│       ├── enterprise-nexus-logo-light.svg
+│       ├── enterprise-nexus-logo.png
+│       ├── enterprise-nexus-logo.svg
+│       └── favicon.ico
 ├── backend/
+│   ├── migrations/
+│   │   ├── 002_audit_and_password_reset.sql
+│   │   ├── 003_notifications.sql
+│   │   └── 004_user_notification_prefs.sql
+│   ├── src/
+│   │   ├── agents/
+│   │   │   ├── tools/
+│   │   │   │   ├── retrieveKnowledge.js
+│   │   │   │   └── scopedQuery.js
+│   │   │   ├── analytics.agent.js
+│   │   │   ├── executive.agent.js
+│   │   │   ├── finance.agent.js
+│   │   │   ├── hr.agent.js
+│   │   │   ├── memory.js
+│   │   │   └── support.agent.js
+│   │   ├── ai/
+│   │   │   ├── BaseAgent.js
+│   │   │   ├── client.js
+│   │   │   ├── embeddings.js
+│   │   │   └── errors.js
+│   │   ├── config/
+│   │   │   └── supabase.js
+│   │   ├── controllers/
+│   │   │   ├── admin.controller.js
+│   │   │   ├── agents.controller.js
+│   │   │   ├── analytics.controller.js
+│   │   │   ├── auth.controller.js
+│   │   │   ├── executive.controller.js
+│   │   │   ├── finance.controller.js
+│   │   │   ├── hr.controller.js
+│   │   │   ├── notifications.controller.js
+│   │   │   ├── search.controller.js
+│   │   │   ├── security.controller.js
+│   │   │   ├── support.controller.js
+│   │   │   ├── task.controller.js
+│   │   │   └── webhook.controller.js
+│   │   ├── middleware/
+│   │   │   ├── auth.middleware.js
+│   │   │   ├── correlationId.middleware.js
+│   │   │   ├── error.middleware.js
+│   │   │   ├── upload.middleware.js
+│   │   │   └── validate.middleware.js
+│   │   ├── routes/
+│   │   │   ├── admin.routes.js
+│   │   │   ├── agents.routes.js
+│   │   │   ├── analytics.routes.js
+│   │   │   ├── auth.routes.js
+│   │   │   ├── executive.routes.js
+│   │   │   ├── finance.routes.js
+│   │   │   ├── hr.routes.js
+│   │   │   ├── notifications.routes.js
+│   │   │   ├── search.routes.js
+│   │   │   ├── security.routes.js
+│   │   │   ├── support.routes.js
+│   │   │   ├── task.routes.js
+│   │   │   └── webhook.routes.js
+│   │   ├── tests/
+│   │   │   ├── agents.api.test.js
+│   │   │   ├── ai.client.unit.test.js
+│   │   │   ├── ai.nofakedata.unit.test.js
+│   │   │   ├── api.integration.test.js
+│   │   │   ├── auth.unit.test.js
+│   │   │   ├── executive.orchestrator.test.js
+│   │   │   └── rag.search.test.js
+│   │   ├── utils/
+│   │   │   ├── audit.js
+│   │   │   ├── email.js
+│   │   │   ├── fileExtract.js
+│   │   │   ├── gemini.js
+│   │   │   ├── logger.js
+│   │   │   ├── pdf.js
+│   │   │   └── webhook.js
+│   │   ├── validators/
+│   │   │   ├── auth.validators.js
+│   │   │   ├── finance.validators.js
+│   │   │   ├── hr.validators.js
+│   │   │   └── support.validators.js
+│   │   └── server.js
+│   ├── .env.example
+│   ├── Dockerfile
+│   ├── package.json
+│   └── render.yaml
 ├── database/
+│   ├── 001_initial_schema.sql
+│   └── migration_user_sessions.sql
+├── documentation/
+│   ├── ai-integration/
+│   │   └── CSE4204-8B-T04_AIIntegrationReport.pdf
+│   ├── backend-progress/
+│   │   └── CSE-8B-T04-Backend-Development-&-Database-Implementation.pdf
+│   ├── diagram/
+│   │   ├── ai-workflow/
+│   │   ├── architecture/
+│   │   ├── er-diagram/
+│   │   ├── use-case-diagram/
+│   │   └── user-flow/
+│   ├── frontend-progress/
+│   │   └── CSE4204-8B-T04_FrontendProgress.pdf
+│   ├── proposal/
+│   │   └── CSE4204-8B-T04_Proposal.pdf
+│   ├── srs/
+│   │   └── CSE4204-8B-T04_SRS.pdf
+│   ├── system-design/
+│   │   └── CSE4204-8B-T04_SystemDesign.pdf
+│   └── ui-design/
+│       ├── screens/
+│       └── figma.md
 ├── frontend/
-├── n8n-workflows/
-│
-└── documentation/
-    ├── proposal/
-    ├── srs/
-    ├── system-design/
-    ├── diagram/
-    │   ├── ai-workflow/
-    │   ├── architecture/
-    │   ├── er-diagram/
-    │   ├── use-case-diagram/
-    │   └── user-flow/
-    └── ui-design/
-        ├── figma.md
-        ├── CSE4204-8B-T04_UIDesign.pdf
-        └── screens/           ← 41 screens (PNG + HTML per screen)
+│   ├── src/
+│   │   ├── app/
+│   │   │   └── (dashboard)/
+│   │   │       ├── admin/
+│   │   │       ├── analytics/
+│   │   │       ├── dashboard/
+│   │   │       ├── executive/
+│   │   │       ├── finance/
+│   │   │       ├── hr/
+│   │   │       ├── security/
+│   │   │       ├── settings/
+│   │   │       └── support/
+│   │   ├── components/
+│   │   │   ├── charts/
+│   │   │   ├── layout/
+│   │   │   ├── modals/
+│   │   │   ├── onboarding/
+│   │   │   └── ui/
+│   │   ├── constants/
+│   │   ├── contexts/
+│   │   ├── hooks/
+│   │   └── lib/
+│   ├── next.config.js
+│   ├── package.json
+│   ├── tailwind.config.ts
+│   └── tsconfig.json
+├── postman/
+│   └── CSE4204-8B-T04_APICollection.json
+├── screenshots/
+│   └── 00-ui-screenshots/
+├── supabase/
+│   └── migrations/
+│       ├── 001_initial_schema.sql
+│       ├── 002_add_ai_status.sql
+│       ├── 003_agent_conversations.sql
+│       └── 004_pgvector_documents.sql
+├── .gitignore
+├── .prettierignore
+├── DEPLOYMENT.md
+├── LICENSE
+├── README.md
+├── docker-compose.yml
+├── package.json
+├── start.bat
+└── stop.bat
 ```
 
 ---
