@@ -28,7 +28,7 @@
 
 Enterprise NeXus is a Multi-Agent AI Business Automation Operating System designed to unify and intelligently automate core business functions for small and medium enterprises, startups, and growing organizations.
 
-The platform deploys five specialized AI agents — an HR Agent, a Finance Agent, a Support Agent, an Analytics Agent, and an Executive Agent — each responsible for a distinct operational domain. These agents operate through a centralized orchestration layer powered by LangChain and CrewAI, enabling them to collaborate autonomously, delegate sub-tasks across departments, and deliver synthesized intelligence to a unified, role-based web dashboard. A dedicated Security Intelligence module monitors threats and enforces data protection across the entire system.
+The platform deploys five specialized AI agents — an HR Agent, a Finance Agent, a Support Agent, an Analytics Agent, and an Executive Agent — each responsible for a distinct operational domain. These agents operate through a centralized orchestration layer powered by LangChain.js, enabling them to collaborate autonomously, delegate sub-tasks across departments, and deliver synthesized intelligence to a unified, role-based web dashboard. A dedicated Security Intelligence module monitors threats and enforces data protection across the entire system.
 
 ---
 
@@ -56,13 +56,49 @@ The platform deploys five specialized AI agents — an HR Agent, a Finance Agent
 | **Backend** | Node.js + Express.js |
 | **Authentication** | JWT + bcrypt |
 | **Workflow Automation** | n8n |
-| **Database** | PostgreSQL |
-| **Vector Database** | Pinecone / ChromaDB |
-| **Core LLM** | OpenAI GPT-4 / Google Gemini |
-| **AI Framework** | LangChain |
-| **Multi-Agent Orchestration** | CrewAI |
-| **Conversational Agents** | AutoGen |
+| **Database** | PostgreSQL (Supabase) |
+| **Vector Search (RAG)** | Supabase pgvector (`documents` table + `match_documents` RPC) |
+| **Embeddings** | Gemini `text-embedding-004` (768-dim) |
+| **Core LLM** | Google Gemini (native JSON mode, hardened client) |
+| **AI Framework** | LangChain.js (`@langchain/google-genai`, tool-calling agents) |
+| **Multi-Agent Orchestration** | Custom Executive orchestrator (BaseAgent delegation + conversation memory) |
+| **Realtime** | Supabase Realtime (live agent activity, dashboard refresh) |
 | **Version Control** | GitHub |
+
+---
+
+## AI Integration (Week 08)
+
+Enterprise NeXus integrates AI as its core product layer — a multi-agent system that reasons over the user's own business data, not a bolt-on feature.
+
+**Selected AI Platform:** Google Gemini (`gemini-1.5-flash`, configurable via `GEMINI_MODEL`)
+**AI Framework:** LangChain.js (`@langchain/google-genai`) with a custom `BaseAgent` tool-calling foundation
+
+**AI Features Implemented**
+- **HR Agent** — Intelligent CV screening: AI score (0–100), confidence, shortlist/review/reject recommendation, per-dimension breakdown
+- **Finance Agent** — Financial anomaly detection (normal/medium/high/critical) with explanatory notes; automated invoice parsing
+- **Support Agent** — Context-aware ticket triage (intent, urgency, sentiment) with RAG-grounded reply drafting and auto-escalation
+- **Analytics Agent** — Cross-module KPI snapshots and AI-generated performance reports
+- **Executive Agent** — Multi-agent orchestrator that delegates to the four specialists and produces daily cross-domain briefings
+- **Semantic Search / RAG** — Gemini `text-embedding-004` embeddings stored in Supabase pgvector, retrieved via the `match_documents` RPC (top-5 cosine similarity)
+
+**AI Workflow**
+```mermaid
+flowchart TD
+    A[User Input] --> B[Frontend — Next.js]
+    B --> C[Backend API — Express]
+    C --> D[Agent — BaseAgent Tool Loop]
+    D --> E[Gemini — Native JSON Mode]
+    E --> F{Output Valid?<br/>Joi / Zod Schema}
+    F -->|Yes| G[Backend Processing<br/>Save + ai_status: success]
+    F -->|No / AI Unavailable| H[Graceful Degradation<br/>ai_status: pending/failed]
+    G --> I[Frontend Display]
+    H --> I
+```
+
+**Prompt Engineering:** Each agent uses a scoped system prompt that fixes its role/domain, forbids inventing data, enforces per-user data isolation, and requires strict JSON output via Gemini's native response-schema mode.
+
+**Response Handling & Reliability:** All Gemini calls go through a hardened client (`backend/src/ai/client.js`) — 30s per-attempt timeout, 2 retries with exponential backoff + jitter for transient errors, and a typed `AiUnavailableError` for permanent failures. If AI is unavailable, records save with `ai_status: "pending"`/`"failed"` and are retryable — the system never fabricates AI output.
 
 ---
 
@@ -149,3 +185,5 @@ Enterprise-NeXus/
 | **Use Case Diagram** | [CSE4204-8B-T04_UseCaseDiagram.pdf](documentation/diagram/use-case-diagram/CSE4204-8B-T04_UseCaseDiagram.pdf) |
 | **UI Design Prototype** | [CSE4204-8B-T04_UIDesign.pdf](documentation/ui-design/CSE4204-8B-T04_UIDesign.pdf) |
 | **Figma Prototype** | [View on Figma](documentation/ui-design/figma.md) |
+| **AI Integration Report** | [CSE4204-8B-T04_AIIntegration.pdf](documentation/ai-integration/CSE4204-8B-T04_AIIntegration.pdf) |
+| **AI Workflow Diagrams** | [ai-workflow/](documentation/diagram/ai-workflow/) (10 diagrams — activity, deployment, module flows, pipeline, degradation) |
