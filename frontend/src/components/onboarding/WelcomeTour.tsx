@@ -18,7 +18,7 @@ const STEPS = [
     icon: <Briefcase className="w-10 h-10 text-primary" />,
     title: 'Welcome to Enterprise NeXus',
     description:
-      'Your AI-powered command centre for HR, Finance, and Support — all in one platform. Let's take a quick look at what you can do.',
+      'Your AI-powered command centre for HR, Finance, and Support — all in one platform. Let\'s take a quick look at what you can do.',
     badge: '1 of 5',
   },
   {

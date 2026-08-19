@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { hrApi, hrUploadApi } from '@/lib/api'
+import { hrApi, hrUploadApi, getApiErrorMessage } from '@/lib/api'
 import toast from 'react-hot-toast'
 
 interface Props {
@@ -68,8 +68,8 @@ export default function CVUploadModal({ open, onClose, onCreated }: Props) {
       reset()
       onCreated()
       onClose()
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || 'Failed to screen CV')
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Failed to screen CV'))
     } finally {
       setLoading(false)
     }

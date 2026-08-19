@@ -1,0 +1,217 @@
+{
+  "name": "05 · Weekly Analytics KPI Generator (Monday 9AM)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 9 * * 1" }]
+        }
+      },
+      "id": "n1-schedule-weekly",
+      "name": "Every Monday 9AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 400]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.NEXUS_API_URL }}/webhook/pending-tasks",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-nexus-secret", "value": "={{ $env.N8N_SECRET }}" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [{ "name": "agent_type", "value": "analytics" }]
+        },
+        "options": {}
+      },
+      "id": "n2-get-analytics-task",
+      "name": "Get Analytics Tasks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "const tasks = $input.first().json.data || [];\nconst task = tasks[0] || null;\nreturn [{ json: { task_id: task?.id || null, user_id: task?.user_id || null } }];"
+      },
+      "id": "n3-extract-analytics-task",
+      "name": "Extract Analytics Task",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 400]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.NEXUS_API_URL }}/hr/stats",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-nexus-secret", "value": "={{ $env.N8N_SECRET }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n4-hr-stats",
+      "name": "Fetch HR Stats",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.NEXUS_API_URL }}/finance/summary",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-nexus-secret", "value": "={{ $env.N8N_SECRET }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n5-finance-summary",
+      "name": "Fetch Finance Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.NEXUS_API_URL }}/support/sentiment-report",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-nexus-secret", "value": "={{ $env.N8N_SECRET }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n6-support-report",
+      "name": "Fetch Support Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 600]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate all data and calculate KPI scores\nconst hr = $('Fetch HR Stats').first().json?.stats || {};\nconst fin = $('Fetch Finance Summary').first().json || {};\nconst sup = $('Fetch Support Report').first().json?.report || {};\nconst taskCtx = $('Extract Analytics Task').first().json;\n\n// Calculate sub-scores\nconst hrScore = hr.total > 0\n  ? Math.round(((hr.shortlisted || 0) / hr.total) * 100)\n  : 0;\n\nconst finScore = fin.record_count > 0\n  ? Math.max(0, 100 - Math.round(((fin.anomaly_count || 0) / fin.record_count) * 100))\n  : 100;\n\nconst supScore = sup.total > 0\n  ? Math.round(((sup.resolved || 0) / sup.total) * 100)\n  : 0;\n\nconst overallScore = Math.round((hrScore + finScore + supScore) / 3);\n\nconst rating =\n  overallScore >= 80 ? 'excellent' :\n  overallScore >= 60 ? 'good' :\n  overallScore >= 40 ? 'average' : 'poor';\n\nconst kpiSnapshot = {\n  'HR Shortlist Rate': `${hrScore}%`,\n  'Finance Health': `${finScore}%`,\n  'Support Resolution Rate': `${supScore}%`,\n  'Total CV Screenings': hr.total || 0,\n  'Total Transactions': fin.record_count || 0,\n  'Finance Anomalies': fin.anomaly_count || 0,\n  'Total Tickets': sup.total || 0,\n  'Tickets Escalated': sup.escalated || 0,\n};\n\nconst prompt = `You are an enterprise analytics AI. Generate a concise weekly KPI analysis based on this data:\n\nHR: ${hr.total || 0} CVs screened, ${hr.shortlisted || 0} shortlisted (${hrScore}% rate), ${hr.rejected || 0} rejected\nFinance: ${fin.record_count || 0} transactions, ৳${Number(fin.total_spend || 0).toLocaleString()} total spend, ${fin.anomaly_count || 0} anomalies detected (health score: ${finScore}%)\nSupport: ${sup.total || 0} tickets, ${sup.resolved || 0} resolved (${supScore}% resolution rate), ${sup.escalated || 0} escalated\nOverall Score: ${overallScore}/100 (${rating})\n\nProvide: 1) Key insights (2-3 sentences), 2) Three specific action items for the upcoming week. Be data-driven and concise.`;\n\nreturn [{\n  json: {\n    overall_score: overallScore,\n    performance_rating: rating,\n    kpi_snapshot: kpiSnapshot,\n    prompt,\n    task_id: taskCtx.task_id,\n    user_id: taskCtx.user_id\n  }\n}];"
+      },
+      "id": "n7-calculate-kpi",
+      "name": "Calculate KPI Scores",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-goog-api-key", "value": "={{ $env.GEMINI_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        { \"text\": {{ JSON.stringify($json.prompt) }} }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "n8-gemini-insights",
+      "name": "Generate AI Insights",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract Gemini insights and parse action items\nconst geminiRes = $input.first().json;\nconst fullText = geminiRes?.candidates?.[0]?.content?.parts?.[0]?.text || '';\nconst kpiCtx = $('Calculate KPI Scores').first().json;\n\n// Extract action items (lines starting with a number or bullet)\nconst lines = fullText.split('\\n').filter(l => l.trim());\nconst actionItems = lines\n  .filter(l => /^(\\d+[.)]|[-*•])/.test(l.trim()))\n  .map(l => l.replace(/^(\\d+[.)]|[-*•])\\s*/, '').trim())\n  .slice(0, 3);\n\n// First paragraph = insights\nconst insightsParagraph = lines.find(l => l.length > 50 && !/^(\\d+[.)]|[-*•])/.test(l.trim())) || fullText.substring(0, 300);\n\nreturn [{\n  json: {\n    user_id: kpiCtx.user_id,\n    task_id: kpiCtx.task_id,\n    performance_rating: kpiCtx.performance_rating,\n    overall_score: kpiCtx.overall_score,\n    ai_insights: insightsParagraph,\n    action_items: actionItems.length > 0 ? actionItems : ['Review anomaly flagged transactions', 'Follow up with shortlisted candidates', 'Resolve escalated support tickets'],\n    kpi_snapshot: kpiCtx.kpi_snapshot\n  }\n}];"
+      },
+      "id": "n9-parse-insights",
+      "name": "Parse AI Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NEXUS_API_URL }}/webhook/analytics-kpi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-nexus-secret", "value": "={{ $env.N8N_SECRET }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "user_id", "value": "={{ $json.user_id }}" },
+            { "name": "performance_rating", "value": "={{ $json.performance_rating }}" },
+            { "name": "overall_score", "value": "={{ $json.overall_score }}" },
+            { "name": "ai_insights", "value": "={{ $json.ai_insights }}" },
+            { "name": "action_items", "value": "={{ JSON.stringify($json.action_items) }}" },
+            { "name": "kpi_snapshot", "value": "={{ JSON.stringify($json.kpi_snapshot) }}" },
+            { "name": "task_id", "value": "={{ $json.task_id }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n10-save-kpi",
+      "name": "Save KPI Report to Backend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1780, 400]
+    }
+  ],
+  "connections": {
+    "Every Monday 9AM": {
+      "main": [[{ "node": "Get Analytics Tasks", "type": "main", "index": 0 }]]
+    },
+    "Get Analytics Tasks": {
+      "main": [[{ "node": "Extract Analytics Task", "type": "main", "index": 0 }]]
+    },
+    "Extract Analytics Task": {
+      "main": [
+        [{ "node": "Fetch HR Stats", "type": "main", "index": 0 }],
+        [{ "node": "Fetch Finance Summary", "type": "main", "index": 0 }],
+        [{ "node": "Fetch Support Report", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fetch HR Stats": {
+      "main": [[{ "node": "Calculate KPI Scores", "type": "main", "index": 0 }]]
+    },
+    "Fetch Finance Summary": {
+      "main": [[{ "node": "Calculate KPI Scores", "type": "main", "index": 0 }]]
+    },
+    "Fetch Support Report": {
+      "main": [[{ "node": "Calculate KPI Scores", "type": "main", "index": 0 }]]
+    },
+    "Calculate KPI Scores": {
+      "main": [[{ "node": "Generate AI Insights", "type": "main", "index": 0 }]]
+    },
+    "Generate AI Insights": {
+      "main": [[{ "node": "Parse AI Response", "type": "main", "index": 0 }]]
+    },
+    "Parse AI Response": {
+      "main": [[{ "node": "Save KPI Report to Backend", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": {
+    "templateId": "nexus-weekly-kpi",
+    "instanceId": "enterprise-nexus"
+  },
+  "id": "wf-analytics-kpi-005",
+  "tags": [{ "name": "Analytics" }, { "name": "Scheduled" }, { "name": "Gemini" }, { "name": "Enterprise NeXus" }]
+}

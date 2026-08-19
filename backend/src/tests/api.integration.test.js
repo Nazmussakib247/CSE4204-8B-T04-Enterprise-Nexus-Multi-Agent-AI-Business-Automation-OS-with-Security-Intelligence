@@ -31,6 +31,7 @@ jest.mock('../config/supabase', () => {
     order: jest.fn().mockReturnThis(),
     range: jest.fn().mockReturnThis(),
     single: jest.fn(),
+    limit: jest.fn().mockResolvedValue({ data: [], error: null }),
     from: jest.fn().mockReturnThis(),
   };
   return {
@@ -69,11 +70,11 @@ jest.mock('../utils/email', () => ({
 
 // ── Auth middleware mock — injects req.user ───────────────────
 jest.mock('../middleware/auth.middleware', () => ({
-  authenticate: (req, _res, next) => {
+  protect: (req, _res, next) => {
     req.user = { id: 'test-user-id', role: 'employee' };
     next();
   },
-  requireRole: () => (_req, _res, next) => next(),
+  authorize: () => (_req, _res, next) => next(),
 }));
 
 // ── Import app after all mocks ────────────────────────────────
@@ -98,7 +99,7 @@ const mock = () => supabase._mock;
 // ── Health check ──────────────────────────────────────────────
 describe('GET /health', () => {
   test('returns 200 with status ok', async () => {
-    const res = await request(app).get('/health');
+    const res = await request(app).get('/api/health');
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ status: 'ok' });
   });
@@ -108,7 +109,6 @@ describe('GET /health', () => {
 describe('HR API — /api/hr/reports', () => {
   describe('GET /api/hr/reports', () => {
     test('returns 200 with paginated data', async () => {
-      mock().single.mockResolvedValueOnce({ data: null, error: null });  // auth user lookup
       mock().range = jest.fn().mockResolvedValueOnce({
         data: [{ id: 'r1', candidate_name: 'Alice', job_title: 'Engineer', recommendation: 'shortlist' }],
         error: null,
@@ -253,7 +253,7 @@ describe('Support API — /api/support/tickets', () => {
   describe('PATCH /api/support/tickets/:id/status', () => {
     test('returns 400 for invalid status value', async () => {
       const res = await request(app)
-        .patch('/api/support/tickets/t1/status')
+        .patch('/api/support/tickets/t1')
         .send({ status: 'invalid-status' });
 
       expect(res.status).toBe(400);

@@ -1,0 +1,167 @@
+{
+  "name": "04 · Daily Executive Briefing (8 AM)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 8 * * *" }]
+        }
+      },
+      "id": "n1-schedule-8am",
+      "name": "Every Day 8AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.NEXUS_API_URL }}/webhook/pending-tasks",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-nexus-secret", "value": "={{ $env.N8N_SECRET }}" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [{ "name": "agent_type", "value": "executive" }]
+        },
+        "options": {}
+      },
+      "id": "n2-get-exec-task",
+      "name": "Get Executive Tasks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the first pending executive task, or create a synthetic one for the daily run\nconst tasks = $input.first().json.data || [];\nconst task = tasks[0] || null;\nreturn [{\n  json: {\n    task_id: task?.id || null,\n    user_id: task?.user_id || null,\n    triggered_by: 'daily_schedule',\n    date: new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })\n  }\n}];"
+      },
+      "id": "n3-extract-task",
+      "name": "Extract Task Info",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.NEXUS_API_URL }}/executive/briefing",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-nexus-secret", "value": "={{ $env.N8N_SECRET }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n4-get-briefing-data",
+      "name": "Fetch Cross-Domain Briefing Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build the Gemini prompt from briefing data\nconst raw = $input.first().json;\nconst briefing = raw.briefing || {};\nconst date = $('Extract Task Info').first().json.date;\n\nconst hrRecent = (briefing.hr?.recent || []).map(c => `  - ${c.candidate_name} (${c.recommendation}, score: ${c.ai_score}%)`).join('\\n') || '  None';\nconst finRecent = (briefing.finance?.recent || []).map(f => `  - ${f.category}: ৳${Number(f.amount).toLocaleString()} [${f.severity}]`).join('\\n') || '  None';\nconst supRecent = (briefing.support?.recent || []).map(t => `  - Urgency: ${t.urgency}, Status: ${t.status}`).join('\\n') || '  None';\nconst analytics = briefing.analytics?.latest ? `Score: ${briefing.analytics.latest.overall_score} (${briefing.analytics.latest.performance_rating})` : 'No data';\n\nconst prompt = `You are the Executive AI for Enterprise NeXus. Generate a concise daily business briefing for ${date}.\n\nDATA:\nHR — Recent CV Screenings:\n${hrRecent}\n\nFinance — Recent Transactions:\n${finRecent}\n\nSupport — Recent Tickets:\n${supRecent}\n\nAnalytics — ${analytics}\n\nWrite a professional executive briefing (3-4 paragraphs) covering: key highlights, risks to watch, and 2-3 recommended actions. Be direct and strategic.`;\n\nreturn [{\n  json: {\n    prompt,\n    task_id: $('Extract Task Info').first().json.task_id,\n    user_id: $('Extract Task Info').first().json.user_id\n  }\n}];"
+      },
+      "id": "n5-build-prompt",
+      "name": "Build Gemini Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-goog-api-key", "value": "={{ $env.GEMINI_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        { \"text\": {{ JSON.stringify($json.prompt) }} }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "n6-call-gemini",
+      "name": "Call Gemini AI",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract Gemini text and build executive report payload\nconst geminiRes = $input.first().json;\nconst text = geminiRes?.candidates?.[0]?.content?.parts?.[0]?.text || 'Briefing generation failed.';\nconst taskCtx = $('Build Gemini Prompt').first().json;\nconst today = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });\n\nreturn [{\n  json: {\n    user_id: taskCtx.user_id,\n    task_id: taskCtx.task_id,\n    performance_summary: `## Daily Executive Briefing — ${today}\\n\\n${text}`\n  }\n}];"
+      },
+      "id": "n7-extract-response",
+      "name": "Extract Gemini Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NEXUS_API_URL }}/webhook/executive-briefing",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-nexus-secret", "value": "={{ $env.N8N_SECRET }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "user_id", "value": "={{ $json.user_id }}" },
+            { "name": "performance_summary", "value": "={{ $json.performance_summary }}" },
+            { "name": "task_id", "value": "={{ $json.task_id }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n8-save-report",
+      "name": "Save Briefing to Backend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1780, 300]
+    }
+  ],
+  "connections": {
+    "Every Day 8AM": {
+      "main": [[{ "node": "Get Executive Tasks", "type": "main", "index": 0 }]]
+    },
+    "Get Executive Tasks": {
+      "main": [[{ "node": "Extract Task Info", "type": "main", "index": 0 }]]
+    },
+    "Extract Task Info": {
+      "main": [[{ "node": "Fetch Cross-Domain Briefing Data", "type": "main", "index": 0 }]]
+    },
+    "Fetch Cross-Domain Briefing Data": {
+      "main": [[{ "node": "Build Gemini Prompt", "type": "main", "index": 0 }]]
+    },
+    "Build Gemini Prompt": {
+      "main": [[{ "node": "Call Gemini AI", "type": "main", "index": 0 }]]
+    },
+    "Call Gemini AI": {
+      "main": [[{ "node": "Extract Gemini Response", "type": "main", "index": 0 }]]
+    },
+    "Extract Gemini Response": {
+      "main": [[{ "node": "Save Briefing to Backend", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": {
+    "templateId": "nexus-daily-briefing",
+    "instanceId": "enterprise-nexus"
+  },
+  "id": "wf-exec-briefing-004",
+  "tags": [{ "name": "Executive" }, { "name": "Scheduled" }, { "name": "Gemini" }, { "name": "Enterprise NeXus" }]
+}

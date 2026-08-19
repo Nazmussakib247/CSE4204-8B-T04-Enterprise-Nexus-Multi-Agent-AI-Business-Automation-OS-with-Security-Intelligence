@@ -1,6 +1,5 @@
 const { createLogger, format, transports } = require('winston');
 const { combine, timestamp, errors, json, colorize, printf } = format;
-const path = require('path');
 
 const isDev = process.env.NODE_ENV !== 'production';
 

@@ -83,7 +83,7 @@ function buildExecutivePdf({ user = {}, briefing = {}, generatedAt = new Date().
     doc.fillColor(C.primary).font('Helvetica-Bold').fontSize(9)
       .text('LATEST PERFORMANCE SCORE', left + 14, bannerY + 9);
     doc.fillColor(C.text).fontSize(22)
-      .text(`${latest.overall_score != null ? latest.overall_score : '-'}`, left + 14, bannerY + 22, { continued: true })
+      .text(`${latest.overall_score ?? '-'}`, left + 14, bannerY + 22, { continued: true })
       .fontSize(11).fillColor(C.muted).text(`   ${cap(latest.performance_rating)}`);
     doc.y = bannerY + 50;
     doc.moveDown(0.6);
@@ -97,7 +97,7 @@ function buildExecutivePdf({ user = {}, briefing = {}, generatedAt = new Date().
     const w = [pageWidth * 0.5, pageWidth * 0.25, pageWidth * 0.25];
     row(['Candidate', 'AI Score', 'Recommendation'], w, { bold: true, color: C.muted });
     hr.forEach((c) =>
-      row([c.candidate_name || '-', `${c.ai_score != null ? c.ai_score : '-'}%`, cap(c.recommendation)], w)
+      row([c.candidate_name || '-', `${c.ai_score ?? '-'}%`, cap(c.recommendation)], w)
     );
   }
 

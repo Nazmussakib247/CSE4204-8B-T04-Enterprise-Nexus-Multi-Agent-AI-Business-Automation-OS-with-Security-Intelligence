@@ -1,0 +1,438 @@
+[33mcommit 0a3789fcd77e6e272b714fb115a87ee5fa399764[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Sun Jul 19 22:20:59 2026 +0600
+
+    Verified working state: AI layer + security hardening (audit 2026-07-19)
+
+[33mcommit 8451222210a6fb95e3c6d2097b0dd2898877d9e7[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Mon Jul 6 19:09:39 2026 +0600
+
+    Add frontend progress report for Week 07 milestone
+
+[33mcommit e99000ccdd6105df947547638695cd5afabd7370[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Mon Jul 6 19:09:22 2026 +0600
+
+    Add backend development and database implementation documentation
+
+[33mcommit 4e565fd38ecc651ab195fa7d132eaf2a666ac99f[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Mon Jul 6 19:06:17 2026 +0600
+
+    Add new screenshot assets for various application settings and agent interfaces
+
+[33mcommit 43198f433d70fb07b988aaa999589b86ca637603[m
+Merge: 0fafc09 4765529
+Author: Nazmus Sakib <159906565+Nazmussakib247@users.noreply.github.com>
+Date:   Sun Jul 5 00:55:44 2026 +0600
+
+    Merge pull request #4 from Nazmussakib247/frontend-components
+    
+    Add UI components, API client, auth context, hooks, and auth pages
+
+[33mcommit 47655293961cfa4f3bb079781199519e4a620ee7[m[33m ([m[1;31morigin/frontend-components[m[33m)[m
+Author: Sabrina Ibrahim <sabrinaibrahimkhushbu@gmail.com>
+Date:   Sun Jul 5 00:43:05 2026 +0600
+
+    Add UI components, API client, auth context, hooks, and auth pages
+
+[33mcommit 0fafc09d74ebefbf9c9e656669bff2f15bf7eb27[m[33m ([m[1;31morigin/backend-server[m[33m)[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Sat Jul 4 15:44:37 2026 +0600
+
+    Add project config: CI, Husky hooks, Docker, and docs
+
+[33mcommit 04a364772a6517e2919e7b6821986550685329e0[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Sat Jul 4 15:43:21 2026 +0600
+
+    Add frontend scaffolding: root layout, landing page, config, and constants
+
+[33mcommit 4e935e1a054744ca0860693bab754a2851f8b724[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Sat Jul 4 15:42:43 2026 +0600
+
+    Add backend core: server bootstrap, utilities, tests, and deployment config
+
+[33mcommit 1e0964190e3065021e88571883a99d814918dbb4[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Wed Jul 1 02:07:44 2026 +0600
+
+    Add Finance Anomaly Alert workflow with critical and high severity logging
+
+[33mcommit a03f1a233d31093ad1f76afcf23b7a0e48538bdc[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Wed Jul 1 02:07:26 2026 +0600
+
+    Add HR Shortlist Pipeline workflow with webhook and task updates
+
+[33mcommit e27a4e921268770e013480245e69bfcab2f90cfb[m
+Merge: 3cb5e31 e5826ad
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Wed Jul 1 01:35:57 2026 +0600
+
+    Merge branch 'main' of https://github.com/Nazmussakib247/CSE4204-8B-T04-Enterprise-Nexus-Multi-Agent-AI-Business-Automation-OS-with-Security-Intelligence
+
+[33mcommit 3cb5e319bd9453a232689f42d5ac3373b34993de[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Wed Jul 1 01:31:39 2026 +0600
+
+    Add database schema (11 tables) and Postman API collection (50 endpoints)
+
+[33mcommit e5826add18744fdfe6e40f7cb4eecd52de5a0e34[m
+Author: Nazmus Sakib <159906565+Nazmussakib247@users.noreply.github.com>
+Date:   Thu Jun 25 23:03:54 2026 +0600
+
+    Add MIT License to the project
+
+[33mcommit 3383ec9ecbd1f4d4a545866237c30a3ace4d1655[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Mon Jun 22 22:41:47 2026 +0600
+
+    Add light theme error pages and assets
+    
+    - Created 404 error page (HTML and PNG) for light theme.
+    - Created access restricted error page (HTML and PNG) for light theme.
+    - Implemented responsive design and interactive elements using Tailwind CSS.
+    - Added micro-interactions for buttons and hover effects.
+
+[33mcommit 01e812788e839d5581043a734b07442fbe456ada[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Mon Jun 22 22:40:48 2026 +0600
+
+    Add authentication login light theme HTML and PNG assets
+
+[33mcommit 5105ca055a261e495f1fda104151b25e711d88df[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Mon Jun 22 22:40:36 2026 +0600
+
+    Add onboarding welcome tour HTML and PNG assets for light theme
+
+[33mcommit 9975e6c5aaafa3860f8986982a5777739b5b4670[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Mon Jun 22 22:40:20 2026 +0600
+
+    Refactor code structure for improved readability and maintainability
+
+[33mcommit 4f9bf96af4f1f898bf547e8103484ff29c99e586[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Mon Jun 22 22:38:53 2026 +0600
+
+    Add splash screen HTML and PNG assets for loading theme
+
+[33mcommit 33e9c04d33b546774b3be8c6ab09900b3f72ad45[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Mon Jun 22 22:38:32 2026 +0600
+
+    Add CSE4204-8B-T04 UI Design Report PDF to documentation/ui-design
+
+[33mcommit 2bec8597109a407b0922602ecd877df0b6bb383c[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Mon Jun 22 22:38:10 2026 +0600
+
+    Add CSE4204-8B-T04 UI Design document to documentation/ui-design
+
+[33mcommit 9e92fc319ee771352e878d4ec18f832ca4ec16d4[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Mon Jun 22 22:37:30 2026 +0600
+
+    Add favicon.ico to assets/logo directory
+
+[33mcommit 2c08cd3ee65f71f9c21d0a9edd8db7a1c927c351[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Mon Jun 22 20:49:59 2026 +0600
+
+    Prototype link added in readme.md file
+
+[33mcommit 2b03de328d21e87b5ccfe235a7a507832d166685[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Sun Jun 21 16:21:48 2026 +0600
+
+    logo.svg
+
+[33mcommit 200279b8e7b0c3f907eccb9ddb894b87376dbc44[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Sun Jun 21 16:21:36 2026 +0600
+
+    logo .png
+
+[33mcommit 86928e2acf33c2475392a137d27ae6826034d8f9[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Sun Jun 21 16:21:14 2026 +0600
+
+    logo-light.svg added
+
+[33mcommit 7ff5518894b822101f6e49b56b09da204baf8751[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Sun Jun 21 16:20:54 2026 +0600
+
+    logo-light.png added
+
+[33mcommit 30abc2e96b1125a271b9ac3070c16b6717f31c04[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Sun Jun 21 16:20:43 2026 +0600
+
+    logo-dark.svg added
+
+[33mcommit 13fa57b6948e5219f34d9cf82dc5c3dbf42cb74f[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Sun Jun 21 16:20:31 2026 +0600
+
+    logo-dark.png added
+
+[33mcommit 4e2104522268643504bc652d8d203c46b6aaae5a[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Sun Jun 21 16:20:08 2026 +0600
+
+    icon-svg added
+
+[33mcommit b65e64689e8cba82c29fb37092f2e3b1271467be[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Sun Jun 21 16:19:50 2026 +0600
+
+    icon-512.png added
+
+[33mcommit 06864da4c32cd1c09e97f5ec016acdbca6a36f02[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Sun Jun 21 16:19:40 2026 +0600
+
+    icon-192.png added
+
+[33mcommit 91fb2b2570bbfa29b1b5852312508d9f7a360316[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Sun Jun 21 16:19:22 2026 +0600
+
+    icon-64.png added
+
+[33mcommit 2d2bd1c16d9649dff1ed95e5b8d8db91d8bd0aed[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Sun Jun 21 16:18:58 2026 +0600
+
+    icon - 32.png added
+
+[33mcommit 5b7228a5f8680fec03e30289a62b501d91951cb8[m
+Merge: c94bff3 b77b43a
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Tue Jun 16 23:44:21 2026 +0600
+
+    Merge branch 'main' of https://github.com/Nazmussakib247/CSE4204-8B-T04-Enterprise-Nexus-Multi-Agent-AI-Business-Automation-OS-with-Security-Intelligence
+
+[33mcommit c94bff36c70fa132c6e9b1e4e849309c58cf5a91[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Tue Jun 16 23:44:14 2026 +0600
+
+    reorganize folder structure and file naming before code production begin
+
+[33mcommit b77b43a1025bb5d88fc329a7fcf0270be8cf9162[m
+Author: Nazmus Sakib <159906565+Nazmussakib247@users.noreply.github.com>
+Date:   Tue Jun 16 00:28:27 2026 +0600
+
+    Update repository structure section in README
+
+[33mcommit c5638f9c1e82c4e7d7dfc597ef23a92e008f8efa[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Tue Jun 16 00:26:56 2026 +0600
+
+    Updated current repository structure after week 04
+
+[33mcommit feee0b178319a02b4ba989ef54c33f39fd1f514f[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Tue Jun 16 00:15:35 2026 +0600
+
+    Added system design documents link in readme.md
+
+[33mcommit 03976b9ab2e942dcdf1d6c412ade8a3e9c29772c[m
+Merge: b6e012f 05bcf99
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Tue Jun 16 00:09:52 2026 +0600
+
+    Merge branch 'main' of https://github.com/Nazmussakib247/CSE4204-8B-T04-Enterprise-Nexus-Multi-Agent-AI-Business-Automation-OS-with-Security-Intelligence
+
+[33mcommit b6e012f64787bd473f8ef70bd12cf7149c187ddf[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Tue Jun 16 00:09:43 2026 +0600
+
+    System Design and Architecture Design added
+
+[33mcommit 05bcf99ece9e011488189eddc006fe751f92670f[m
+Merge: c581fbb 10f9b2d
+Author: Nazmus Sakib <159906565+Nazmussakib247@users.noreply.github.com>
+Date:   Tue Jun 16 00:06:56 2026 +0600
+
+    Merge pull request #3 from Nazmussakib247/Nazmussakib247-patch-1
+    
+    Add Week 04 section to README
+
+[33mcommit 10f9b2d1fbe654748b85d90feffd03a6907fcda3[m
+Author: Nazmus Sakib <159906565+Nazmussakib247@users.noreply.github.com>
+Date:   Tue Jun 16 00:03:22 2026 +0600
+
+    Add Week 04 section to README
+    
+    Added Week 04 section with a placeholder for System Design PDF.
+
+[33mcommit c581fbb7c9b81b30d146c8d53dfd382ad6985138[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Mon Jun 15 11:30:14 2026 +0600
+
+    Initial use case diagram JPG added
+
+[33mcommit ea3196c4962104f627c992a886ea38bf2e38e87d[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Mon Jun 15 11:29:58 2026 +0600
+
+    Initial Use case diagram added
+
+[33mcommit d6914a8b09664bc1d91f25a3c9a418341acacf3e[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Mon Jun 15 11:29:44 2026 +0600
+
+    Initial architecture design JPG added
+
+[33mcommit bee8a053ce23741b014767e1a0f3b018750b3d26[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Mon Jun 15 11:29:24 2026 +0600
+
+    Initial Architecture Design added
+
+[33mcommit 46912134a7dc67dec6b563aaecfa7f08db43a8a9[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Mon Jun 15 11:29:06 2026 +0600
+
+    Initial ER diagram JPG added
+
+[33mcommit cc542bf4817a76187222dabe292f01a02ac2e53a[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Mon Jun 15 11:28:45 2026 +0600
+
+    Initial ER Diagram added
+
+[33mcommit 75a2b0b9ac308a52010526b6edcb65d745605bcf[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Mon Jun 15 11:28:29 2026 +0600
+
+    Softaware Specification Requirements added
+
+[33mcommit 0cca59d67ac0b6e239757e7deac48b3144b0dbf9[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Mon Jun 15 11:28:05 2026 +0600
+
+    Project proposal added
+
+[33mcommit cdc547b2668dfef077f746fb495ca59e8d7f76b4[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Tue Jun 9 01:17:59 2026 +0600
+
+    Add initial project folder structure
+
+[33mcommit b81cb65952fee0b7fee9221df3ecae344c433604[m
+Author: Nazmus Sakib <159906565+Nazmussakib247@users.noreply.github.com>
+Date:   Tue Jun 9 01:13:38 2026 +0600
+
+    Update README with repository structure
+    
+    Added repository structure section to README
+
+[33mcommit 42b39e718c525f3d12148fdd9efbe78779a61fec[m
+Author: Nazmus Sakib <159906565+Nazmussakib247@users.noreply.github.com>
+Date:   Tue Jun 9 01:09:58 2026 +0600
+
+    Reorganize objectives section in README.md
+    
+    The objectives section was removed from its original position and added back at the end of the document, maintaining the same content.
+
+[33mcommit 7ad73ba3390db86c6557fe9e494117ec5a17b6ef[m
+Merge: 8a2986a af6642b
+Author: Nazmus Sakib <159906565+Nazmussakib247@users.noreply.github.com>
+Date:   Mon Jun 8 23:52:35 2026 +0600
+
+    Merge pull request #2 from Nazmussakib247/Nazmussakib247-patch-1
+    
+    Add Week 03 resources to README
+
+[33mcommit af6642b51607dc6e41121e8957f4e137d2a102a8[m
+Author: Nazmus Sakib <159906565+Nazmussakib247@users.noreply.github.com>
+Date:   Mon Jun 8 23:51:33 2026 +0600
+
+    Add Week 03 resources to README
+
+[33mcommit 8a2986a4ed8a2856ac8279fde9ea4ee82702c593[m
+Author: Nazmus Sakib <159906565+Nazmussakib247@users.noreply.github.com>
+Date:   Mon Jun 8 23:14:43 2026 +0600
+
+    Update project title in README.md
+
+[33mcommit b7d75582f5f27fece3e983f3f4f19394523f34f4[m
+Author: Nazmus Sakib <159906565+Nazmussakib247@users.noreply.github.com>
+Date:   Mon Jun 8 22:47:14 2026 +0600
+
+    Add project objectives to README
+    
+    Added objectives outlining the goals of the Enterprise Nexus project, including automation, decision support, business intelligence, security, deployment, and AI engineering as a part of week 03 task.
+
+[33mcommit 07e4561cc2d79a8643b933f558f111c3c35830fc[m
+Author: Nazmus Sakib <159906565+Nazmussakib247@users.noreply.github.com>
+Date:   Mon Jun 8 13:52:17 2026 +0600
+
+    Correct links in README for project proposal
+    
+    Fix link formatting for project proposal and initial planning.
+
+[33mcommit 408fe888af27f0479ccc77b1718b4de57f2a013d[m
+Author: Nazmus Sakib <159906565+Nazmussakib247@users.noreply.github.com>
+Date:   Sun Jun 7 21:11:46 2026 +0600
+
+    Fix links in README for Project Proposal and Planning
+    
+    Corrected link formatting and fixed a broken link.
+
+[33mcommit dac65c8ba4cdd5060e95112e53b6ae7fdb872c47[m
+Author: Nazmus Sakib <159906565+Nazmussakib247@users.noreply.github.com>
+Date:   Sun Jun 7 21:03:00 2026 +0600
+
+    Fix formatting in Week 02 section of README
+
+[33mcommit 4160fe8a3ca14b987653e63a0f078d825434a8b8[m
+Author: Nazmus Sakib <159906565+Nazmussakib247@users.noreply.github.com>
+Date:   Sun Jun 7 21:00:14 2026 +0600
+
+    Fix formatting for Week 02 project links in README
+
+[33mcommit 404f3677b58649937485c6d89419824a9176bff0[m
+Author: Nazmus Sakib <159906565+Nazmussakib247@users.noreply.github.com>
+Date:   Sat Jun 6 21:10:30 2026 +0600
+
+    Fix link formatting for Initial Project Planning
+
+[33mcommit 144b9651ed5eafc5eda76d0e3010abd3012c0984[m
+Author: Nazmus Sakib <159906565+Nazmussakib247@users.noreply.github.com>
+Date:   Sat Jun 6 21:09:36 2026 +0600
+
+    Fix formatting of links in README.md
+
+[33mcommit 2bb3bc19dd22508617d5bab69174f6d3cc1b359c[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Wed May 27 10:20:15 2026 +0600
+
+    Add documentation segment till week 02
+
+[33mcommit 9f3306e3fc3c7ca2ea18d704dee58019e7f70bbc[m
+Author: Nazmus Sakib <nazmuss247@gmail.com>
+Date:   Tue May 26 03:27:16 2026 +0600
+
+    Readme file updated with Team members. project details, features, outcome as per week_02 Instruction
+
+[33mcommit e4b48439157cf85c3ad79ad2c7a54d37f1531419[m
+Author: Nazmus Sakib <159906565+Nazmussakib247@users.noreply.github.com>
+Date:   Tue May 26 01:21:44 2026 +0600
+
+    Team no updated.
+    
+    Team number has been changed by discussion with everyone from section, so updated repo and readme
+
+[33mcommit b305fe9f7576fd3c49690a89347d8faec09439e7[m
+Author: Nazmus Sakib <159906565+Nazmussakib247@users.noreply.github.com>
+Date:   Mon May 25 20:05:45 2026 +0600
+
+    Initial commit

@@ -31,7 +31,7 @@ Sentry.init({
   beforeSend(event) {
     // Strip PII from breadcrumbs in production
     if (process.env.NODE_ENV === 'production') {
-      event.breadcrumbs?.values?.forEach((b) => {
+      event.breadcrumbs?.forEach((b) => {
         if (b.data?.url) b.data.url = b.data.url.replace(/token=[^&]*/g, 'token=REDACTED')
       })
     }
