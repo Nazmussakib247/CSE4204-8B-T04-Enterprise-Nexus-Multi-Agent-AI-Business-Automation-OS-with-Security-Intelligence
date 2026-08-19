@@ -17,7 +17,7 @@
 
 | Role | Name | Student ID |
 |---|---|---|
-| Team Leader & AI Integration Lead | Nazmus Sakib | 11220320888 |
+| Team Leader & AI Integration Lead | [Nazmus Sakib](https://www.linkedin.com/in/nazmussakib247/) | 11220320888 |
 | Backend Developer | Shoeb Shariar Mashuk | 11220320878 |
 | Frontend Developer — 1 | Most Sumiya Sanjida | 11220320874 |
 | Database Manager & Frontend Developer — 2 | Sabrina Ibrahim | 11220320895 |
