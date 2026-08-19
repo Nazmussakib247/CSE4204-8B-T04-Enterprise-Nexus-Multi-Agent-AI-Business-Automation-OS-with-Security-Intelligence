@@ -1,11 +1,13 @@
 # ── Build stage ───────────────────────────────────────────────
-FROM node:20-alpine AS deps
+FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --omit=dev
+# Use `npm install` rather than `npm ci` so the build is resilient to minor
+# package-lock drift. Falls back to a lockfile refresh when needed.
+RUN npm install --omit=dev --no-audit --no-fund
 
 # ── Runtime stage ─────────────────────────────────────────────
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production

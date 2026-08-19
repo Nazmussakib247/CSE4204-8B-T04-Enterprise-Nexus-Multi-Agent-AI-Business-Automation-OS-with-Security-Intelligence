@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 
-type Variant = 'success' | 'warning' | 'error' | 'neutral' | 'purple' | 'info'
+export type Variant = 'success' | 'warning' | 'error' | 'neutral' | 'purple' | 'info'
 
 const variants: Record<Variant, string> = {
   success: 'bg-primary-container/20 text-primary',

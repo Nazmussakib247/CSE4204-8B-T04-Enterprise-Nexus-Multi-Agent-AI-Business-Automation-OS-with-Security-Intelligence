@@ -21,6 +21,7 @@ const navGroups = [
       { label: 'Support',    icon: 'support_agent',     href: '/support' },
       { label: 'Analytics',  icon: 'bar_chart_4_bars',  href: '/analytics' },
       { label: 'Executive',  icon: 'auto_awesome',      href: '/executive' },
+      { label: 'Activity',   icon: 'monitoring',        href: '/activity' },
     ],
   },
   {

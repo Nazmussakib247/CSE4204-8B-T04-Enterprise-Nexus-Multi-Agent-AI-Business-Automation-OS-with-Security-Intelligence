@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { financeApi } from '@/lib/api'
+import { financeApi, getApiErrorMessage } from '@/lib/api'
 import toast from 'react-hot-toast'
 
 interface Props {
@@ -58,9 +58,10 @@ export default function FinanceUploadModal({ open, onClose, onCreated }: Props) 
         setResult(`Imported ${inserted_count} row${inserted_count === 1 ? '' : 's'}` + (failed_count ? `, ${failed_count} skipped (check columns: category, amount, date).` : '.'))
       }
       onCreated()
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || 'Upload failed')
-      setResult(err?.response?.data?.error || 'Upload failed. Please try again.')
+    } catch (err) {
+      const msg = getApiErrorMessage(err, 'Upload failed')
+      toast.error(msg)
+      setResult(getApiErrorMessage(err, 'Upload failed. Please try again.'))
     } finally {
       setLoading(false)
     }

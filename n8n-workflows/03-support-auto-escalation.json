@@ -1,0 +1,152 @@
+{
+  "name": "03 · Support Auto-Escalation (Hourly)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "hours", "hoursInterval": 1 }]
+        }
+      },
+      "id": "n1-schedule",
+      "name": "Every Hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.NEXUS_API_URL }}/webhook/pending-tasks",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-nexus-secret", "value": "={{ $env.N8N_SECRET }}" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [{ "name": "agent_type", "value": "support" }]
+        },
+        "options": {}
+      },
+      "id": "n2-get-pending",
+      "name": "Get Pending Support Tasks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter tasks that carry old high-urgency ticket IDs\nconst tasks = $input.first().json.data || [];\nconst TWO_HOURS_MS = 2 * 60 * 60 * 1000;\nconst now = Date.now();\n\nconst stale = tasks.filter(t => {\n  const load = t.load || {};\n  const isHighUrgency = load.urgency === 'high';\n  const age = now - new Date(t.created_at).getTime();\n  return isHighUrgency && age > TWO_HOURS_MS && !t.escalated;\n});\n\nif (stale.length === 0) {\n  return [{ json: { nothing_to_escalate: true, checked_at: new Date().toISOString() } }];\n}\n\nreturn stale.map(t => ({ json: { task_id: t.id, ticket_id: t.load?.ticket_id, user_id: t.user_id } }));"
+      },
+      "id": "n3-filter-stale",
+      "name": "Filter Stale High-Urgency Tickets",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "conditions": [
+            {
+              "id": "cond-has-ticket",
+              "leftValue": "={{ $json.ticket_id }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEmpty" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "n4-has-ticket",
+      "name": "Has Ticket ID?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NEXUS_API_URL }}/webhook/support-escalate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-nexus-secret", "value": "={{ $env.N8N_SECRET }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "ticket_id", "value": "={{ $json.ticket_id }}" },
+            { "name": "user_id", "value": "={{ $json.user_id }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n5-escalate",
+      "name": "Escalate Ticket",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NEXUS_API_URL }}/webhook/task-update",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-nexus-secret", "value": "={{ $env.N8N_SECRET }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "task_id", "value": "={{ $json.task_id }}" },
+            { "name": "status", "value": "completed" },
+            { "name": "result", "value": "={{ JSON.stringify({ escalated: true, ticket_id: $json.ticket_id }) }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n6-update-task",
+      "name": "Mark Task Completed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 200]
+    }
+  ],
+  "connections": {
+    "Every Hour": {
+      "main": [[{ "node": "Get Pending Support Tasks", "type": "main", "index": 0 }]]
+    },
+    "Get Pending Support Tasks": {
+      "main": [[{ "node": "Filter Stale High-Urgency Tickets", "type": "main", "index": 0 }]]
+    },
+    "Filter Stale High-Urgency Tickets": {
+      "main": [[{ "node": "Has Ticket ID?", "type": "main", "index": 0 }]]
+    },
+    "Has Ticket ID?": {
+      "main": [
+        [{ "node": "Escalate Ticket", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Escalate Ticket": {
+      "main": [[{ "node": "Mark Task Completed", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": {
+    "templateId": "nexus-support-escalation",
+    "instanceId": "enterprise-nexus"
+  },
+  "id": "wf-support-escalation-003",
+  "tags": [{ "name": "Support" }, { "name": "Scheduled" }, { "name": "Enterprise NeXus" }]
+}

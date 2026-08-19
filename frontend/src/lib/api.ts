@@ -1,6 +1,15 @@
 import axios from 'axios'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+
+/** Extract the backend's error message from an unknown thrown value. */
+export const getApiErrorMessage = (err: unknown, fallback: string): string => {
+  if (axios.isAxiosError(err)) {
+    const data = err.response?.data as { error?: string } | undefined
+    if (data?.error) return data.error
+  }
+  return fallback
+}
 
 const api = axios.create({
   baseURL: API_URL,
@@ -12,13 +21,23 @@ api.interceptors.response.use(
   (res) => res,
   async (err) => {
     const original = err.config
-    if (err.response?.status === 401 && !original._retry) {
+    const url = original?.url || ''
+    const isAuthCheck =
+      url.includes('/auth/me') ||
+      url.includes('/auth/refresh') ||
+      url.includes('/auth/login') ||
+      url.includes('/auth/register')
+    if (err.response?.status === 401 && !original._retry && !isAuthCheck) {
       original._retry = true
       try {
         await axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true })
         return api(original)
       } catch {
-        window.location.href = '/login'
+        if (typeof window !== 'undefined') {
+          const authPaths = ['/login', '/register', '/forgot-password', '/reset-password']
+          const onAuthPage = authPaths.some((p) => window.location.pathname.startsWith(p))
+          if (!onAuthPage) window.location.href = '/login'
+        }
       }
     }
     return Promise.reject(err)
@@ -132,6 +151,39 @@ export const searchApi = {
     api.get('/search', { params: { q, limit } }),
 }
 
+export interface KnowledgeDoc {
+  source_id: string
+  title: string
+  chunks: number
+  created_at: string
+}
+
+export interface AgentActivityEntry {
+  id: string
+  action: string
+  resource_type: string | null
+  resource_id: string | null
+  metadata: Record<string, unknown> | null
+  success: boolean
+  created_at: string
+}
+
+export const agentActivityApi = {
+  list: (limit = 50) =>
+    api.get<{ data: AgentActivityEntry[] }>('/v1/agents/activity', { params: { limit } }),
+}
+
+export const knowledgeApi = {
+  list: () => api.get<{ data: KnowledgeDoc[] }>('/v1/admin/knowledge'),
+  upload: (file: File, title?: string) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    if (title) fd.append('title', title)
+    return api.post('/v1/admin/knowledge', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+  },
+  remove: (sourceId: string) => api.delete(`/v1/admin/knowledge/${sourceId}`),
+}
+
 export const adminApi = {
   listUsers: (params?: Record<string, unknown>) =>
     api.get('/admin/users', { params }),
@@ -140,4 +192,121 @@ export const adminApi = {
     api.patch(`/admin/users/${id}/role`, { role }),
   toggleUserStatus: (id: string, is_active: boolean) =>
     api.patch(`/admin/users/${id}/status`, { is_active }),
+}
+
+export interface AgentStep {
+  tool: string
+  args: Record<string, unknown>
+  result_summary: string
+  success: boolean
+}
+export interface AgentSource {
+  title: string
+  snippet: string
+}
+export interface AgentChatResponse {
+  agent: string
+  answer: string
+  sources?: AgentSource[]
+  steps: AgentStep[]
+}
+
+export const agentsApi = {
+  // Agents are exposed under /api/v1 only (no legacy /api alias)
+  chat: (agent: 'hr' | 'finance' | 'support' | 'analytics', message: string) =>
+    api.post<AgentChatResponse>(`/v1/agents/${agent}/chat`, { message }),
+}
+
+// ── Executive orchestrator chat ───────────────────────────────
+export interface Delegation {
+  agent: string
+  label?: string
+  question?: string
+  status: 'started' | 'completed' | 'failed'
+  answer_preview?: string
+  sub_steps?: string[]
+}
+export interface AgentConversation {
+  id: string
+  title: string | null
+  summary: string | null
+  created_at: string
+  updated_at: string
+}
+export interface AgentMessage {
+  id: string
+  role: 'user' | 'assistant' | 'tool'
+  content: string
+  metadata: { delegations?: Delegation[] } | null
+  created_at: string
+}
+
+export const executiveChatApi = {
+  conversations: () => api.get<{ data: AgentConversation[] }>('/v1/executive/conversations'),
+  messages: (id: string) =>
+    api.get<{ data: AgentMessage[] }>(`/v1/executive/conversations/${id}/messages`),
+}
+
+export interface AskStreamHandlers {
+  onToken: (text: string) => void
+  onDelegation: (d: Delegation) => void
+  onDone: (payload: { conversation_id: string; delegations: Delegation[] }) => void
+  onError: (message: string) => void
+}
+
+/** Stream POST /v1/executive/ask via fetch + ReadableStream (SSE). */
+export async function executiveAskStream(
+  question: string,
+  conversationId: string | null,
+  handlers: AskStreamHandlers,
+): Promise<void> {
+  const res = await fetch(`${API_URL}/v1/executive/ask`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+    body: JSON.stringify({ question, ...(conversationId ? { conversation_id: conversationId } : {}) }),
+  })
+
+  if (!res.ok || !res.body) {
+    let msg = 'Agent request failed'
+    try {
+      const j = await res.json()
+      msg = j.error || msg
+    } catch { /* not json */ }
+    handlers.onError(msg)
+    return
+  }
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+
+  const handleFrame = (frame: string) => {
+    let event = 'message'
+    let data = ''
+    for (const line of frame.split('\n')) {
+      if (line.startsWith('event: ')) event = line.slice(7).trim()
+      else if (line.startsWith('data: ')) data += line.slice(6)
+    }
+    if (!data) return
+    try {
+      const parsed = JSON.parse(data)
+      if (event === 'token') handlers.onToken(parsed.text)
+      else if (event === 'delegation') handlers.onDelegation(parsed)
+      else if (event === 'done') handlers.onDone(parsed)
+      else if (event === 'error') handlers.onError(parsed.message || 'Agent error')
+    } catch { /* skip malformed frame */ }
+  }
+
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    let idx
+    while ((idx = buffer.indexOf('\n\n')) !== -1) {
+      handleFrame(buffer.slice(0, idx))
+      buffer = buffer.slice(idx + 2)
+    }
+  }
+  if (buffer.trim()) handleFrame(buffer)
 }

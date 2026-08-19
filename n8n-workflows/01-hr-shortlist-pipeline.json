@@ -1,0 +1,126 @@
+{
+  "name": "01 · HR Shortlist Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hr-report",
+        "options": {}
+      },
+      "id": "n1-webhook-hr",
+      "name": "HR Report Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "hr-report"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-shortlist",
+              "leftValue": "={{ $json.recommendation }}",
+              "rightValue": "shortlist",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "n2-if-shortlist",
+      "name": "Is Shortlisted?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build interview scheduling payload\nconst body = $input.first().json;\nreturn [\n  {\n    json: {\n      candidate_name: body.candidate_name,\n      job_title: body.job_title,\n      ai_score: body.ai_score,\n      user_id: body.user_id,\n      report_id: body.report_id,\n      scheduled_for: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // 48h from now\n      message: `Candidate ${body.candidate_name} shortlisted for ${body.job_title} with AI score ${body.ai_score}%. Interview recommended within 48 hours.`\n    }\n  }\n];"
+      },
+      "id": "n3-prepare-interview",
+      "name": "Prepare Interview Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NEXUS_API_URL }}/webhook/task-update",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-nexus-secret", "value": "={{ $env.N8N_SECRET }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "task_id", "value": "={{ $('HR Report Webhook').first().json.task_id || '' }}" },
+            { "name": "status", "value": "completed" },
+            { "name": "result", "value": "={{ JSON.stringify({ action: 'interview_scheduled', candidate: $json.candidate_name, scheduled_for: $json.scheduled_for }) }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n4-update-task-shortlist",
+      "name": "Update Task — Shortlisted",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NEXUS_API_URL }}/webhook/task-update",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-nexus-secret", "value": "={{ $env.N8N_SECRET }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "task_id", "value": "={{ $('HR Report Webhook').first().json.task_id || '' }}" },
+            { "name": "status", "value": "completed" },
+            { "name": "result", "value": "={{ JSON.stringify({ action: 'no_action', recommendation: $('HR Report Webhook').first().json.recommendation }) }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n5-update-task-other",
+      "name": "Update Task — Not Shortlisted",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 400]
+    }
+  ],
+  "connections": {
+    "HR Report Webhook": {
+      "main": [[{ "node": "Is Shortlisted?", "type": "main", "index": 0 }]]
+    },
+    "Is Shortlisted?": {
+      "main": [
+        [{ "node": "Prepare Interview Data", "type": "main", "index": 0 }],
+        [{ "node": "Update Task — Not Shortlisted", "type": "main", "index": 0 }]
+      ]
+    },
+    "Prepare Interview Data": {
+      "main": [[{ "node": "Update Task — Shortlisted", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": {
+    "templateId": "nexus-hr-pipeline",
+    "instanceId": "enterprise-nexus"
+  },
+  "id": "wf-hr-pipeline-001",
+  "tags": [{ "name": "HR" }, { "name": "Enterprise NeXus" }]
+}

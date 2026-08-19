@@ -1,8 +1,6 @@
 const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
-const path = require('path');
 const fs = require('fs');
-const logger = require('./logger');
 
 /**
  * Extract plain text from a PDF or DOCX buffer/path.
