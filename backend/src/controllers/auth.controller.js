@@ -11,7 +11,10 @@ const IS_PROD = process.env.NODE_ENV === 'production';
 const COOKIE_BASE = {
   httpOnly: true,
   secure: IS_PROD,
-  sameSite: IS_PROD ? 'strict' : 'lax',
+  // 'none' is required for cross-site cookies (frontend on Vercel, backend on
+  // Render are different domains) — must be paired with secure:true, which it
+  // is in production. Locally frontend/backend share localhost, so 'lax' is fine.
+  sameSite: IS_PROD ? 'none' : 'lax',
   path: '/',
 };
 
