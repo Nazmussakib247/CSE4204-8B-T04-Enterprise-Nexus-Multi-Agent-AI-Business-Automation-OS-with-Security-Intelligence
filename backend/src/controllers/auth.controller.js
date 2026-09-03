@@ -89,6 +89,55 @@ const register = async (req, res, next) => {
   }
 };
 
+// ── POST /api/auth/register-external ──────────────────────────
+// Public signup for candidate/customer accounts (storefront, careers portal).
+// Kept separate from register() so the internal-staff flow is untouched and
+// role is never accepted from arbitrary input there.
+const registerExternal = async (req, res, next) => {
+  try {
+    const { name, email, password, role } = req.body; // role validated to 'customer' | 'candidate' by Joi
+
+    const { data: existing } = await supabase
+      .from('users').select('id').eq('email', email).single();
+
+    if (existing) return res.status(409).json({ error: 'Email already registered' });
+
+    const { data: roleRow, error: roleErr } = await supabase
+      .from('roles').select('id').eq('name', role).single();
+
+    if (roleErr || !roleRow) return res.status(400).json({ error: 'Invalid account type' });
+
+    const password_hash = await bcrypt.hash(password, 12);
+
+    const { data: user, error } = await supabase
+      .from('users')
+      .insert({ name, email, password_hash, role_id: roleRow.id })
+      .select('id, name, email, role_id, created_at')
+      .single();
+
+    if (error) throw error;
+
+    const { accessToken, refreshToken } = generateTokens(user.id);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    await supabase.from('user_sessions').insert({
+      user_id: user.id,
+      token_hash: hashToken(refreshToken),
+      expires_at: expiresAt,
+    });
+
+    setAuthCookies(res, accessToken, refreshToken);
+    writeAuditLog({ userId: user.id, action: 'auth.register_external', metadata: { role }, req });
+
+    res.status(201).json({
+      message: 'Registration successful',
+      user: { id: user.id, name: user.name, email: user.email, role },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // ── POST /api/auth/login ──────────────────────────────────────
 const login = async (req, res, next) => {
   try {
@@ -315,4 +364,4 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login, refresh, logout, me, updateMe, forgotPassword, resetPassword };
+module.exports = { register, registerExternal, login, refresh, logout, me, updateMe, forgotPassword, resetPassword };

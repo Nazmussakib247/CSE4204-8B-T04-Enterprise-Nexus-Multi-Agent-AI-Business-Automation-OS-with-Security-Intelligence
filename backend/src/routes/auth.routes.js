@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
-const { register, login, refresh, logout, me, updateMe, forgotPassword, resetPassword } = require('../controllers/auth.controller');
+const { register, registerExternal, login, refresh, logout, me, updateMe, forgotPassword, resetPassword } = require('../controllers/auth.controller');
 const { protect } = require('../middleware/auth.middleware');
 const validate = require('../middleware/validate.middleware');
-const { registerSchema, loginSchema, updateMeSchema } = require('../validators/auth.validators');
+const { registerSchema, registerExternalSchema, loginSchema, updateMeSchema } = require('../validators/auth.validators');
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -24,6 +24,7 @@ const resetLimiter = rateLimit({
 });
 
 router.post('/register', validate(registerSchema), register);
+router.post('/register-external', validate(registerExternalSchema), registerExternal);
 router.post('/login', loginLimiter, validate(loginSchema), login);
 router.post('/refresh', refresh);
 router.post('/logout', protect, logout);
