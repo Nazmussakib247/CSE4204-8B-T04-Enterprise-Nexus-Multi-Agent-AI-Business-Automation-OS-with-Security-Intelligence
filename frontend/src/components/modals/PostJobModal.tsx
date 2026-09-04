@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { addMockJob, type RequiredSkill } from '@/lib/mockJobs'
+import { jobsApi, getApiErrorMessage } from '@/lib/api'
+
+export interface RequiredSkill { skill: string; weight: number }
 
 interface Props {
   open: boolean
@@ -37,7 +39,7 @@ export default function PostJobModal({ open, onClose, onCreated }: Props) {
   const addSkillRow = () => setSkills(prev => [...prev, { skill: '', weight: 0 }])
   const removeSkillRow = (i: number) => setSkills(prev => prev.filter((_, idx) => idx !== i))
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim() || !description.trim() || !screeningCriteria.trim()) {
       toast.error('Title, description and screening criteria are required')
@@ -54,18 +56,19 @@ export default function PostJobModal({ open, onClose, onCreated }: Props) {
     }
 
     setLoading(true)
-    addMockJob({
-      title: title.trim(),
-      department: department.trim(),
-      description: description.trim(),
-      screeningCriteria: screeningCriteria.trim(),
-      requiredSkills: cleanSkills,
-    })
-    toast.success('Job posted — now live on the careers page')
-    setLoading(false)
-    reset()
-    onCreated()
-    onClose()
+    try {
+      await jobsApi.create({
+        title: title.trim(), department: department.trim() || null,
+        description: description.trim(), screening_criteria: screeningCriteria.trim(),
+        required_skills: cleanSkills, status: 'open',
+      })
+      toast.success('Job posted — now live on the careers page')
+      reset(); onCreated(); onClose()
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Could not post job'))
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

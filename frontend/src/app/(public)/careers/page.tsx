@@ -2,20 +2,16 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { getOpenMockJobs, type MockJob } from '@/lib/mockJobs'
+import { jobsApi } from '@/lib/api'
+
+interface Job { id: string; title: string; department: string | null; description: string; required_skills: { skill: string; weight: number }[] }
 
 export default function CareersPage() {
-  const [jobs, setJobs] = useState<MockJob[]>([])
+  const [jobs, setJobs] = useState<Job[]>([])
 
   useEffect(() => {
-    const load = () => setJobs(getOpenMockJobs())
+    const load = () => jobsApi.getOpen().then(res => setJobs(res.data.data ?? [])).catch(() => setJobs([]))
     load()
-    window.addEventListener('nexus-mock-jobs-updated', load)
-    window.addEventListener('storage', load)
-    return () => {
-      window.removeEventListener('nexus-mock-jobs-updated', load)
-      window.removeEventListener('storage', load)
-    }
   }, [])
 
   return (
@@ -47,7 +43,7 @@ export default function CareersPage() {
                   {job.department && <p className="font-mono text-[11px] text-on-surface-variant mt-1 uppercase tracking-wide">{job.department}</p>}
                   <p className="font-body text-[13px] text-on-surface-variant mt-2 line-clamp-2">{job.description}</p>
                   <div className="flex flex-wrap gap-1.5 mt-3">
-                    {job.requiredSkills.map(s => (
+                    {job.required_skills.map(s => (
                       <span key={s.skill} className="font-mono text-[10px] px-2 py-1 rounded-lg bg-surface-container-low text-on-surface-variant">
                         {s.skill}
                       </span>

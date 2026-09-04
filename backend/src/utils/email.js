@@ -103,4 +103,18 @@ const sendEscalationEmail = async ({ to, ticketId, subject, priority, descriptio
   return info;
 };
 
-module.exports = { sendPasswordReset, sendEscalationEmail };
+const sendApplicationNotificationEmail = async ({ to, candidateName, jobTitle, message }) => {
+  const t = await getTransporter();
+  const body = message || `Thank you for applying for the ${jobTitle} role. Our HR team has reviewed your application and will be in touch with next steps.`;
+  const info = await t.sendMail({
+    from: FROM,
+    to,
+    subject: `Update on your application — ${jobTitle}`,
+    html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto"><h2 style="color:#00c2a8">Application update</h2><p>Hi ${candidateName || 'there'},</p><p>${body}</p><p style="color:#666;font-size:13px">Enterprise NeXus HR Team</p></div>`,
+    text: `Hi ${candidateName || 'there'},\n\n${body}\n\nEnterprise NeXus HR Team`,
+  });
+  if (nodemailer.getTestMessageUrl(info)) logger.info(`[Email] Application notification preview: ${nodemailer.getTestMessageUrl(info)}`);
+  return info;
+};
+
+module.exports = { sendPasswordReset, sendEscalationEmail, sendApplicationNotificationEmail };
