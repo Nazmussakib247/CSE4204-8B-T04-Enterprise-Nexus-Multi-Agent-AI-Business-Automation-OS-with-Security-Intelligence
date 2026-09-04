@@ -1,0 +1,11 @@
+{
+  "remoteName": "origin",
+  "projects": [
+    {
+      "id": "prj_qe4ynsHuQvCZ5MxORqa84IxS99j8",
+      "name": "enterprise-nexus",
+      "directory": "frontend",
+      "orgId": "team_AT1LRt6Md2lnpqTn8b80MPPw"
+    }
+  ]
+}
