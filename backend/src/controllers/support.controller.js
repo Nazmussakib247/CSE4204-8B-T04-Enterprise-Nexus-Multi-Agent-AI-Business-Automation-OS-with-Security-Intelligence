@@ -58,8 +58,9 @@ const createTicket = async (req, res, next) => {
     if (!query) return res.status(400).json({ error: 'query is required' });
 
     let linkedOrder = null;
+    let linkedProduct = null;
     if (order_id) {
-      let orderQuery = supabase.from('orders').select('id, customer_id, product_id').eq('id', order_id);
+      let orderQuery = supabase.from('orders').select('id, customer_id, product_id, status, quantity, total, created_at').eq('id', order_id);
       if (!isStaff(req.user)) orderQuery = orderQuery.eq('customer_id', req.user.id);
       const { data, error } = await orderQuery.single();
       if (error || !data) return res.status(400).json({ error: 'Linked order was not found or is not yours' });
@@ -67,12 +68,24 @@ const createTicket = async (req, res, next) => {
     }
     const linkedProductId = product_id || linkedOrder?.product_id || null;
     if (linkedProductId) {
-      const { data: product, error } = await supabase.from('products').select('id').eq('id', linkedProductId).single();
+      const { data: product, error } = await supabase.from('products').select('id, name').eq('id', linkedProductId).single();
       if (error || !product) return res.status(400).json({ error: 'Linked product was not found' });
       if (linkedOrder && linkedOrder.product_id !== linkedProductId) return res.status(400).json({ error: 'Linked product does not match the selected order' });
+      linkedProduct = product;
     }
 
-    const aiResult = await analyseSentiment({ query });
+    // Give the AI the order/product context so its auto-reply is grounded in
+    // the actual purchase, not just the raw complaint text.
+    const contextLines = [];
+    if (linkedProduct) contextLines.push(`Product: ${linkedProduct.name}`);
+    if (linkedOrder) {
+      contextLines.push(`Order #${linkedOrder.id.slice(0, 8)} — status: ${linkedOrder.status}, quantity: ${linkedOrder.quantity}, placed: ${new Date(linkedOrder.created_at).toISOString().slice(0, 10)}`);
+    }
+    const aiQuery = contextLines.length
+      ? `${query}\n\n[Order context — use this to ground your reply, e.g. reference the order status directly]\n${contextLines.join('\n')}`
+      : query;
+
+    const aiResult = await analyseSentiment({ query: aiQuery });
 
     const { data, error } = await supabase
       .from('support_tickets')

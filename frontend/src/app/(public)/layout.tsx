@@ -1,6 +1,20 @@
+'use client'
+
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/auth'
+import { authApi } from '@/lib/api'
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth()
+  const router = useRouter()
+
+  const handleSignOut = async () => {
+    try { await authApi.logout() } catch { /* proceed regardless */ }
+    router.push('/store')
+    router.refresh()
+  }
+
   return (
     <div className="min-h-screen bg-surface flex flex-col">
       <header className="border-b border-outline-variant/50 bg-white sticky top-0 z-10">
@@ -19,18 +33,38 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <Link href="/careers" className="px-3 py-2 rounded-lg font-body text-[14px] text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors">
               Careers
             </Link>
-            <Link href="/store/orders" className="px-3 py-2 rounded-lg font-body text-[14px] text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors">
-              My orders
-            </Link>
+            {user && (
+              <>
+                <Link href="/store/orders" className="px-3 py-2 rounded-lg font-body text-[14px] text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors">
+                  My orders
+                </Link>
+                <Link href="/store/support" className="px-3 py-2 rounded-lg font-body text-[14px] text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors">
+                  Support
+                </Link>
+              </>
+            )}
           </nav>
 
           <div className="flex items-center gap-2">
-            <Link href="/store/login" className="px-4 py-2 rounded-xl font-body text-[14px] font-medium text-on-surface hover:bg-surface-container-low transition-colors">
-              Sign in
-            </Link>
-            <Link href="/store/register" className="px-4 py-2 rounded-xl bg-primary text-on-primary font-body text-[14px] font-medium hover:bg-primary/90 transition-colors">
-              Get started
-            </Link>
+            {loading ? (
+              <div className="w-20 h-9" />
+            ) : user ? (
+              <>
+                <span className="hidden sm:inline font-body text-[13px] text-on-surface-variant pr-1">Hi, {user.name.split(' ')[0]}</span>
+                <button onClick={handleSignOut} className="px-4 py-2 rounded-xl font-body text-[14px] font-medium text-on-surface hover:bg-surface-container-low transition-colors">
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/store/login" className="px-4 py-2 rounded-xl font-body text-[14px] font-medium text-on-surface hover:bg-surface-container-low transition-colors">
+                  Sign in
+                </Link>
+                <Link href="/store/register" className="px-4 py-2 rounded-xl bg-primary text-on-primary font-body text-[14px] font-medium hover:bg-primary/90 transition-colors">
+                  Get started
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
