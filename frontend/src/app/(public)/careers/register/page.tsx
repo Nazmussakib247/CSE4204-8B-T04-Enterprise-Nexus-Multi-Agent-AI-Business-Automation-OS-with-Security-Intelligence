@@ -1,14 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { authApi, getApiErrorMessage } from '@/lib/api'
 import AlreadySignedInGate from '@/components/auth/AlreadySignedInGate'
 
-export default function StoreRegisterPage() {
+export default function CandidateRegisterPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -30,9 +31,10 @@ export default function StoreRegisterPage() {
 
     setLoading(true)
     try {
-      await authApi.registerExternal(name, email, password, 'customer')
+      await authApi.registerExternal(name, email, password, 'candidate')
       toast.success('Account created')
-      router.push('/store')
+      const redirectTo = searchParams.get('redirect') || '/careers'
+      router.push(redirectTo)
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Registration failed'))
     } finally {
@@ -41,11 +43,11 @@ export default function StoreRegisterPage() {
   }
 
   return (
-    <AlreadySignedInGate dashboardPath="/store" loginPath="/store/login">
+    <AlreadySignedInGate dashboardPath="/careers" loginPath="/store/login">
     <div className="max-w-[380px] mx-auto px-6 py-16">
       <div className="text-center mb-8">
-        <h1 className="font-display text-headline-md text-on-surface">Create an account</h1>
-        <p className="font-body text-[14px] text-on-surface-variant mt-1.5">Order NeXus hardware and track delivery</p>
+        <h1 className="font-display text-headline-md text-on-surface">Create a candidate account</h1>
+        <p className="font-body text-[14px] text-on-surface-variant mt-1.5">Apply for roles and track your application status</p>
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-outline-variant/50 p-6">
@@ -109,6 +111,9 @@ export default function StoreRegisterPage() {
 
       <p className="text-center font-body text-[13px] text-on-surface-variant mt-5">
         Already have an account? <Link href="/store/login" className="text-primary font-medium">Sign in</Link>
+      </p>
+      <p className="text-center font-body text-[12px] text-on-surface-variant/60 mt-6">
+        Here to buy hardware instead? <Link href="/store/register" className="underline">Create a customer account</Link>
       </p>
     </div>
     </AlreadySignedInGate>

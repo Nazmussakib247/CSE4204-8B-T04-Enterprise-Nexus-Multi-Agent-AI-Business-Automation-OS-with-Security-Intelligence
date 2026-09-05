@@ -31,7 +31,7 @@ export default function StoreLoginPage() {
   }
 
   return (
-    <AlreadySignedInGate dashboardPath="/store">
+    <AlreadySignedInGate dashboardPath="/store" loginPath="/store/login">
     <div className="max-w-[380px] mx-auto px-6 py-16">
       <div className="text-center mb-8">
         <h1 className="font-display text-headline-md text-on-surface">Sign in</h1>

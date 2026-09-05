@@ -13,9 +13,11 @@ import { useAuth } from '@/lib/auth'
 export default function AlreadySignedInGate({
   children,
   dashboardPath = '/dashboard',
+  loginPath = '/login',
 }: {
   children: React.ReactNode
   dashboardPath?: string
+  loginPath?: string
 }) {
   const { user, loading, logout } = useAuth()
   const router = useRouter()
@@ -40,7 +42,7 @@ export default function AlreadySignedInGate({
             Go to dashboard
           </button>
           <button
-            onClick={() => logout()}
+            onClick={() => logout(loginPath)}
             className="h-11 rounded-xl border border-outline-variant text-on-surface font-body text-[14px] font-medium hover:bg-surface-container-low transition-colors"
           >
             Sign out

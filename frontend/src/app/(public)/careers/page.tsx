@@ -4,14 +4,21 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { jobsApi } from '@/lib/api'
 
-interface Job { id: string; title: string; department: string | null; description: string; required_skills: { skill: string; weight: number }[] }
+interface JobPosting {
+  id: string
+  title: string
+  department: string | null
+  description: string
+  required_skills: { skill: string; weight: number }[]
+}
 
 export default function CareersPage() {
-  const [jobs, setJobs] = useState<Job[]>([])
+  const [jobs, setJobs] = useState<JobPosting[] | null>(null)
 
   useEffect(() => {
-    const load = () => jobsApi.getOpen().then(res => setJobs(res.data.data ?? [])).catch(() => setJobs([]))
-    load()
+    jobsApi.getOpen()
+      .then(r => setJobs(r.data.data ?? []))
+      .catch(() => setJobs([]))
   }, [])
 
   return (
@@ -20,16 +27,20 @@ export default function CareersPage() {
         <span className="font-mono text-[11px] uppercase tracking-widest text-primary">Careers</span>
         <h1 className="font-display text-display-lg text-on-surface mt-2">Build the agents with us</h1>
         <p className="font-body text-body-lg text-on-surface-variant mt-3">
-          Open roles posted by our HR team will appear here — apply directly, and our AI will screen your CV against the role the moment you submit it.
+          Open roles posted by our HR team appear here — apply directly, and our AI will screen your CV against the role the moment you submit it.
         </p>
       </div>
 
-      {jobs.length === 0 ? (
+      {jobs === null ? (
+        <div className="space-y-3">
+          {[0, 1].map(i => <div key={i} className="h-28 rounded-2xl bg-surface-container-low animate-pulse" />)}
+        </div>
+      ) : jobs.length === 0 ? (
         <div className="bg-white rounded-2xl border border-outline-variant/50 p-16 flex flex-col items-center text-center">
           <span className="material-symbols-outlined text-[40px] text-on-surface-variant/40 mb-3">work_outline</span>
           <p className="font-body text-[15px] text-on-surface">No open positions right now</p>
           <p className="font-body text-[13px] text-on-surface-variant mt-1 max-w-[360px]">
-            Check back soon, or follow up with our team — new roles are posted here as soon as HR opens them.
+            Check back soon — new roles are posted here as soon as HR opens them.
           </p>
         </div>
       ) : (
@@ -43,7 +54,7 @@ export default function CareersPage() {
                   {job.department && <p className="font-mono text-[11px] text-on-surface-variant mt-1 uppercase tracking-wide">{job.department}</p>}
                   <p className="font-body text-[13px] text-on-surface-variant mt-2 line-clamp-2">{job.description}</p>
                   <div className="flex flex-wrap gap-1.5 mt-3">
-                    {job.required_skills.map(s => (
+                    {(job.required_skills || []).map(s => (
                       <span key={s.skill} className="font-mono text-[10px] px-2 py-1 rounded-lg bg-surface-container-low text-on-surface-variant">
                         {s.skill}
                       </span>

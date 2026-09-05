@@ -15,7 +15,7 @@ interface AuthContextType {
   user: User | null
   loading: boolean
   login: (email: string, password: string) => Promise<void>
-  logout: () => Promise<void>
+  logout: (redirectTo?: string) => Promise<void>
   isAuthenticated: boolean
 }
 
@@ -37,14 +37,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user)
   }
 
-  const logout = async () => {
+  const logout = async (redirectTo = '/login') => {
     try {
       await authApi.logout()
     } catch {
       // proceed to login even if request fails
     }
     setUser(null)
-    window.location.href = '/login'
+    window.location.href = redirectTo
   }
 
   return (
