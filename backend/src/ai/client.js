@@ -19,6 +19,7 @@ const DEFAULTS = {
   timeoutMs: 30_000,
   maxRetries: 2, // 2 retries => up to 3 attempts
   baseBackoffMs: 500,
+  thinkingBudget: 0, // fastest — no internal reasoning tokens by default
 };
 
 let _genAI = null;
@@ -80,6 +81,11 @@ async function generateJson({
   systemInstruction,
   timeoutMs = getTimeoutMs(),
   maxRetries = DEFAULTS.maxRetries,
+  // Newer "thinking"-capable models (2.5+/3.x) spend extra latency reasoning
+  // before answering. For short, structured, schema-constrained calls like
+  // ours that reasoning rarely changes the output, so default it low.
+  // Pass a higher number (or omit via null) for tasks that truly need it.
+  thinkingBudget = DEFAULTS.thinkingBudget,
 }) {
   const model = getGenAI().getGenerativeModel({
     model: getModelName(),
@@ -87,6 +93,7 @@ async function generateJson({
     generationConfig: {
       responseMimeType: 'application/json',
       ...(responseSchema ? { responseSchema } : {}),
+      ...(thinkingBudget !== null ? { thinkingConfig: { thinkingBudget } } : {}),
     },
   });
 

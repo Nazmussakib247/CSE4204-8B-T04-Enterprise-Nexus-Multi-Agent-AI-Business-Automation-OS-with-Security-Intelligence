@@ -14,7 +14,7 @@ This file exists so any future session (human or AI) can pick up context fast wi
 | Frontend | Vercel — `enterprise-nexus-delta.vercel.app` | Auto-deploys from this branch's pushes |
 | Backend | Render — `enterprise-nexus-backend.onrender.com` | **Manual Deploy** required after push (branch tracking, not auto) |
 | Database | Supabase project `cidfxhtrtxxpzljfwycu` | **This is the correct/current project.** An older project (`knbmuyrxgqaxvqrlsakk`) was used early on — if you ever see that URL anywhere, it's stale and wrong. |
-| AI model | `gemini-3.7-flash` (`GEMINI_MODEL` env var) | Older `1.5`/`2.5` models are deprecated for this API key — always verify available models in Google AI Studio before changing this. |
+| AI model | `gemini-3.7-flash` (`GEMINI_MODEL` env var) | Older `1.5`/`2.5` models are deprecated for this API key — always verify available models in Google AI Studio before changing this. `thinkingBudget` defaults to `0` in `ai/client.js` (see below) to keep responses fast. |
 | Email | Gmail SMTP via `EMAIL_HOST=smtp.gmail.com` | Uses a Gmail **App Password**, not the real Gmail password. |
 
 Environment variables live in **two places that must stay in sync**: Render's dashboard (production) and local `.env` / `.env.local` files (gitignored, never committed). Changing one does NOT change the other.
@@ -63,6 +63,7 @@ HR, Finance, Support, Analytics, Executive — CV screening, expense anomaly det
 5. **Two different Supabase projects existed at once.** Local `.env` pointed at the old project long after Render had moved to the new one — always diff `SUPABASE_URL` across local `.env`, `frontend/.env.local`, and Render's dashboard when something "isn't showing up."
 6. **Secrets got pasted into chat.** If you're reading this after that happened: `EMAIL_PASS`, `GEMINI_API_KEY`, `JWT_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` should have been rotated. Confirm they actually were.
 7. **A hardcoded model name bypassed `GEMINI_MODEL` entirely.** `executive.controller.js`'s `askAI` used to instantiate its own `GoogleGenerativeAI` client with `model: 'gemini-1.5-flash'` hardcoded — completely separate from the hardened `ai/client.js` that HR/Finance/Support go through. When `gemini-1.5-flash` was deprecated for this API key, HR/Finance/Support kept working (they read `GEMINI_MODEL` from env) while only the Executive "Ask AI" box failed with a confusing generic error. **Fixed** by routing it through `generateJson()` from `ai/client.js` instead. Lesson: grep for `getGenerativeModel(` across the codebase if a model-related error only affects one feature — there may be a second, un-hardened code path calling Gemini directly.
+8. **`gemini-3.x` models think before answering, and it's slow.** CV screening and the Executive Q&A both got noticeably slower after moving to `gemini-3.7-flash` — newer thinking-capable models spend extra hidden reasoning tokens by default. `ai/client.js`'s `generateJson()` now passes `generationConfig.thinkingConfig.thinkingBudget`, defaulted to `0` (fastest, no reasoning) in `DEFAULTS.thinkingBudget`. If a specific call needs deeper reasoning and can tolerate the latency, pass a higher `thinkingBudget` (or `null` to omit the field) as a `generateJson()` option — don't just bump the global default.
 
 ---
 
