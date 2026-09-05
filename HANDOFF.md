@@ -49,6 +49,9 @@ HR, Finance, Support, Analytics, Executive — CV screening, expense anomaly det
 ### External auth
 `POST /auth/register-external` — separate from the internal `/auth/register` — creates `customer` or `candidate` accounts. Cross-domain cookies use `sameSite: 'none'` in production (required because Vercel and Render are different domains); `lax` locally.
 
+### "Already signed in" gate on auth pages
+`components/auth/AlreadySignedInGate.tsx` wraps `/login`, `/register`, `/store/login`, `/store/register`. If a signed-in user lands on any of these (most commonly via the browser Back button after logging in), they see an explicit "You're already signed in as X — Go to dashboard / Sign out" card instead of the raw login/register form silently rendering underneath an active session.
+
 ---
 
 ## Known gotchas / things that bit us this session

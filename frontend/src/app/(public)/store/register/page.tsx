@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { authApi, getApiErrorMessage } from '@/lib/api'
+import AlreadySignedInGate from '@/components/auth/AlreadySignedInGate'
 
 export default function StoreRegisterPage() {
   const router = useRouter()
@@ -40,6 +41,7 @@ export default function StoreRegisterPage() {
   }
 
   return (
+    <AlreadySignedInGate dashboardPath="/store">
     <div className="max-w-[380px] mx-auto px-6 py-16">
       <div className="text-center mb-8">
         <h1 className="font-display text-headline-md text-on-surface">Create an account</h1>
@@ -109,5 +111,6 @@ export default function StoreRegisterPage() {
         Already have an account? <Link href="/store/login" className="text-primary font-medium">Sign in</Link>
       </p>
     </div>
+    </AlreadySignedInGate>
   )
 }

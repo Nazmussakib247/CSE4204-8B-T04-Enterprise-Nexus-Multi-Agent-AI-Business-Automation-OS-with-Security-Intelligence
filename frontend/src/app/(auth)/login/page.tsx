@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth'
 import toast from 'react-hot-toast'
+import AlreadySignedInGate from '@/components/auth/AlreadySignedInGate'
 
 export default function LoginPage() {
   const { login } = useAuth()
@@ -29,6 +30,7 @@ export default function LoginPage() {
   }
 
   return (
+    <AlreadySignedInGate dashboardPath="/dashboard">
     <div className="min-h-screen w-full flex">
       {/* ── Left Panel ─────────────────────────────────── */}
       <div className="hidden lg:flex w-[480px] flex-shrink-0 flex-col bg-[#1a1d1e] relative overflow-hidden">
@@ -175,5 +177,6 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+    </AlreadySignedInGate>
   )
 }
