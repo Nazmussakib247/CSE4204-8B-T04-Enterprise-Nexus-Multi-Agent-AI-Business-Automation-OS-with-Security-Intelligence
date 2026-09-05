@@ -36,8 +36,9 @@ HR, Finance, Support, Analytics, Executive — CV screening, expense anomaly det
 
 ### Careers / recruitment
 - `job_postings` / `job_applications` tables, with **weighted skill scoring** (`required_skills` JSONB on the job, `skill_scores` JSONB on the application)
-- Backend routes (`jobs.controller.js`, `jobs.routes.js`) and frontend API client (`jobsApi` in `lib/api.ts`) already exist — confirm current state before assuming anything is missing here, this file may lag behind
-- HR-side "Post a Job" UI exists on the `/hr` dashboard
+- Backend (`jobs.controller.js`) is fully built: job CRUD, CV upload + Supabase Storage, AI screening scoped to each job's skills/criteria, n8n webhook notification, and **bulk "Confirm & Notify" email** to applicants
+- HR-side UI (`/hr` — Post a Job modal, `JobApplicationsPanel`) was already correctly wired to this real API
+- **Public-facing `/careers` pages were NOT wired to it** — they were built against a localStorage mock (`lib/mockJobs.ts`) before the real backend was discovered. **Fixed**: `/careers`, `/careers/[id]` now call `jobsApi` directly. Added `/careers/register` for candidate signup (separate from `/store/register`'s `customer` role — applying requires a `candidate`-role account, enforced server-side in `createApplication`). `lib/mockJobs.ts` and `lib/mockStore.ts` are now dead code, safe to delete.
 
 ### Product reviews
 - `product_reviews` table with `sentiment`/`urgency`/`flagged_as_complaint` columns
@@ -50,7 +51,7 @@ HR, Finance, Support, Analytics, Executive — CV screening, expense anomaly det
 `POST /auth/register-external` — separate from the internal `/auth/register` — creates `customer` or `candidate` accounts. Cross-domain cookies use `sameSite: 'none'` in production (required because Vercel and Render are different domains); `lax` locally.
 
 ### "Already signed in" gate on auth pages
-`components/auth/AlreadySignedInGate.tsx` wraps `/login`, `/register`, `/store/login`, `/store/register`. If a signed-in user lands on any of these (most commonly via the browser Back button after logging in), they see an explicit "You're already signed in as X — Go to dashboard / Sign out" card instead of the raw login/register form silently rendering underneath an active session.
+`components/auth/AlreadySignedInGate.tsx` wraps `/login`, `/register`, `/store/login`, `/store/register`, `/careers/register`. If a signed-in user lands on any of these (most commonly via the browser Back button after logging in), they see an explicit "You're already signed in as X — Go to dashboard / Sign out" card instead of the raw login/register form silently rendering underneath an active session. `logout()` in `lib/auth.tsx` now takes an optional redirect path (default `/login`) so signing out from a storefront/careers page doesn't dump you on the internal staff login.
 
 ---
 
@@ -70,6 +71,5 @@ HR, Finance, Support, Analytics, Executive — CV screening, expense anomaly det
 ## Open decisions / not yet done
 
 - Finance revenue integration: whether `orders` feeds `finance_records` (needs a `type` column) or Analytics/Executive read `orders` directly — **not decided yet**.
-- n8n workflow for automatic AI CV screening on job application submit — needs to be built (pattern: `n8n-workflows/01-hr-shortlist-pipeline.json`).
-- HR "Confirm & Notify" bulk email for job applicants — reuse `utils/email.js`, not yet wired to a UI button.
 - Product review submission UI on the storefront (backend exists, frontend form does not).
+- Delete `frontend/src/lib/mockJobs.ts` and `frontend/src/lib/mockStore.ts` (dead code, superseded by real API wiring).
