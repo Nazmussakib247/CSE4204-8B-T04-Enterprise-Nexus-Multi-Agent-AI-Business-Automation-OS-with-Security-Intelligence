@@ -49,6 +49,8 @@ export const authApi = {
     api.post('/auth/login', { email, password }),
   register: (name: string, email: string, password: string) =>
     api.post('/auth/register', { name, email, password }),
+  registerExternal: (name: string, email: string, password: string, role: 'customer' | 'candidate') =>
+    api.post('/auth/register-external', { name, email, password, role }),
   refresh: () => api.post('/auth/refresh'),
   logout: () => api.post('/auth/logout'),
   me: () => api.get('/auth/me'),
@@ -58,6 +60,42 @@ export const authApi = {
     api.post('/auth/forgot-password', { email }),
   resetPassword: (token: string, password: string) =>
     api.post('/auth/reset-password', { token, password }),
+}
+
+export const jobsApi = {
+  getOpen: () => api.get('/jobs'),
+  get: (id: string) => api.get(`/jobs/${id}`),
+  getAllForStaff: () => api.get('/jobs/admin/all'),
+  create: (data: Record<string, unknown>) => api.post('/jobs', data),
+  update: (id: string, data: Record<string, unknown>) => api.patch(`/jobs/${id}`, data),
+  remove: (id: string) => api.delete(`/jobs/${id}`),
+  apply: (id: string, formData: FormData) => api.post(`/jobs/${id}/applications`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  getApplications: (id: string) => api.get(`/jobs/${id}/applications`),
+  updateApplication: (jobId: string, applicationId: string, status: string) => api.patch(`/jobs/${jobId}/applications/${applicationId}`, { status }),
+  removeApplication: (jobId: string, applicationId: string) => api.delete(`/jobs/${jobId}/applications/${applicationId}`),
+  confirmAndNotify: (id: string, application_ids: string[], message?: string) => api.post(`/jobs/${id}/applications/confirm-notify`, { application_ids, message }),
+}
+
+export const ordersApi = {
+  create: (product_id: string, quantity = 1) => api.post('/orders', { product_id, quantity }),
+  getAll: (params?: Record<string, unknown>) => api.get('/orders', { params }),
+  get: (id: string) => api.get(`/orders/${id}`),
+}
+
+export interface StoreProduct {
+  id: string; slug: string; name: string; tagline: string; description: string
+  price: number; icon: string; highlights: string[]; specs: { label: string; value: string }[]
+}
+
+export const productsApi = {
+  list: () => api.get('/products'),
+  getBySlug: (slug: string) => api.get(`/products/${slug}`),
+}
+
+export const reviewsApi = {
+  getForProduct: (productId: string) => api.get(`/reviews/products/${productId}`),
+  create: (data: { product_id: string; rating: number; comment: string }) => api.post('/reviews', data),
+  getFlagged: () => api.get('/reviews/flagged'),
 }
 
 export const hrApi = {

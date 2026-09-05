@@ -3,6 +3,8 @@ const { analyseSentiment } = require('../utils/gemini');
 const { notifyN8n } = require('../utils/webhook');
 const { sendEscalationEmail } = require('../utils/email');
 const { writeAuditLog } = require('../utils/audit');
+const STAFF_ROLES = ['admin', 'manager', 'employee'];
+const isStaff = (user) => STAFF_ROLES.includes(user.role);
 
 // GET /api/support/tickets
 const getTickets = async (req, res, next) => {
@@ -13,9 +15,10 @@ const getTickets = async (req, res, next) => {
     let query = supabase
       .from('support_tickets')
       .select('*', { count: 'exact' })
-      .eq('user_id', req.user.id)
       .order('created_at', { ascending: false })
       .range(offset, offset + Number(limit) - 1);
+
+    if (!isStaff(req.user)) query = query.eq('user_id', req.user.id);
 
     if (status) query = query.eq('status', status);
     if (urgency) query = query.eq('urgency', urgency);
@@ -34,12 +37,12 @@ const getTickets = async (req, res, next) => {
 // GET /api/support/tickets/:id
 const getTicket = async (req, res, next) => {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('support_tickets')
       .select('*')
-      .eq('id', req.params.id)
-      .eq('user_id', req.user.id)
-      .single();
+      .eq('id', req.params.id);
+    if (!isStaff(req.user)) query = query.eq('user_id', req.user.id);
+    const { data, error } = await query.single();
 
     if (error || !data) return res.status(404).json({ error: 'Ticket not found' });
     res.json({ data });
@@ -51,8 +54,23 @@ const getTicket = async (req, res, next) => {
 // POST /api/support/tickets — Gemini sentiment analysis
 const createTicket = async (req, res, next) => {
   try {
-    const { query } = req.body;
+    const { query, order_id, product_id } = req.body;
     if (!query) return res.status(400).json({ error: 'query is required' });
+
+    let linkedOrder = null;
+    if (order_id) {
+      let orderQuery = supabase.from('orders').select('id, customer_id, product_id').eq('id', order_id);
+      if (!isStaff(req.user)) orderQuery = orderQuery.eq('customer_id', req.user.id);
+      const { data, error } = await orderQuery.single();
+      if (error || !data) return res.status(400).json({ error: 'Linked order was not found or is not yours' });
+      linkedOrder = data;
+    }
+    const linkedProductId = product_id || linkedOrder?.product_id || null;
+    if (linkedProductId) {
+      const { data: product, error } = await supabase.from('products').select('id').eq('id', linkedProductId).single();
+      if (error || !product) return res.status(400).json({ error: 'Linked product was not found' });
+      if (linkedOrder && linkedOrder.product_id !== linkedProductId) return res.status(400).json({ error: 'Linked product does not match the selected order' });
+    }
 
     const aiResult = await analyseSentiment({ query });
 
@@ -68,6 +86,8 @@ const createTicket = async (req, res, next) => {
         confidence: aiResult.confidence,
         status: 'open',
         escalated: aiResult.urgency === 'high',
+        order_id: linkedOrder?.id || null,
+        product_id: linkedProductId,
       })
       .select()
       .single();
@@ -79,7 +99,7 @@ const createTicket = async (req, res, next) => {
       action: 'support.ticket.create',
       resourceType: 'support_ticket',
       resourceId: data.id,
-      metadata: { urgency: aiResult.urgency, sentiment: aiResult.sentiment },
+      metadata: { urgency: aiResult.urgency, sentiment: aiResult.sentiment, order_id: linkedOrder?.id || null, product_id: linkedProductId },
       req,
     });
 
@@ -184,10 +204,11 @@ const escalateTicket = async (req, res, next) => {
 // GET /api/support/sentiment-report
 const getSentimentReport = async (req, res, next) => {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('support_tickets')
-      .select('sentiment, urgency, status, escalated, created_at')
-      .eq('user_id', req.user.id);
+      .select('sentiment, urgency, status, escalated, created_at');
+    if (!isStaff(req.user)) query = query.eq('user_id', req.user.id);
+    const { data, error } = await query;
 
     if (error) throw error;
 

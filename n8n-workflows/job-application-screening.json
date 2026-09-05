@@ -1,0 +1,22 @@
+{
+  "name": "Enterprise NeXus — Job Application AI Screening",
+  "nodes": [
+    {"parameters":{"path":"job-application","httpMethod":"POST","responseMode":"onReceived","options":{}},"id":"0c3f68a3-8c9d-43e5-a9d8-843a5b3e0001","name":"Job application received","type":"n8n-nodes-base.webhook","typeVersion":2,"position":[240,300],"webhookId":"enterprise-nexus-job-application"},
+    {"parameters":{"jsCode":"const body = $input.first().json.body || $input.first().json;\nconst required = ['application_id', 'candidate_name', 'job_title', 'cv_text'];\nfor (const key of required) if (!body[key]) throw new Error(`Missing ${key}`);\nconst skillList = (body.required_skills || []).map(s => `- ${s.skill}: weight ${s.weight}%`).join('\\n');\nconst prompt = `Screen this CV for the job below. Score every required skill from 0 to 100. Return only JSON with ai_score (0-100), ai_confidence (low|medium|high), ai_recommendation (shortlist|review|reject), narrative_summary, and skill_scores [{skill,weight,score}].\\n\\nCandidate: ${body.candidate_name}\\nJob: ${body.job_title}\\nCriteria: ${body.screening_criteria || 'N/A'}\\nRequired skills:\\n${skillList}\\n\\nCV:\\n${body.cv_text}`;\nreturn [{ json: { application_id: body.application_id, geminiBody: { contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: 'application/json' } } } }];"},"id":"0c3f68a3-8c9d-43e5-a9d8-843a5b3e0002","name":"Prepare CV screening prompt","type":"n8n-nodes-base.code","typeVersion":2,"position":[500,300]},
+    {"parameters":{"method":"POST","url":"={{ 'https://generativelanguage.googleapis.com/v1beta/models/' + ($env.GEMINI_MODEL || 'gemini-1.5-flash') + ':generateContent?key=' + $env.GEMINI_API_KEY }}","sendBody":true,"contentType":"json","jsonBody":"={{ JSON.stringify($json.geminiBody) }}","options":{}},"id":"0c3f68a3-8c9d-43e5-a9d8-843a5b3e0003","name":"Gemini CV screening","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[760,300]},
+    {"parameters":{"jsCode":"const raw = $input.first().json.candidates?.[0]?.content?.parts?.[0]?.text;\nif (!raw) throw new Error('Gemini returned no screening result');\nconst result = JSON.parse(raw);\nconst application_id = $('Prepare CV screening prompt').first().json.application_id;\nreturn [{ json: { application_id, ai_score: Math.max(0, Math.min(100, Math.round(Number(result.ai_score) || 0))), ai_confidence: ['low','medium','high'].includes(result.ai_confidence) ? result.ai_confidence : 'medium', ai_recommendation: ['shortlist','review','reject'].includes(result.ai_recommendation) ? result.ai_recommendation : 'review', skill_scores: Array.isArray(result.skill_scores) ? result.skill_scores : [], narrative_summary: String(result.narrative_summary || ''), status: 'ai_screened' } }];"},"id":"0c3f68a3-8c9d-43e5-a9d8-843a5b3e0004","name":"Normalise screening result","type":"n8n-nodes-base.code","typeVersion":2,"position":[1020,300]},
+    {"parameters":{"method":"POST","url":"={{ $env.NEXUS_API_URL + '/api/webhook/job-application-screened' }}","sendHeaders":true,"headerParameters":{"parameters":[{"name":"x-nexus-secret","value":"={{ $env.N8N_SECRET }}"}]},"sendBody":true,"contentType":"json","jsonBody":"={{ JSON.stringify($json) }}","options":{}},"id":"0c3f68a3-8c9d-43e5-a9d8-843a5b3e0005","name":"Save screening result to NeXus","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[1280,300]}
+  ],
+  "pinData": {},
+  "connections": {
+    "Job application received":{"main":[[{"node":"Prepare CV screening prompt","type":"main","index":0}]]},
+    "Prepare CV screening prompt":{"main":[[{"node":"Gemini CV screening","type":"main","index":0}]]},
+    "Gemini CV screening":{"main":[[{"node":"Normalise screening result","type":"main","index":0}]]},
+    "Normalise screening result":{"main":[[{"node":"Save screening result to NeXus","type":"main","index":0}]]}
+  },
+  "active": false,
+  "settings": {"executionOrder":"v1"},
+  "versionId":"0c3f68a3-8c9d-43e5-a9d8-843a5b3e0000",
+  "meta":{"templateCredsSetupCompleted":true},
+  "tags":[]
+}

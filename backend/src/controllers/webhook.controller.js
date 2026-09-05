@@ -149,6 +149,24 @@ const escalateTicket = async (req, res, next) => {
   }
 };
 
+// POST /api/webhook/job-application-screened
+// n8n calls this after its screening/routing workflow has completed.
+const saveJobApplicationScreening = async (req, res, next) => {
+  try {
+    const { application_id, ai_score, ai_confidence, ai_recommendation, skill_scores, narrative_summary, status = 'ai_screened' } = req.body;
+    if (!application_id) return res.status(400).json({ error: 'application_id is required' });
+    const updates = { status, updated_at: new Date().toISOString() };
+    if (Number.isInteger(ai_score) && ai_score >= 0 && ai_score <= 100) updates.ai_score = ai_score;
+    if (['low', 'medium', 'high'].includes(ai_confidence)) updates.ai_confidence = ai_confidence;
+    if (['shortlist', 'review', 'reject'].includes(ai_recommendation)) updates.ai_recommendation = ai_recommendation;
+    if (Array.isArray(skill_scores)) updates.skill_scores = skill_scores;
+    if (typeof narrative_summary === 'string') updates.narrative_summary = narrative_summary;
+    const { data, error } = await supabase.from('job_applications').update(updates).eq('id', application_id).select().single();
+    if (error || !data) return res.status(404).json({ error: 'Job application not found' });
+    res.json({ message: 'Job application screening saved', data });
+  } catch (err) { next(err); }
+};
+
 // GET /api/webhook/pending-tasks
 // n8n polls this to pick up pending tasks (alternative to push)
 const getPendingTasks = async (req, res, next) => {
@@ -179,4 +197,4 @@ const getPendingTasks = async (req, res, next) => {
   }
 };
 
-module.exports = { verifySecret, taskUpdate, saveExecutiveBriefing, saveAnalyticsKPI, escalateTicket, getPendingTasks };
+module.exports = { verifySecret, taskUpdate, saveExecutiveBriefing, saveAnalyticsKPI, escalateTicket, saveJobApplicationScreening, getPendingTasks };

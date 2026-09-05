@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { supportApi } from '@/lib/api'
+import { useEffect, useState } from 'react'
+import { ordersApi, productsApi, supportApi, type StoreProduct } from '@/lib/api'
 import toast from 'react-hot-toast'
 
 interface Props {
@@ -12,7 +12,17 @@ interface Props {
 
 export default function TicketModal({ open, onClose, onCreated }: Props) {
   const [query, setQuery] = useState('')
+  const [orderId, setOrderId] = useState('')
+  const [productId, setProductId] = useState('')
+  const [orders, setOrders] = useState<{ id: string; products?: { name: string } }[]>([])
+  const [products, setProducts] = useState<StoreProduct[]>([])
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    ordersApi.getAll().then(res => setOrders(res.data.data ?? [])).catch(() => {})
+    productsApi.list().then(res => setProducts(res.data.data ?? [])).catch(() => {})
+  }, [open])
 
   if (!open) return null
 
@@ -24,7 +34,7 @@ export default function TicketModal({ open, onClose, onCreated }: Props) {
     }
     setLoading(true)
     try {
-      const res = await supportApi.createTicket({ query })
+      const res = await supportApi.createTicket({ query, order_id: orderId || null, product_id: productId || null })
       const ai = res.data?.ai_analysis
       if (ai?.sentiment) {
         toast.success(`Ticket created — Gemini detected: ${ai.sentiment} sentiment, ${ai.urgency} urgency`)
@@ -32,6 +42,7 @@ export default function TicketModal({ open, onClose, onCreated }: Props) {
         toast.success('Ticket created with AI analysis')
       }
       setQuery('')
+      setOrderId(''); setProductId('')
       onCreated()
       onClose()
     } catch {
@@ -53,6 +64,15 @@ export default function TicketModal({ open, onClose, onCreated }: Props) {
           <div>
             <h2 className="font-display text-[16px] font-semibold text-on-surface">New Support Ticket</h2>
             <p className="font-mono text-[10px] text-on-surface-variant mt-0.5 uppercase tracking-wider">AI will analyse sentiment and urgency</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div><label className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1.5">Related order <span className="normal-case tracking-normal">(optional)</span></label>
+              <select value={orderId} onChange={e => setOrderId(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-outline-variant bg-white text-[13px]"><option value="">No order selected</option>{orders.map(order => <option key={order.id} value={order.id}>{order.products?.name ?? 'Order'} · {order.id.slice(0, 8)}</option>)}</select>
+            </div>
+            <div><label className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1.5">Related product <span className="normal-case tracking-normal">(optional)</span></label>
+              <select value={productId} onChange={e => setProductId(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-outline-variant bg-white text-[13px]"><option value="">No product selected</option>{products.map(product => <option key={product.id} value={product.id}>{product.name}</option>)}</select>
+            </div>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-xl hover:bg-surface-container flex items-center justify-center transition-colors">
             <span className="material-symbols-outlined text-[18px] text-on-surface-variant">close</span>
