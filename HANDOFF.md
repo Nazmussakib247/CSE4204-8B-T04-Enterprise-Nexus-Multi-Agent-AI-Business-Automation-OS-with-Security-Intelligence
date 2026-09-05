@@ -42,7 +42,7 @@ HR, Finance, Support, Analytics, Executive — CV screening, expense anomaly det
 
 ### Product reviews
 - `product_reviews` table with `sentiment`/`urgency`/`flagged_as_complaint` columns
-- Backend routes (`reviews.controller.js`, `reviews.routes.js`) and frontend API client (`reviewsApi`) already exist
+- Backend (`reviews.controller.js`) and the storefront submission/listing UI (`components/store/ReviewsSection.tsx`, rendered on every `/store/[slug]` page) were **already fully wired** — this was never actually missing, an earlier version of this doc wrongly listed it as pending.
 
 ### Support Agent — order-aware replies
 `support.controller.js`'s `createTicket` now accepts an optional `order_id`. When present, it fetches the order + product and **injects that context into the Gemini prompt** (not just stores it in the DB), so the AI's auto-reply can reference the actual order status. `support_tickets.order_id` / `product_id` are nullable — a ticket never *requires* an order link.
@@ -52,6 +52,9 @@ HR, Finance, Support, Analytics, Executive — CV screening, expense anomaly det
 
 ### "Already signed in" gate on auth pages
 `components/auth/AlreadySignedInGate.tsx` wraps `/login`, `/register`, `/store/login`, `/store/register`, `/careers/register`. If a signed-in user lands on any of these (most commonly via the browser Back button after logging in), they see an explicit "You're already signed in as X — Go to dashboard / Sign out" card instead of the raw login/register form silently rendering underneath an active session. `logout()` in `lib/auth.tsx` now takes an optional redirect path (default `/login`) so signing out from a storefront/careers page doesn't dump you on the internal staff login.
+
+### Storefront profile menu
+`components/auth/ProfileMenu.tsx` — replaces the plain "Hi, Name / Sign out" text in the `(public)` header with a proper dropdown (avatar initial + name) containing My Orders, Support, and Sign out. Only rendered when `user` is set; logged-out visitors still see Sign in / Get started.
 
 ---
 
@@ -71,5 +74,5 @@ HR, Finance, Support, Analytics, Executive — CV screening, expense anomaly det
 ## Open decisions / not yet done
 
 - Finance revenue integration: whether `orders` feeds `finance_records` (needs a `type` column) or Analytics/Executive read `orders` directly — **not decided yet**.
-- Product review submission UI on the storefront (backend exists, frontend form does not).
 - Delete `frontend/src/lib/mockJobs.ts` and `frontend/src/lib/mockStore.ts` (dead code, superseded by real API wiring).
+- **Recurring lesson this session: before saying a feature is "missing," grep the codebase first.** Careers pages, HR applications panel, and product reviews were each independently assumed to be unbuilt at some point in this session and turned out to already exist, fully wired, elsewhere. Don't trust this file's memory over the actual code.
