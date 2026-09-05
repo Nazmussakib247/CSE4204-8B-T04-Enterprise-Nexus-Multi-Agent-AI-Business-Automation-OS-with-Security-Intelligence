@@ -19,6 +19,9 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <Link href="/careers" className="px-3 py-2 rounded-lg font-body text-[14px] text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors">
               Careers
             </Link>
+            <Link href="/store/orders" className="px-3 py-2 rounded-lg font-body text-[14px] text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors">
+              My orders
+            </Link>
           </nav>
 
           <div className="flex items-center gap-2">
@@ -40,6 +43,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           <div className="flex items-center gap-4">
             <Link href="/store" className="font-mono text-[11px] text-on-surface-variant hover:text-on-surface">Store</Link>
             <Link href="/careers" className="font-mono text-[11px] text-on-surface-variant hover:text-on-surface">Careers</Link>
+            <Link href="/store/orders" className="font-mono text-[11px] text-on-surface-variant hover:text-on-surface">My orders</Link>
           </div>
         </div>
       </footer>

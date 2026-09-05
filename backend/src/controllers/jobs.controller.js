@@ -100,7 +100,12 @@ const createApplication = async (req, res, next) => {
     }).select('*, users!job_applications_candidate_id_fkey(name, email)').single();
     if (error) throw error;
     writeAuditLog({ userId: req.user.id, action: 'job.application.create', resourceType: 'job_application', resourceId: data.id, metadata: { job_id: job.id, ai_score: weightedScore }, req });
-    notifyN8n('job-application', { application_id: data.id, job_id: job.id, candidate_id: req.user.id, ai_score: weightedScore, recommendation: ai.recommendation });
+    notifyN8n('job-application', {
+      application_id: data.id, job_id: job.id, candidate_id: req.user.id,
+      candidate_name: req.user.name, job_title: job.title,
+      required_skills: job.required_skills, screening_criteria: job.screening_criteria,
+      cv_text: cvText.slice(0, 12000), ai_score: weightedScore, recommendation: ai.recommendation,
+    });
     res.status(201).json({ message: 'Application submitted and screened', data: await withSignedCvUrl(data) });
   } catch (err) { next(err); }
 };

@@ -21,7 +21,7 @@ export default function StoreLoginPage() {
     try {
       await authApi.login(email, password)
       toast.success('Signed in')
-      router.push('/store')
+      router.push('/store/orders')
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Invalid email or password'))
     } finally {
