@@ -9,6 +9,7 @@ import TicketModal from '@/components/modals/TicketModal'
 import Pagination from '@/components/ui/Pagination'
 import { SkeletonCards, SkeletonTicketRows } from '@/components/ui/Skeleton'
 import toast from 'react-hot-toast'
+import FlaggedReviewsPanel from '@/components/support/FlaggedReviewsPanel'
 
 interface Ticket {
   id: string; query: string; ai_response: string; intent: string
@@ -165,6 +166,8 @@ export default function SupportPage() {
           ))
         ) : null}
       </div>
+
+      <FlaggedReviewsPanel refreshKey={total} />
 
       {/* Tickets */}
       <div className="bg-white rounded-2xl border border-outline-variant/50 overflow-hidden">

@@ -68,6 +68,22 @@ export const ordersApi = {
   get: (id: string) => api.get(`/orders/${id}`),
 }
 
+export interface StoreProduct {
+  id: string; slug: string; name: string; tagline: string; description: string
+  price: number; icon: string; highlights: string[]; specs: { label: string; value: string }[]
+}
+
+export const productsApi = {
+  list: () => api.get('/products'),
+  getBySlug: (slug: string) => api.get(`/products/${slug}`),
+}
+
+export const reviewsApi = {
+  getForProduct: (productId: string) => api.get(`/reviews/products/${productId}`),
+  create: (data: { product_id: string; rating: number; comment: string }) => api.post('/reviews', data),
+  getFlagged: () => api.get('/reviews/flagged'),
+}
+
 export const getApiErrorMessage = (error: unknown, fallback: string) => {
   const response = error as { response?: { data?: { error?: string } } }
   return response.response?.data?.error || fallback

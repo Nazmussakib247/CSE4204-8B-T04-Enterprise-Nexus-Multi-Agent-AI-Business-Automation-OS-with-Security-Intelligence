@@ -52,6 +52,7 @@ const agentsRoutes = require('./routes/agents.routes');
 const productsRoutes = require('./routes/products.routes');
 const ordersRoutes = require('./routes/orders.routes');
 const jobsRoutes = require('./routes/jobs.routes');
+const reviewsRoutes = require('./routes/reviews.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -131,6 +132,7 @@ v1.use('/agents', agentsRoutes); // v1 only — no /api alias
 v1.use('/products', productsRoutes);
 v1.use('/orders', ordersRoutes);
 v1.use('/jobs', jobsRoutes);
+v1.use('/reviews', reviewsRoutes);
 
 app.use('/api/v1', v1);
 
@@ -150,6 +152,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/jobs', jobsRoutes);
+app.use('/api/reviews', reviewsRoutes);
 
 // ── 404 ───────────────────────────────────────────────────────────────────────
 app.use((req, res) => {

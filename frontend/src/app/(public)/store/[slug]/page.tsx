@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { productsApi, type StoreProduct } from '@/lib/api'
 import BuyButton from './BuyButton'
+import ReviewsSection from '@/components/store/ReviewsSection'
 
 export default function ProductPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -68,15 +69,7 @@ export default function ProductPage() {
         </div>
       </div>
 
-      {/* Reviews — populated once product_reviews + Support Agent monitoring are wired in */}
-      <div className="mt-14 pt-10 border-t border-outline-variant/50">
-        <h2 className="font-display text-[18px] font-semibold text-on-surface mb-4">Reviews</h2>
-        <div className="bg-white rounded-2xl border border-outline-variant/50 p-10 flex flex-col items-center text-center">
-          <span className="material-symbols-outlined text-[36px] text-on-surface-variant/40 mb-2">rate_review</span>
-          <p className="font-body text-[14px] text-on-surface-variant">No reviews yet</p>
-          <p className="font-body text-[12px] text-on-surface-variant/70 mt-1">Reviews left here will be scanned by the Support Agent for complaints.</p>
-        </div>
-      </div>
+      <ReviewsSection productId={product.id} />
     </div>
   )
 }
