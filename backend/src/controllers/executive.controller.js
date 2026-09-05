@@ -1,5 +1,5 @@
 const supabase = require('../config/supabase');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { generateJson, AiUnavailableError } = require('../ai/client');
 const { writeAuditLog } = require('../utils/audit');
 const { buildExecutivePdf } = require('../utils/pdf');
 
@@ -166,12 +166,9 @@ const askAI = async (req, res, next) => {
       analytics: analyticsRes.data || [],
     };
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
     const prompt = `You are an executive AI assistant for an enterprise management system. 
 Answer the following question based ONLY on the enterprise data provided below.
-Be concise, insightful, and actionable. Format your response clearly.
+Be concise, insightful, and actionable.
 
 ENTERPRISE DATA:
 HR Reports (recent ${context.hr.length}): ${JSON.stringify(context.hr)}
@@ -183,8 +180,15 @@ QUESTION: ${question}
 
 Provide a direct, data-driven answer. If the data doesn't contain enough information to answer, say so clearly.`;
 
-    const result = await model.generateContent(prompt);
-    const answer = result.response.text();
+    const { answer } = await generateJson({
+      systemInstruction: 'You are an executive AI assistant. Return only the requested JSON.',
+      prompt,
+      responseSchema: {
+        type: 'object',
+        properties: { answer: { type: 'string' } },
+        required: ['answer'],
+      },
+    });
 
     writeAuditLog({
       userId,
