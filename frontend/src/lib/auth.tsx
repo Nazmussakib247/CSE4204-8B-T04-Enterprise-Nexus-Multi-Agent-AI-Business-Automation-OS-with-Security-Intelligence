@@ -28,7 +28,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     authApi.me()
       .then(({ data }) => setUser(data.user))
-      .catch(() => setUser(null))
+      .catch(async () => {
+        // Access tokens are short lived. A page reload must recover an
+        // otherwise valid storefront/office session using its refresh token.
+        try {
+          await authApi.refresh()
+          const { data } = await authApi.me()
+          setUser(data.user)
+        } catch {
+          setUser(null)
+        }
+      })
       .finally(() => setLoading(false))
   }, [])
 

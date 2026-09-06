@@ -44,7 +44,7 @@ export default function StoreRegisterPage() {
   }
 
   return (
-    <AlreadySignedInGate dashboardPath="/store" loginPath="/store/login">
+    <AlreadySignedInGate dashboardPath="/store">
     <div className="max-w-[380px] mx-auto px-6 py-16">
       <div className="text-center mb-8">
         <h1 className="font-display text-headline-md text-on-surface">Create an account</h1>

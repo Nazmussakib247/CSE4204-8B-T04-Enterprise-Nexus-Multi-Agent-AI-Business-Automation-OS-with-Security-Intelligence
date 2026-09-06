@@ -41,7 +41,7 @@ function CandidateRegisterContent() {
   }
 
   return (
-    <AlreadySignedInGate dashboardPath="/careers" loginPath="/store/login">
+    <AlreadySignedInGate dashboardPath="/careers">
     <div className="max-w-[380px] mx-auto px-6 py-16">
       <div className="text-center mb-8">
         <h1 className="font-display text-headline-md text-on-surface">Create a candidate account</h1>
