@@ -6,18 +6,17 @@ import Link from 'next/link'
 import toast from 'react-hot-toast'
 import AlreadySignedInGate from '@/components/auth/AlreadySignedInGate'
 import { authApi, getApiErrorMessage } from '@/lib/api'
-import { useAuth } from '@/lib/auth'
 
 export default function RegisterPage() {
   const router = useRouter()
-  const { login } = useAuth()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
-  const [role, setRole] = useState<'employee' | 'customer' | 'candidate' | ''>('')
+  const [role, setRole] = useState<'admin' | 'manager' | 'employee' | ''>('')
   const [loading, setLoading] = useState(false)
   const [showPass, setShowPass] = useState(false)
+  const [requestSent, setRequestSent] = useState(false)
 
   const passwordChecks = {
     length: password.length >= 8,
@@ -34,15 +33,8 @@ export default function RegisterPage() {
     if (!passwordValid) { toast.error('Password does not meet the requirements below'); return }
     setLoading(true)
     try {
-      const { data } = await authApi.register(name, email, password, role)
-      if (data.pending_approval) {
-        toast.success('Account request sent. An admin must approve it before you can sign in.')
-        router.push(role === 'employee' ? '/login' : '/store/login')
-      } else {
-        await login(email, password)
-        toast.success('Customer account created')
-        router.push('/store')
-      }
+      await authApi.register(name, email, password, role)
+      setRequestSent(true)
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, 'Registration failed'))
     } finally {
@@ -79,7 +71,7 @@ export default function RegisterPage() {
               Get access to five specialized AI agents that automate your daily business operations.
             </p>
           </div>
-          <div className="space-y-3 mb-10">
+            <div className="space-y-3 mb-10">
             {[
               { icon: 'check_circle', text: 'AI-powered CV screening & hiring' },
               { icon: 'check_circle', text: 'Financial anomaly detection' },
@@ -93,21 +85,6 @@ export default function RegisterPage() {
               </div>
             ))}
 
-            <div>
-              <label className="block font-mono text-[11px] uppercase tracking-widest text-on-surface-variant mb-2">Account Type</label>
-              <select
-                value={role}
-                required
-                onChange={e => setRole(e.target.value as typeof role)}
-                className="w-full bg-white border border-outline-variant rounded-xl px-4 py-3 font-body text-[14px] text-on-surface focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all"
-              >
-                <option value="" disabled>Select account type</option>
-                <option value="employee">Employee — request office access</option>
-                <option value="customer">Customer — buy products and track orders</option>
-                <option value="candidate">Candidate — apply for careers</option>
-              </select>
-              <p className="font-body text-[12px] text-on-surface-variant mt-1.5">Customer accounts activate immediately. Employee and candidate requests need admin approval. Admin and manager roles cannot be requested publicly.</p>
-            </div>
           </div>
         </div>
       </div>
@@ -142,6 +119,21 @@ export default function RegisterPage() {
                 />
               </div>
             ))}
+
+            <div>
+              <label className="block font-mono text-[11px] uppercase tracking-widest text-on-surface-variant mb-2">Requested Role</label>
+              <select
+                value={role}
+                required
+                onChange={e => setRole(e.target.value as typeof role)}
+                className="w-full bg-white border border-outline-variant rounded-xl px-4 py-3 font-body text-[14px] text-on-surface focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all"
+              >
+                <option value="" disabled>Select role</option>
+                <option value="admin">Admin</option>
+                <option value="manager">Manager</option>
+                <option value="employee">Employee</option>
+              </select>
+            </div>
 
             <div>
               <label className="block font-mono text-[11px] uppercase tracking-widest text-on-surface-variant mb-2">Password</label>
@@ -208,6 +200,24 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+    {requestSent && (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#101314]/70 backdrop-blur-sm px-5 animate-fade-in">
+        <div className="w-full max-w-[420px] rounded-2xl bg-white p-8 text-center shadow-2xl animate-scale-in">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+            <span className="material-symbols-outlined text-[30px] text-primary icon-filled animate-pulse">hourglass_top</span>
+          </div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">Request submitted</p>
+          <h2 className="mt-2 font-display text-[23px] font-bold text-on-surface">Your access is awaiting approval</h2>
+          <p className="mt-3 font-body text-[14px] leading-relaxed text-on-surface-variant">An administrator will review your requested role. Please wait for approval before signing in.</p>
+          <button
+            onClick={() => router.push('/login')}
+            className="mt-7 w-full rounded-xl bg-primary py-3 font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-on-primary transition-colors hover:bg-primary/90"
+          >
+            Okay
+          </button>
+        </div>
+      </div>
+    )}
     </AlreadySignedInGate>
   )
 }

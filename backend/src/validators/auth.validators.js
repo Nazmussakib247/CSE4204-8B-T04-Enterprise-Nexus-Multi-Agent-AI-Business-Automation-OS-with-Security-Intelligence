@@ -16,8 +16,8 @@ const registerSchema = Joi.object({
   name: Joi.string().min(2).max(100).required(),
   email: Joi.string().email().max(255).lowercase().required(),
   password: passwordRules,
-  // Public users may request an account type, never elevated access.
-  role: Joi.string().valid('employee', 'customer', 'candidate').required(),
+  // Office access requests are always pending admin approval.
+  role: Joi.string().valid('admin', 'manager', 'employee').required(),
 });
 
 // Public signup used by /store/register and /careers apply flow.

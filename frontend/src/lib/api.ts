@@ -52,7 +52,7 @@ api.interceptors.response.use(
 export const authApi = {
   login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }),
-  register: (name: string, email: string, password: string, role: 'employee' | 'customer' | 'candidate') =>
+  register: (name: string, email: string, password: string, role: 'admin' | 'manager' | 'employee') =>
     api.post('/auth/register', { name, email, password, role }),
   registerExternal: (name: string, email: string, password: string, role: 'customer' | 'candidate') =>
     api.post('/auth/register-external', { name, email, password, role }),
