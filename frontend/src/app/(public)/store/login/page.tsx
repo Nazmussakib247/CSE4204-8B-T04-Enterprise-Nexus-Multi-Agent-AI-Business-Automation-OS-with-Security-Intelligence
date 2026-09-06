@@ -4,11 +4,13 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
-import { authApi, getApiErrorMessage } from '@/lib/api'
+import { getApiErrorMessage } from '@/lib/api'
 import AlreadySignedInGate from '@/components/auth/AlreadySignedInGate'
+import { useAuth } from '@/lib/auth'
 
 export default function StoreLoginPage() {
   const router = useRouter()
+  const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
@@ -20,9 +22,10 @@ export default function StoreLoginPage() {
 
     setLoading(true)
     try {
-      await authApi.login(email, password)
+      await login(email, password)
       toast.success('Signed in')
-      router.push('/store/orders')
+      const returnTo = new URLSearchParams(window.location.search).get('returnTo')
+      router.replace(returnTo?.startsWith('/store') ? returnTo : '/store/orders')
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Invalid email or password'))
     } finally {

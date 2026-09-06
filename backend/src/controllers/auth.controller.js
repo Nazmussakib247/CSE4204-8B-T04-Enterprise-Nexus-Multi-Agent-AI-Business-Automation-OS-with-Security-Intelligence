@@ -11,10 +11,10 @@ const IS_PROD = process.env.NODE_ENV === 'production';
 const COOKIE_BASE = {
   httpOnly: true,
   secure: IS_PROD,
-  // 'none' is required for cross-site cookies (frontend on Vercel, backend on
-  // Render are different domains) — must be paired with secure:true, which it
-  // is in production. Locally frontend/backend share localhost, so 'lax' is fine.
-  sameSite: IS_PROD ? 'none' : 'lax',
+  // Production browser calls now use the Vercel same-origin /api rewrite.
+  // Lax prevents unnecessary third-party cookie exposure while allowing the
+  // normal first-party storefront and office session flow.
+  sameSite: 'lax',
   path: '/',
 };
 
@@ -261,7 +261,12 @@ const me = async (req, res, next) => {
       .single();
 
     if (error || !user) return res.status(404).json({ error: 'User not found' });
-    res.json({ user });
+    res.json({
+      user: {
+        ...user,
+        role: user.roles?.name || null,
+      },
+    });
   } catch (err) {
     next(err);
   }

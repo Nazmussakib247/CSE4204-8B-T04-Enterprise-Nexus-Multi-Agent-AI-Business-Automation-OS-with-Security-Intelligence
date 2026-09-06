@@ -14,6 +14,9 @@ export default function BuyButton({ productId }: { productId: string }) {
   const [loading, setLoading] = useState(false)
   const [placedOrder, setPlacedOrder] = useState<{ id: string } | null>(null)
   const router = useRouter()
+  const storeLoginUrl = typeof window === 'undefined'
+    ? '/store/login'
+    : `/store/login?returnTo=${encodeURIComponent(window.location.pathname)}`
 
   const handleBuy = async () => {
     setLoading(true)
@@ -23,7 +26,7 @@ export default function BuyButton({ productId }: { productId: string }) {
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 401) {
         toast('Sign in to place an order', { icon: '🔒' })
-        router.push('/store/login')
+        router.push(storeLoginUrl)
       } else {
         toast.error(getApiErrorMessage(err, 'Could not place order'))
       }
@@ -58,7 +61,7 @@ export default function BuyButton({ productId }: { productId: string }) {
     return (
       <div className="mt-6">
         <Link
-          href="/store/login"
+          href={storeLoginUrl}
           className="flex items-center justify-center h-11 rounded-xl bg-primary text-on-primary font-body text-[14px] font-medium hover:bg-primary/90 transition-colors"
         >
           Sign in to buy

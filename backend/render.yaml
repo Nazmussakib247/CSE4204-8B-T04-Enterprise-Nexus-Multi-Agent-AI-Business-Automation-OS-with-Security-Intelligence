@@ -29,3 +29,5 @@ services:
         sync: false
       - key: FRONTEND_URL
         sync: false   # set to your Vercel URL after deploy
+      - key: FRONTEND_ORIGINS
+        sync: false   # comma-separated approved Vercel origins; takes precedence over FRONTEND_URL
