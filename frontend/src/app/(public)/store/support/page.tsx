@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
@@ -12,7 +12,7 @@ interface OrderOption {
   products?: { name: string }
 }
 
-export default function CustomerSupportPage() {
+function CustomerSupportContent() {
   const { user, loading: authLoading } = useAuth()
   const searchParams = useSearchParams()
   const [orders, setOrders] = useState<OrderOption[]>([])
@@ -103,5 +103,13 @@ export default function CustomerSupportPage() {
         </button>
       </form>
     </div>
+  )
+}
+
+export default function CustomerSupportPage() {
+  return (
+    <Suspense fallback={<div className="max-w-[560px] mx-auto px-6 py-12 font-body text-[14px] text-on-surface-variant">Loading support form…</div>}>
+      <CustomerSupportContent />
+    </Suspense>
   )
 }

@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { authApi, getApiErrorMessage } from '@/lib/api'
 import AlreadySignedInGate from '@/components/auth/AlreadySignedInGate'
 
-export default function CandidateRegisterPage() {
+function CandidateRegisterContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [name, setName] = useState('')
@@ -117,5 +117,13 @@ export default function CandidateRegisterPage() {
       </p>
     </div>
     </AlreadySignedInGate>
+  )
+}
+
+export default function CandidateRegisterPage() {
+  return (
+    <Suspense fallback={<div className="max-w-[380px] mx-auto px-6 py-16 font-body text-[14px] text-on-surface-variant">Loading registration…</div>}>
+      <CandidateRegisterContent />
+    </Suspense>
   )
 }
