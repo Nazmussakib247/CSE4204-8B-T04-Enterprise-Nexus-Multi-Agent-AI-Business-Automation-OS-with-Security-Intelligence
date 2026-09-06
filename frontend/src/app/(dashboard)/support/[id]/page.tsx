@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { supportApi } from '@/lib/api'
 import ConfirmModal from '@/components/ui/ConfirmModal'
 import toast from 'react-hot-toast'
@@ -32,7 +32,6 @@ const POLL_MS = 30_000
 
 export default function SupportDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const router = useRouter()
   const [ticket, setTicket] = useState<Ticket | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')

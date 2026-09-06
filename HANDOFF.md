@@ -71,6 +71,8 @@ HR, Finance, Support, Analytics, Executive — CV screening, expense anomaly det
 
 ---
 
+9. **An unrelated pre-existing ESLint error silently blocked Vercel builds.** `support/[id]/page.tsx` had an unused `const router = useRouter()` — harmless in dev, but Next.js fails production builds on ESLint errors by default. It likely sat there for a while without being caught because this file's build path hadn't actually run on Vercel until a later push exercised it. Lesson: a "Build Failed" with no obvious cause in your own diff can be a pre-existing lint error in a file you didn't touch — always check the Vercel **Logs** tab (not just the deployment summary) for the actual compiler/linter output.
+
 ## Open decisions / not yet done
 
 - Finance revenue integration: whether `orders` feeds `finance_records` (needs a `type` column) or Analytics/Executive read `orders` directly — **not decided yet**.
