@@ -26,7 +26,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f4f5f6] flex items-center justify-center p-4">
+    <main className="min-h-screen w-full bg-[#f4f5f6] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl border border-outline-variant/50 shadow-sm overflow-hidden">
           <div className="px-8 pt-8 pb-6 border-b border-outline-variant/30" style={{ background: '#16191a' }}>
