@@ -101,6 +101,7 @@ export const reviewsApi = {
   getForProduct: (productId: string) => api.get(`/reviews/products/${productId}`),
   create: (data: { product_id: string; rating: number; comment: string }) => api.post('/reviews', data),
   getFlagged: () => api.get('/reviews/flagged'),
+  reply: (id: string, response: string) => api.patch(`/reviews/${id}/reply`, { response }),
 }
 
 export const hrApi = {
@@ -144,6 +145,7 @@ export const supportApi = {
     api.patch(`/support/tickets/${id}`, data),
   escalateTicket: (id: string) => api.patch(`/support/tickets/${id}/escalate`),
   resolveTicket: (id: string) => api.patch(`/support/tickets/${id}/resolve`),
+  replyToTicket: (id: string, response: string) => api.patch(`/support/tickets/${id}/reply`, { response }),
   getSentimentReport: () => api.get('/support/sentiment-report'),
 }
 

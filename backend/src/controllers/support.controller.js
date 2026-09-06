@@ -84,20 +84,34 @@ const createTicket = async (req, res, next) => {
       ? `${query}\n\n[Order context — use this to ground your reply, e.g. reference the order status directly]\n${contextLines.join('\n')}`
       : query;
 
-    const aiResult = await analyseSentiment({ query: aiQuery });
+    // Keep the customer's message even when the AI provider is down. This
+    // creates a durable failed-analysis row that n8n can retry later.
+    let aiResult = null;
+    let aiStatus = 'completed';
+    try {
+      aiResult = await analyseSentiment({ query: aiQuery });
+    } catch (aiError) {
+      aiStatus = 'failed';
+      console.warn('[support] AI analysis deferred:', aiError.message);
+    }
+    const requiresHuman = aiResult?.urgency === 'high';
 
     const { data, error } = await supabase
       .from('support_tickets')
       .insert({
         user_id: req.user.id,
         query,
-        ai_response: aiResult.ai_response,
-        intent: aiResult.intent,
-        urgency: aiResult.urgency,
-        sentiment: aiResult.sentiment,
-        confidence: aiResult.confidence,
+        ai_response: aiResult?.ai_response || null,
+        intent: aiResult?.intent || null,
+        urgency: aiResult?.urgency || null,
+        sentiment: aiResult?.sentiment || null,
+        confidence: aiResult?.confidence || null,
+        ai_status: aiStatus,
         status: 'open',
-        escalated: aiResult.urgency === 'high',
+        escalated: requiresHuman,
+        human_intervention_required: requiresHuman,
+        human_intervention_reason: requiresHuman ? 'High urgency detected by AI' : null,
+        human_intervention_status: requiresHuman ? 'pending' : 'not_required',
         order_id: linkedOrder?.id || null,
         product_id: linkedProductId,
       })
@@ -111,21 +125,28 @@ const createTicket = async (req, res, next) => {
       action: 'support.ticket.create',
       resourceType: 'support_ticket',
       resourceId: data.id,
-      metadata: { urgency: aiResult.urgency, sentiment: aiResult.sentiment, order_id: linkedOrder?.id || null, product_id: linkedProductId },
+      metadata: { urgency: aiResult?.urgency || null, sentiment: aiResult?.sentiment || null, ai_status: aiStatus, order_id: linkedOrder?.id || null, product_id: linkedProductId },
       req,
     });
 
-    notifyN8n('support-ticket', {
-      ticket_id: data.id,
-      user_id: req.user.id,
-      urgency: aiResult.urgency,
-      sentiment: aiResult.sentiment,
-      intent: aiResult.intent,
-      escalated: data.escalated,
-      created_at: data.created_at,
-    });
+    if (aiResult) {
+      notifyN8n('support-ticket', {
+        ticket_id: data.id,
+        user_id: req.user.id,
+        urgency: aiResult.urgency,
+        sentiment: aiResult.sentiment,
+        intent: aiResult.intent,
+        escalated: data.escalated,
+        created_at: data.created_at,
+      });
+    }
 
-    res.status(201).json({ message: 'Ticket created with AI analysis', data, ai_analysis: aiResult });
+    res.status(201).json({
+      message: aiResult ? 'Ticket created with AI analysis' : 'Ticket created. AI analysis will retry shortly.',
+      data,
+      ai_analysis: aiResult,
+      ...(aiResult ? {} : { warning: 'AI analysis is temporarily unavailable; your ticket was saved.' }),
+    });
   } catch (err) {
     next(err);
   }
@@ -167,7 +188,14 @@ const escalateTicket = async (req, res, next) => {
   try {
     let updateQuery = supabase
       .from('support_tickets')
-      .update({ escalated: true, status: 'escalated', updated_at: new Date().toISOString() })
+      .update({
+        escalated: true,
+        status: 'escalated',
+        human_intervention_required: true,
+        human_intervention_reason: 'Manually escalated by support staff',
+        human_intervention_status: 'pending',
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', req.params.id);
     if (!isOfficeUser(req.user)) updateQuery = updateQuery.eq('user_id', req.user.id);
     const { data, error } = await updateQuery.select().single();
@@ -206,6 +234,30 @@ const escalateTicket = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+
+// PATCH /api/support/tickets/:id/reply — office support reply visible to customer
+const replyToTicket = async (req, res, next) => {
+  try {
+    const { response } = req.body;
+    const { data, error } = await supabase
+      .from('support_tickets')
+      .update({
+        human_response: response,
+        human_response_by: req.user.id,
+        human_response_at: new Date().toISOString(),
+        human_intervention_status: 'handled',
+        status: 'in_progress',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error || !data) return res.status(404).json({ error: 'Ticket not found' });
+    writeAuditLog({ userId: req.user.id, action: 'support.ticket.reply', resourceType: 'support_ticket', resourceId: data.id, metadata: { response_length: response.length }, req });
+    res.json({ message: 'Support reply sent to customer', data });
+  } catch (err) { next(err); }
 };
 
 // GET /api/support/sentiment-report
@@ -269,4 +321,4 @@ const resolveTicket = async (req, res, next) => {
   }
 };
 
-module.exports = { getTickets, getTicket, createTicket, updateTicket, escalateTicket, getSentimentReport, resolveTicket };
+module.exports = { getTickets, getTicket, createTicket, updateTicket, escalateTicket, getSentimentReport, resolveTicket, replyToTicket };

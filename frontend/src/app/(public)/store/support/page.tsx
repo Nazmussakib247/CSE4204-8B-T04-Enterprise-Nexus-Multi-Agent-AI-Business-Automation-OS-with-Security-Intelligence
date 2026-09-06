@@ -11,6 +11,7 @@ interface OrderOption {
   id: string
   products?: { name: string }
 }
+interface CustomerTicket { id: string; query: string; status: string; ai_response?: string | null; human_response?: string | null; created_at: string }
 
 function CustomerSupportContent() {
   const { user, loading: authLoading } = useAuth()
@@ -20,10 +21,12 @@ function CustomerSupportContent() {
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<{ ai_response: string; sentiment: string; urgency: string } | null>(null)
+  const [tickets, setTickets] = useState<CustomerTicket[]>([])
 
   useEffect(() => {
-    if (!user) return
+    if (!user) { setTickets([]); return }
     ordersApi.getAll().then(r => setOrders(r.data.data ?? [])).catch(() => {})
+    supportApi.getTickets({ limit: 20 }).then(r => setTickets(r.data.data ?? [])).catch(() => setTickets([]))
   }, [user])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,7 +35,8 @@ function CustomerSupportContent() {
     setLoading(true)
     try {
       const { data } = await supportApi.createTicket({ query: message, order_id: orderId || undefined })
-      setResult(data.ai_analysis)
+      setResult(data.ai_analysis || null)
+      setTickets(current => [data.data as CustomerTicket, ...current])
       setMessage('')
       toast.success('Ticket submitted')
     } catch (err) {
@@ -102,6 +106,10 @@ function CustomerSupportContent() {
           {loading ? 'Analysing...' : 'Submit'}
         </button>
       </form>
+      <section className="mt-8">
+        <h2 className="font-display text-[18px] font-semibold text-on-surface mb-3">Your support requests</h2>
+        {!tickets.length ? <p className="font-body text-[13px] text-on-surface-variant">No support requests yet.</p> : <div className="space-y-3">{tickets.map(ticket => <article key={ticket.id} className="bg-white rounded-2xl border border-outline-variant/50 p-5"><div className="flex items-center justify-between gap-3"><p className="font-body text-[14px] text-on-surface line-clamp-1">{ticket.query}</p><span className="font-mono text-[10px] uppercase tracking-wider text-primary">{ticket.status}</span></div>{ticket.ai_response && <p className="mt-3 font-body text-[13px] text-on-surface-variant"><span className="font-medium text-on-surface">AI: </span>{ticket.ai_response}</p>}{ticket.human_response && <div className="mt-3 rounded-xl bg-primary/5 border border-primary-container/20 p-3"><p className="font-mono text-[10px] uppercase tracking-wider text-primary mb-1">Support team reply</p><p className="font-body text-[13px] text-on-surface whitespace-pre-wrap">{ticket.human_response}</p></div>}</article>)}</div>}
+      </section>
     </div>
   )
 }

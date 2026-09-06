@@ -11,4 +11,8 @@ const updateTicketSchema = Joi.object({
   query: Joi.string().min(5).max(5000),
 }).min(1);
 
-module.exports = { createTicketSchema, updateTicketSchema };
+const replyTicketSchema = Joi.object({
+  response: Joi.string().trim().min(3).max(2000).required(),
+});
+
+module.exports = { createTicketSchema, updateTicketSchema, replyTicketSchema };

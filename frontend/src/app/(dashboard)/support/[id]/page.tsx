@@ -11,6 +11,7 @@ interface Ticket {
   id: string; query: string; ai_response: string; intent: string
   urgency: string; sentiment: string; confidence: number
   escalated: boolean; status: string; created_at: string; updated_at?: string
+  human_response?: string | null; human_response_at?: string | null
 }
 
 const urgBadge = (u: string) =>
@@ -37,6 +38,8 @@ export default function SupportDetailPage() {
   const [error, setError] = useState('')
   const [confirmAction, setConfirmAction] = useState<'escalate' | 'resolve' | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [reply, setReply] = useState('')
+  const [replyLoading, setReplyLoading] = useState(false)
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const fetchTicket = () => {
@@ -84,6 +87,19 @@ export default function SupportDetailPage() {
   const handleConfirm = () => {
     if (confirmAction === 'escalate') handleEscalate()
     else if (confirmAction === 'resolve') handleResolve()
+  }
+
+  const sendReply = async () => {
+    if (reply.trim().length < 3) { toast.error('Write a reply of at least 3 characters'); return }
+    setReplyLoading(true)
+    try {
+      const { data } = await supportApi.replyToTicket(id, reply.trim())
+      setTicket(data.data)
+      setReply('')
+      toast.success('Reply sent to the customer')
+    } catch {
+      toast.error('Could not send reply')
+    } finally { setReplyLoading(false) }
   }
 
   if (loading) return (
@@ -208,6 +224,13 @@ export default function SupportDetailPage() {
             </div>
           )}
 
+          {ticket.human_response && (
+            <div className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-primary-container/20 flex items-center justify-center flex-shrink-0 mt-0.5"><span className="material-symbols-outlined text-[15px] text-primary">support_agent</span></div>
+              <div className="flex-1"><p className="font-mono text-[10px] font-semibold text-primary uppercase tracking-wider mb-1.5">Support team</p><div className="rounded-xl px-4 py-3 bg-primary/5 border border-primary-container/20"><p className="font-body text-[14px] text-on-surface whitespace-pre-wrap">{ticket.human_response}</p></div></div>
+            </div>
+          )}
+
           {/* Status update if resolved/escalated */}
           {(ticket.status === 'resolved' || ticket.status === 'escalated') && (
             <div className="flex gap-3">
@@ -226,6 +249,15 @@ export default function SupportDetailPage() {
           )}
         </div>
       </div>
+
+      {ticket.status !== 'resolved' && (
+        <section className="bg-white rounded-2xl border border-outline-variant/50 p-6">
+          <h2 className="font-display text-[15px] font-semibold text-on-surface mb-1">Reply to customer</h2>
+          <p className="font-body text-[12px] text-on-surface-variant mb-4">This reply is saved and shown in the customer’s store support page.</p>
+          <textarea value={reply} onChange={e => setReply(e.target.value)} rows={4} maxLength={2000} placeholder="Write a clear next step or resolution…" className="w-full rounded-xl border border-outline-variant px-4 py-3 font-body text-[14px] resize-none focus:outline-none focus:border-primary-container" />
+          <button onClick={sendReply} disabled={replyLoading} className="mt-3 px-4 py-2.5 rounded-xl bg-primary text-on-primary font-body text-[13px] disabled:opacity-60">{replyLoading ? 'Sending…' : 'Send reply'}</button>
+        </section>
+      )}
 
       {/* Meta */}
       <div className="bg-white rounded-2xl border border-outline-variant/50 p-6">

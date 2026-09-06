@@ -6,4 +6,8 @@ const createReviewSchema = Joi.object({
   comment: Joi.string().trim().min(1).max(2000).required(),
 });
 
-module.exports = { createReviewSchema };
+const replyReviewSchema = Joi.object({
+  response: Joi.string().trim().min(3).max(2000).required(),
+});
+
+module.exports = { createReviewSchema, replyReviewSchema };

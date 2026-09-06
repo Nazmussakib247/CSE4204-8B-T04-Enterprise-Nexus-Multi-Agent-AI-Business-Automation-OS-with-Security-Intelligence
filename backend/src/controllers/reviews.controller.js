@@ -6,7 +6,7 @@ const getProductReviews = async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('product_reviews')
-      .select('id, rating, comment, sentiment, urgency, ai_status, created_at, users!product_reviews_customer_id_fkey(name)')
+      .select('id, rating, comment, sentiment, urgency, ai_status, support_reply, support_replied_at, created_at, users!product_reviews_customer_id_fkey(name)')
       .eq('product_id', req.params.productId)
       .order('created_at', { ascending: false });
     if (error) throw error;
@@ -39,6 +39,9 @@ const createReview = async (req, res, next) => {
       urgency: ai?.urgency || null,
       ai_status: aiStatus,
       flagged_as_complaint: flagged,
+      human_intervention_required: flagged,
+      human_intervention_reason: flagged ? 'Negative sentiment or high urgency detected by AI' : null,
+      human_intervention_status: flagged ? 'pending' : 'not_required',
     }).select('*, users!product_reviews_customer_id_fkey(name)').single();
     if (error) throw error;
     writeAuditLog({ userId: req.user.id, action: 'product.review.create', resourceType: 'product_review', resourceId: data.id, metadata: { product_id, rating, flagged }, req });
@@ -66,4 +69,25 @@ const getFlaggedReviews = async (_req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { getProductReviews, createReview, getFlaggedReviews };
+const replyToReview = async (req, res, next) => {
+  try {
+    const { response } = req.body;
+    const { data, error } = await supabase
+      .from('product_reviews')
+      .update({
+        support_reply: response,
+        support_replied_by: req.user.id,
+        support_replied_at: new Date().toISOString(),
+        human_intervention_required: false,
+        human_intervention_status: 'handled',
+      })
+      .eq('id', req.params.id)
+      .select('*, products(name, slug), users!product_reviews_customer_id_fkey(name, email)')
+      .single();
+    if (error || !data) return res.status(404).json({ error: 'Review not found' });
+    writeAuditLog({ userId: req.user.id, action: 'product.review.reply', resourceType: 'product_review', resourceId: data.id, metadata: { response_length: response.length }, req });
+    res.json({ message: 'Support reply published', data });
+  } catch (err) { next(err); }
+};
+
+module.exports = { getProductReviews, createReview, getFlaggedReviews, replyToReview };
