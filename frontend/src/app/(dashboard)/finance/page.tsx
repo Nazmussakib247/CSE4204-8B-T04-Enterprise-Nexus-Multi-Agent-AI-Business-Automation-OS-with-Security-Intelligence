@@ -19,6 +19,7 @@ interface FinanceRecord {
 interface FinanceSummary {
   total_spend: number; by_category: Record<string, number>
   anomaly_count: number; record_count: number
+  sales: { total_revenue: number; order_count: number; average_order_value: number }
 }
 
 const sevBadge = (s: string) =>
@@ -171,15 +172,16 @@ export default function FinancePage() {
       />
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {summaryLoading ? (
-          <SkeletonCards count={4} />
+          <SkeletonCards count={5} />
         ) : summary ? (
           [
             { label: 'Total Records', value: summary.record_count, icon: 'receipt_long', color: 'text-primary-container', bg: 'bg-primary-container/10' },
             { label: 'Total Spend', value: `$${Number(summary.total_spend).toLocaleString()}`, icon: 'payments', color: 'text-primary', bg: 'bg-primary/10' },
+            { label: 'Store Revenue', value: `$${Number(summary.sales?.total_revenue ?? 0).toLocaleString()}`, icon: 'shopping_bag', color: 'text-tertiary', bg: 'bg-tertiary-fixed/40' },
+            { label: 'Mock Orders', value: summary.sales?.order_count ?? 0, icon: 'receipt_long', color: 'text-primary-container', bg: 'bg-primary-container/10' },
             { label: 'Anomalies', value: summary.anomaly_count, icon: 'warning', color: 'text-error', bg: 'bg-error-container' },
-            { label: 'Categories', value: Object.keys(summary.by_category).length, icon: 'category', color: 'text-tertiary', bg: 'bg-tertiary-fixed/40' },
           ].map(s => (
             <div key={s.label} className="bg-white rounded-2xl p-5 border border-outline-variant/50">
               <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${s.bg}`}>

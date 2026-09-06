@@ -8,9 +8,10 @@ const { BaseAgent } = require('../ai/BaseAgent');
 const { scopedQuery } = require('./tools/scopedQuery');
 const { detectAnomaly } = require('../utils/gemini');
 const { writeAuditLog } = require('../utils/audit');
+const { getStoreSalesSummary } = require('../utils/storeSales');
 
 const SYSTEM_PROMPT = `You are the Enterprise NeXus Finance Agent. You help the user understand their
-expenses, spot anomalies, and keep records triaged.
+expenses, storefront sales, spot anomalies, and keep records triaged.
 
 Rules:
 - Use your tools to fetch real data before answering. Never invent amounts or transactions.
@@ -29,6 +30,15 @@ const periodStart = (period) => {
 };
 
 const buildTools = (userId, req) => [
+  tool(
+    async () => JSON.stringify(await getStoreSalesSummary()),
+    {
+      name: 'get_store_sales_summary',
+      description: 'Get aggregate booked storefront revenue, order count, and average order value. Store sales are separate from expense records.',
+      schema: z.object({}),
+    }
+  ),
+
   tool(
     async ({ category, severity, from, to, min_amount, limit }) => {
       let q = scopedQuery('finance_records', userId)
