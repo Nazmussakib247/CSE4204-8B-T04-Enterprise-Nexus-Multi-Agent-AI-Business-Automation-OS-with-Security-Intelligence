@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { authApi, getApiErrorMessage } from '@/lib/api'
@@ -9,7 +9,6 @@ import AlreadySignedInGate from '@/components/auth/AlreadySignedInGate'
 
 function CandidateRegisterContent() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
