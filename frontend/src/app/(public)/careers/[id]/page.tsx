@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/lib/auth'
@@ -18,7 +18,6 @@ interface JobPosting {
 export default function JobDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { user, loading: authLoading } = useAuth()
-  const router = useRouter()
   const [job, setJob] = useState<JobPosting | null | undefined>(undefined)
   const [file, setFile] = useState<File | null>(null)
   const [applying, setApplying] = useState(false)

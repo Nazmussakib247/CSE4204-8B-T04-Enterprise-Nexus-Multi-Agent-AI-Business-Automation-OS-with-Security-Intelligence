@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
+import axios from 'axios'
 import { useAuth } from '@/lib/auth'
 import { ordersApi, getApiErrorMessage } from '@/lib/api'
 
@@ -19,8 +20,8 @@ export default function BuyButton({ productId }: { productId: string }) {
     try {
       const { data } = await ordersApi.create(productId, qty)
       setPlacedOrder(data.data)
-    } catch (err: any) {
-      if (err?.response?.status === 401) {
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
         toast('Sign in to place an order', { icon: '🔒' })
         router.push('/store/login')
       } else {

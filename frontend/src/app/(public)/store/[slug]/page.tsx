@@ -22,7 +22,7 @@ export default function ProductPage() {
   if (product === null) {
     return (
       <div className="max-w-[700px] mx-auto px-6 py-16 text-center">
-        <p className="font-body text-[15px] text-on-surface">This product isn't available.</p>
+        <p className="font-body text-[15px] text-on-surface">This product isn&apos;t available.</p>
         <Link href="/store" className="font-body text-[13px] text-primary mt-2 inline-block">Back to store</Link>
       </div>
     )
