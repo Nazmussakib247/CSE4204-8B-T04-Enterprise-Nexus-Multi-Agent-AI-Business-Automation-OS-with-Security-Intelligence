@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { getApiErrorMessage, reviewsApi } from '@/lib/api'
 import toast from 'react-hot-toast'
 
@@ -11,8 +11,10 @@ export default function ReviewsSection({ productId }: { productId: string }) {
   const [rating, setRating] = useState(5)
   const [comment, setComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const load = () => reviewsApi.getForProduct(productId).then(res => setReviews(res.data.data ?? [])).catch(() => setReviews([]))
-  useEffect(() => { load() }, [productId])
+  const load = useCallback(() => {
+    reviewsApi.getForProduct(productId).then(res => setReviews(res.data.data ?? [])).catch(() => setReviews([]))
+  }, [productId])
+  useEffect(() => { load() }, [load])
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault()
