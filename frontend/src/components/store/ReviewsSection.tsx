@@ -12,7 +12,7 @@ export default function ReviewsSection({ productId }: { productId: string }) {
   const [comment, setComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const load = () => reviewsApi.getForProduct(productId).then(res => setReviews(res.data.data ?? [])).catch(() => setReviews([]))
-  useEffect(load, [productId])
+  useEffect(() => { load() }, [productId])
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault()
