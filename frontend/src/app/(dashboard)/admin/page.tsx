@@ -14,6 +14,7 @@ interface User {
   name: string
   email: string
   is_active: boolean
+  approval_status?: 'pending' | 'approved' | 'rejected'
   created_at: string
   roles?: { name: string } | null
 }
@@ -104,6 +105,22 @@ export default function AdminPage() {
     }
   }
 
+  const handleApprove = async (u: User) => {
+    const reason = window.prompt(`Approve ${u.email}? Add an approval note.`)?.trim()
+    if (!reason) return
+    setActionLoading(`approve-${u.id}`)
+    try {
+      await adminApi.approveUser(u.id, reason)
+      setUsers(users => users.map(x => x.id === u.id ? { ...x, is_active: true, approval_status: 'approved' } : x))
+      toast.success('Account approved')
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+      toast.error(msg ?? 'Failed to approve account')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
   return (
     <div className="space-y-6 max-w-[1200px]">
       <PageHeader
@@ -116,7 +133,7 @@ export default function AdminPage() {
         {[
           { label: 'Total Users', value: total, icon: 'group', color: 'text-primary-container', bg: 'bg-primary-container/10' },
           { label: 'Active', value: users.filter(u => u.is_active).length, icon: 'check_circle', color: 'text-primary', bg: 'bg-primary/10' },
-          { label: 'Inactive', value: users.filter(u => !u.is_active).length, icon: 'block', color: 'text-error', bg: 'bg-error-container' },
+          { label: 'Pending Approval', value: users.filter(u => u.approval_status === 'pending').length, icon: 'pending', color: 'text-tertiary', bg: 'bg-tertiary-container/20' },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-2xl p-5 border border-outline-variant/50 flex items-center gap-4">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${s.bg}`}>
@@ -208,8 +225,10 @@ export default function AdminPage() {
 
                   {/* Status */}
                   <td className="px-5 py-4">
-                    <span className={`font-mono text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full ${u.is_active ? 'bg-primary-container/10 text-primary' : 'bg-surface-container text-on-surface-variant'}`}>
-                      {u.is_active ? 'Active' : 'Inactive'}
+                    <span className={`font-mono text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full ${
+                      u.approval_status === 'pending' ? 'bg-tertiary-container/25 text-tertiary' : u.is_active ? 'bg-primary-container/10 text-primary' : 'bg-surface-container text-on-surface-variant'
+                    }`}>
+                      {u.approval_status === 'pending' ? 'Pending approval' : u.is_active ? 'Active' : 'Access revoked'}
                     </span>
                   </td>
 
@@ -221,20 +240,28 @@ export default function AdminPage() {
                   {/* Toggle active */}
                   <td className="px-5 py-4">
                     {u.id !== (user as { id?: string })?.id && (
-                      <button
-                        onClick={() => handleToggleStatus(u)}
-                        disabled={actionLoading === `status-${u.id}`}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-[10px] uppercase tracking-wider border transition-all disabled:opacity-50 ${
-                          u.is_active
-                            ? 'border-error/30 text-error hover:bg-error-container/20'
-                            : 'border-primary-container/40 text-primary hover:bg-primary-container/10'
-                        }`}
-                      >
-                        <span className="material-symbols-outlined text-[14px]">
-                          {actionLoading === `status-${u.id}` ? 'hourglass_empty' : u.is_active ? 'block' : 'check_circle'}
-                        </span>
-                        {u.is_active ? 'Deactivate' : 'Activate'}
-                      </button>
+                      <div className="flex gap-2">
+                        {u.approval_status === 'pending' && (
+                          <button
+                            onClick={() => handleApprove(u)}
+                            disabled={actionLoading === `approve-${u.id}`}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-[10px] uppercase tracking-wider border border-primary-container/40 text-primary hover:bg-primary-container/10 transition-all disabled:opacity-50"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">{actionLoading === `approve-${u.id}` ? 'hourglass_empty' : 'check_circle'}</span>
+                            Approve
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleToggleStatus(u)}
+                          disabled={actionLoading === `status-${u.id}`}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-[10px] uppercase tracking-wider border transition-all disabled:opacity-50 ${
+                            u.is_active ? 'border-error/30 text-error hover:bg-error-container/20' : 'border-primary-container/40 text-primary hover:bg-primary-container/10'
+                          }`}
+                        >
+                          <span className="material-symbols-outlined text-[14px]">{actionLoading === `status-${u.id}` ? 'hourglass_empty' : u.is_active ? 'block' : 'check_circle'}</span>
+                          {u.is_active ? 'Deactivate' : 'Activate'}
+                        </button>
+                      </div>
                     )}
                   </td>
                 </tr>

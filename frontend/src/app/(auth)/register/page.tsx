@@ -3,17 +3,19 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth } from '@/lib/auth'
 import toast from 'react-hot-toast'
 import AlreadySignedInGate from '@/components/auth/AlreadySignedInGate'
+import { authApi, getApiErrorMessage } from '@/lib/api'
+import { useAuth } from '@/lib/auth'
 
 export default function RegisterPage() {
-  const { login } = useAuth()
   const router = useRouter()
+  const { login } = useAuth()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
+  const [role, setRole] = useState<'employee' | 'customer' | 'candidate' | ''>('')
   const [loading, setLoading] = useState(false)
   const [showPass, setShowPass] = useState(false)
 
@@ -27,23 +29,22 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name || !email || !password) { toast.error('All fields required'); return }
+    if (!name || !email || !password || !role) { toast.error('Complete all fields, including account type'); return }
     if (password !== confirm) { toast.error('Passwords do not match'); return }
     if (!passwordValid) { toast.error('Password does not meet the requirements below'); return }
     setLoading(true)
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.details?.join(', ') || data.error || 'Registration failed')
-      await login(email, password)
-      toast.success('Welcome to Enterprise NeXus!')
-      router.push('/dashboard')
+      const { data } = await authApi.register(name, email, password, role)
+      if (data.pending_approval) {
+        toast.success('Account request sent. An admin must approve it before you can sign in.')
+        router.push(role === 'employee' ? '/login' : '/store/login')
+      } else {
+        await login(email, password)
+        toast.success('Customer account created')
+        router.push('/store')
+      }
     } catch (err: unknown) {
-      toast.error((err as Error).message)
+      toast.error(getApiErrorMessage(err, 'Registration failed'))
     } finally {
       setLoading(false)
     }
@@ -91,6 +92,22 @@ export default function RegisterPage() {
                 <span className="font-body text-[14px] text-white/50">{text}</span>
               </div>
             ))}
+
+            <div>
+              <label className="block font-mono text-[11px] uppercase tracking-widest text-on-surface-variant mb-2">Account Type</label>
+              <select
+                value={role}
+                required
+                onChange={e => setRole(e.target.value as typeof role)}
+                className="w-full bg-white border border-outline-variant rounded-xl px-4 py-3 font-body text-[14px] text-on-surface focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all"
+              >
+                <option value="" disabled>Select account type</option>
+                <option value="employee">Employee — request office access</option>
+                <option value="customer">Customer — buy products and track orders</option>
+                <option value="candidate">Candidate — apply for careers</option>
+              </select>
+              <p className="font-body text-[12px] text-on-surface-variant mt-1.5">Customer accounts activate immediately. Employee and candidate requests need admin approval. Admin and manager roles cannot be requested publicly.</p>
+            </div>
           </div>
         </div>
       </div>

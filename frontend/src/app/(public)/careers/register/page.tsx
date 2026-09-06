@@ -32,9 +32,8 @@ function CandidateRegisterContent() {
     setLoading(true)
     try {
       await authApi.registerExternal(name, email, password, 'candidate')
-      toast.success('Account created')
-      const redirectTo = searchParams.get('redirect') || '/careers'
-      router.push(redirectTo)
+      toast.success('Account request sent. An admin must approve it before sign in.')
+      router.push('/store/login')
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Registration failed'))
     } finally {

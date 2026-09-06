@@ -45,46 +45,67 @@ const generateTokens = (userId) => {
 
 const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
 
+const createAccount = async ({ name, email, password, role, req }) => {
+  const { data: existing } = await supabase.from('users').select('id').eq('email', email).single();
+  if (existing) {
+    const err = new Error('Email already registered');
+    err.statusCode = 409;
+    throw err;
+  }
+
+  const { data: roleRow, error: roleErr } = await supabase
+    .from('roles').select('id').eq('name', role).single();
+  if (roleErr || !roleRow) {
+    const err = new Error('Invalid account type');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const password_hash = await bcrypt.hash(password, 12);
+  const requiresApproval = role !== 'customer';
+  const { data: user, error } = await supabase
+    .from('users')
+    .insert({
+      name,
+      email,
+      password_hash,
+      role_id: roleRow.id,
+      is_active: !requiresApproval,
+      approval_status: requiresApproval ? 'pending' : 'approved',
+    })
+    .select('id, name, email, role_id, approval_status, created_at')
+    .single();
+  if (error) throw error;
+
+  writeAuditLog({
+    userId: user.id,
+    action: requiresApproval ? 'auth.registration_requested' : 'auth.customer.register',
+    metadata: { requested_role: role },
+    req,
+  });
+  return { user, requiresApproval };
+};
+
+const createSessionResponse = async (res, user) => {
+  const { accessToken, refreshToken } = generateTokens(user.id);
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  await supabase.from('user_sessions').insert({ user_id: user.id, token_hash: hashToken(refreshToken), expires_at: expiresAt });
+  setAuthCookies(res, accessToken, refreshToken);
+};
+
 // ── POST /api/auth/register ───────────────────────────────────
 const register = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
-
-    const { data: existing } = await supabase
-      .from('users').select('id').eq('email', email).single();
-
-    if (existing) return res.status(409).json({ error: 'Email already registered' });
-
-    const { data: employeeRole } = await supabase
-      .from('roles').select('id').eq('name', 'employee').single();
-
-    const password_hash = await bcrypt.hash(password, 12);
-
-    const { data: user, error } = await supabase
-      .from('users')
-      .insert({ name, email, password_hash, role_id: employeeRole?.id })
-      .select('id, name, email, role_id, created_at')
-      .single();
-
-    if (error) throw error;
-
-    const { accessToken, refreshToken } = generateTokens(user.id);
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
-    await supabase.from('user_sessions').insert({
-      user_id: user.id,
-      token_hash: hashToken(refreshToken),
-      expires_at: expiresAt,
-    });
-
-    setAuthCookies(res, accessToken, refreshToken);
-    writeAuditLog({ userId: user.id, action: 'auth.register', req });
-
+    const { name, email, password, role } = req.body;
+    const { user, requiresApproval } = await createAccount({ name, email, password, role, req });
+    if (!requiresApproval) await createSessionResponse(res, user);
     res.status(201).json({
-      message: 'Registration successful',
-      user: { id: user.id, name: user.name, email: user.email },
+      message: requiresApproval ? 'Account request sent for admin approval' : 'Customer account created',
+      pending_approval: requiresApproval,
+      user: { ...user, role },
     });
   } catch (err) {
+    if (err.statusCode) return res.status(err.statusCode).json({ error: err.message });
     next(err);
   }
 };
@@ -95,45 +116,16 @@ const register = async (req, res, next) => {
 // role is never accepted from arbitrary input there.
 const registerExternal = async (req, res, next) => {
   try {
-    const { name, email, password, role } = req.body; // role validated to 'customer' | 'candidate' by Joi
-
-    const { data: existing } = await supabase
-      .from('users').select('id').eq('email', email).single();
-
-    if (existing) return res.status(409).json({ error: 'Email already registered' });
-
-    const { data: roleRow, error: roleErr } = await supabase
-      .from('roles').select('id').eq('name', role).single();
-
-    if (roleErr || !roleRow) return res.status(400).json({ error: 'Invalid account type' });
-
-    const password_hash = await bcrypt.hash(password, 12);
-
-    const { data: user, error } = await supabase
-      .from('users')
-      .insert({ name, email, password_hash, role_id: roleRow.id })
-      .select('id, name, email, role_id, created_at')
-      .single();
-
-    if (error) throw error;
-
-    const { accessToken, refreshToken } = generateTokens(user.id);
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
-    await supabase.from('user_sessions').insert({
-      user_id: user.id,
-      token_hash: hashToken(refreshToken),
-      expires_at: expiresAt,
-    });
-
-    setAuthCookies(res, accessToken, refreshToken);
-    writeAuditLog({ userId: user.id, action: 'auth.register_external', metadata: { role }, req });
-
+    const { name, email, password, role } = req.body;
+    const { user, requiresApproval } = await createAccount({ name, email, password, role, req });
+    if (!requiresApproval) await createSessionResponse(res, user);
     res.status(201).json({
-      message: 'Registration successful',
-      user: { id: user.id, name: user.name, email: user.email, role },
+      message: requiresApproval ? 'Account request sent for admin approval' : 'Customer account created',
+      pending_approval: requiresApproval,
+      user: { ...user, role },
     });
   } catch (err) {
+    if (err.statusCode) return res.status(err.statusCode).json({ error: err.message });
     next(err);
   }
 };
@@ -145,7 +137,7 @@ const login = async (req, res, next) => {
 
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, name, email, password_hash, is_active, role_id, roles(name)')
+      .select('id, name, email, password_hash, is_active, approval_status, role_id, roles(name)')
       .eq('email', email)
       .single();
 
@@ -154,8 +146,14 @@ const login = async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    if (user.approval_status === 'pending') {
+      return res.status(403).json({ error: 'Account pending admin approval' });
+    }
+    if (user.approval_status === 'rejected') {
+      return res.status(403).json({ error: 'Account request was not approved' });
+    }
     if (!user.is_active) {
-      return res.status(403).json({ error: 'Account is deactivated' });
+      return res.status(403).json({ error: 'Account access has been revoked' });
     }
 
     const valid = await bcrypt.compare(password, user.password_hash);

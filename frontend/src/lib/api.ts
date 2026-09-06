@@ -34,9 +34,14 @@ api.interceptors.response.use(
         return api(original)
       } catch {
         if (typeof window !== 'undefined') {
-          const authPaths = ['/login', '/register', '/forgot-password', '/reset-password']
+          const authPaths = ['/login', '/register', '/forgot-password', '/reset-password', '/store/login', '/store/register', '/careers/register']
           const onAuthPage = authPaths.some((p) => window.location.pathname.startsWith(p))
-          if (!onAuthPage) window.location.href = '/login'
+          if (!onAuthPage) {
+            const isStorePath = window.location.pathname.startsWith('/store') || window.location.pathname.startsWith('/careers')
+            const loginPath = isStorePath ? '/store/login' : '/login'
+            const returnTo = isStorePath ? `?returnTo=${encodeURIComponent(window.location.pathname + window.location.search)}` : ''
+            window.location.href = `${loginPath}${returnTo}`
+          }
         }
       }
     }
@@ -47,8 +52,8 @@ api.interceptors.response.use(
 export const authApi = {
   login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }),
-  register: (name: string, email: string, password: string) =>
-    api.post('/auth/register', { name, email, password }),
+  register: (name: string, email: string, password: string, role: 'employee' | 'customer' | 'candidate') =>
+    api.post('/auth/register', { name, email, password, role }),
   registerExternal: (name: string, email: string, password: string, role: 'customer' | 'candidate') =>
     api.post('/auth/register-external', { name, email, password, role }),
   refresh: () => api.post('/auth/refresh'),
@@ -230,6 +235,8 @@ export const adminApi = {
     api.patch(`/admin/users/${id}/role`, { role, reason }),
   toggleUserStatus: (id: string, is_active: boolean, reason: string) =>
     api.patch(`/admin/users/${id}/status`, { is_active, reason }),
+  approveUser: (id: string, reason: string) =>
+    api.patch(`/admin/users/${id}/approve`, { reason }),
 }
 
 export interface AgentStep {

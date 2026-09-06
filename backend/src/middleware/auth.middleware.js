@@ -13,7 +13,7 @@ const protect = async (req, res, next) => {
 
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, name, email, is_active, role_id, roles(name)')
+      .select('id, name, email, is_active, approval_status, role_id, roles(name)')
       .eq('id', decoded.userId)
       .single();
 
@@ -21,8 +21,11 @@ const protect = async (req, res, next) => {
       return res.status(401).json({ error: 'User not found' });
     }
 
-    if (!user.is_active) {
-      return res.status(403).json({ error: 'Account is deactivated' });
+    if (user.approval_status === 'pending') {
+      return res.status(403).json({ error: 'Account pending admin approval' });
+    }
+    if (user.approval_status === 'rejected' || !user.is_active) {
+      return res.status(403).json({ error: 'Account access has been revoked' });
     }
 
     req.user = {

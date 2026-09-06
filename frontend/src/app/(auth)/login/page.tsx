@@ -20,10 +20,11 @@ export default function LoginPage() {
     if (!email || !password) { toast.error('Email and password required'); return }
     setLoading(true)
     try {
-      await login(email, password)
-      router.push('/dashboard')
-    } catch {
-      toast.error('Invalid credentials')
+      const signedInUser = await login(email, password)
+      router.push(['customer', 'candidate'].includes(signedInUser.role) ? '/store' : '/dashboard')
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+      toast.error(msg ?? 'Invalid credentials')
     } finally {
       setLoading(false)
     }

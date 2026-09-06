@@ -14,7 +14,7 @@ const getActiveAdminCount = async () => {
 const getTargetUser = async (id) => {
   const { data, error } = await supabase
     .from('users')
-    .select('id, name, email, is_active, role_id, roles(name)')
+    .select('id, name, email, is_active, approval_status, role_id, roles(name)')
     .eq('id', id)
     .single();
   if (error || !data) return null;
@@ -29,7 +29,7 @@ const listUsers = async (req, res, next) => {
 
     let query = supabase
       .from('users')
-      .select('id, name, email, is_active, created_at, role_id, roles(name)', { count: 'exact' })
+      .select('id, name, email, is_active, approval_status, approved_at, created_at, role_id, roles(name)', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(offset, offset + Number(limit) - 1);
 
@@ -41,6 +41,46 @@ const listUsers = async (req, res, next) => {
     if (error) throw error;
 
     res.json({ data, total: count, page: Number(page), limit: Number(limit) });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// PATCH /api/admin/users/:id/approve
+const approveUser = async (req, res, next) => {
+  try {
+    const { reason } = req.body;
+    if (!reason || !String(reason).trim()) return res.status(400).json({ error: 'reason is required for approval' });
+
+    const target = await getTargetUser(req.params.id);
+    if (!target) return res.status(404).json({ error: 'User not found' });
+    if (target.approval_status === 'approved' && target.is_active) {
+      return res.status(400).json({ error: 'Account is already approved' });
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .update({
+        is_active: true,
+        approval_status: 'approved',
+        approved_at: new Date().toISOString(),
+        approved_by: req.user.id,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', req.params.id)
+      .select('id, name, email, is_active, approval_status, roles(name)')
+      .single();
+    if (error) throw error;
+
+    writeAuditLog({
+      userId: req.user.id,
+      action: 'admin.user.approve',
+      resourceType: 'user',
+      resourceId: req.params.id,
+      metadata: { requested_role: target.roles?.name || null, reason: String(reason).trim() },
+      req,
+    });
+    res.json({ message: 'Account approved', data });
   } catch (err) {
     next(err);
   }
@@ -150,4 +190,4 @@ const listRoles = async (req, res, next) => {
   }
 };
 
-module.exports = { listUsers, updateUserRole, toggleUserStatus, listRoles };
+module.exports = { listUsers, updateUserRole, toggleUserStatus, approveUser, listRoles };

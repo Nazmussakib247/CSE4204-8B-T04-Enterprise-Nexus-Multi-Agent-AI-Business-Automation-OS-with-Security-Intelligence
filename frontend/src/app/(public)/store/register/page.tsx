@@ -6,9 +6,11 @@ import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { authApi, getApiErrorMessage } from '@/lib/api'
 import AlreadySignedInGate from '@/components/auth/AlreadySignedInGate'
+import { useAuth } from '@/lib/auth'
 
 export default function StoreRegisterPage() {
   const router = useRouter()
+  const { login } = useAuth()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -31,7 +33,8 @@ export default function StoreRegisterPage() {
     setLoading(true)
     try {
       await authApi.registerExternal(name, email, password, 'customer')
-      toast.success('Account created')
+      await login(email, password)
+      toast.success('Customer account created')
       router.push('/store')
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Registration failed'))
