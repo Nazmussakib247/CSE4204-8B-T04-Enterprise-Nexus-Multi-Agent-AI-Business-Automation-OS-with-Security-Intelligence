@@ -69,9 +69,14 @@ export default function AdminPage() {
   }, [search, fetchUsers])
 
   const handleRoleChange = async (userId: string, role: string) => {
+    const reason = window.prompt('Why are you changing this user\'s role?')?.trim()
+    if (!reason) {
+      fetchUsers(search)
+      return
+    }
     setActionLoading(`role-${userId}`)
     try {
-      await adminApi.updateUserRole(userId, role)
+      await adminApi.updateUserRole(userId, role, reason)
       setUsers(u => u.map(x => x.id === userId ? { ...x, roles: { name: role } } : x))
       toast.success('Role updated')
     } catch {
@@ -82,9 +87,13 @@ export default function AdminPage() {
   }
 
   const handleToggleStatus = async (u: User) => {
+    const action = u.is_active ? 'revoke access for' : 'restore access for'
+    if (!window.confirm(`Are you sure you want to ${action} ${u.email}?`)) return
+    const reason = window.prompt(`Why are you changing ${u.email}'s access?`)?.trim()
+    if (!reason) return
     setActionLoading(`status-${u.id}`)
     try {
-      await adminApi.toggleUserStatus(u.id, !u.is_active)
+      await adminApi.toggleUserStatus(u.id, !u.is_active, reason)
       setUsers(users => users.map(x => x.id === u.id ? { ...x, is_active: !u.is_active } : x))
       toast.success(`User ${!u.is_active ? 'activated' : 'deactivated'}`)
     } catch (err: unknown) {
@@ -99,7 +108,7 @@ export default function AdminPage() {
     <div className="space-y-6 max-w-[1200px]">
       <PageHeader
         title="Admin Panel"
-        subtitle="User management, roles, and access control"
+        subtitle="Manage office access. Every role or access change is recorded in the admin audit log."
       />
 
       {/* Stats bar */}
