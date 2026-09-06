@@ -44,7 +44,11 @@ export default function Sidebar() {
   const pathname = usePathname()
   const { user, logout } = useAuth()
   const role = (user as { role?: string } | null)?.role
-  const groups = role === 'admin' ? [...navGroups, adminGroup] : navGroups
+  const groups = role === 'admin'
+    ? [...navGroups, adminGroup]
+    : navGroups.map(group => group.label === 'System'
+      ? { ...group, items: group.items.filter(item => item.href !== '/security') }
+      : group)
   const { open, close } = useSidebar()
 
   const isActive = (href: string) =>

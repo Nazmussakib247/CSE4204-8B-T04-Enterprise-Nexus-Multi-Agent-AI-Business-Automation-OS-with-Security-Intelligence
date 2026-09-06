@@ -226,10 +226,10 @@ export const adminApi = {
   listUsers: (params?: Record<string, unknown>) =>
     api.get('/admin/users', { params }),
   listRoles: () => api.get('/admin/roles'),
-  updateUserRole: (id: string, role: string) =>
-    api.patch(`/admin/users/${id}/role`, { role }),
-  toggleUserStatus: (id: string, is_active: boolean) =>
-    api.patch(`/admin/users/${id}/status`, { is_active }),
+  updateUserRole: (id: string, role: string, reason: string) =>
+    api.patch(`/admin/users/${id}/role`, { role, reason }),
+  toggleUserStatus: (id: string, is_active: boolean, reason: string) =>
+    api.patch(`/admin/users/${id}/status`, { is_active, reason }),
 }
 
 export interface AgentStep {

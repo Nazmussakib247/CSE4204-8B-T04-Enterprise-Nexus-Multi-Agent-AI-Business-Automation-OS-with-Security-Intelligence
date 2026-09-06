@@ -65,7 +65,6 @@ const getRecords = async (req, res, next) => {
     let query = supabase
       .from('finance_records')
       .select('*', { count: 'exact' })
-      .eq('user_id', req.user.id)
       .order('expense_date', { ascending: false })
       .range(offset, offset + Number(limit) - 1);
 
@@ -90,7 +89,6 @@ const getRecord = async (req, res, next) => {
       .from('finance_records')
       .select('*')
       .eq('id', req.params.id)
-      .eq('user_id', req.user.id)
       .single();
 
     if (error || !data) return res.status(404).json({ error: 'Record not found' });
@@ -169,7 +167,6 @@ const updateRecord = async (req, res, next) => {
       .from('finance_records')
       .update(updates)
       .eq('id', req.params.id)
-      .eq('user_id', req.user.id)
       .select()
       .single();
 
@@ -196,8 +193,7 @@ const deleteRecord = async (req, res, next) => {
     const { error } = await supabase
       .from('finance_records')
       .delete()
-      .eq('id', req.params.id)
-      .eq('user_id', req.user.id);
+      .eq('id', req.params.id);
 
     if (error) throw error;
 
@@ -221,7 +217,6 @@ const getAnomalies = async (req, res, next) => {
     const { data, error } = await supabase
       .from('finance_records')
       .select('*')
-      .eq('user_id', req.user.id)
       .in('severity', ['high', 'critical'])
       .order('expense_date', { ascending: false });
 
@@ -237,8 +232,7 @@ const getSummary = async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('finance_records')
-      .select('category, amount, severity')
-      .eq('user_id', req.user.id);
+      .select('category, amount, severity');
 
     if (error) throw error;
 

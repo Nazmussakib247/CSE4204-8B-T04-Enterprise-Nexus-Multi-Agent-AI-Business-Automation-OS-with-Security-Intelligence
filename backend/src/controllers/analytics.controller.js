@@ -11,7 +11,6 @@ const getReports = async (req, res, next) => {
     const { data, error, count } = await supabase
       .from('analytics_reports')
       .select('*', { count: 'exact' })
-      .eq('user_id', req.user.id)
       .order('created_at', { ascending: false })
       .range(offset, offset + Number(limit) - 1);
 
@@ -29,7 +28,6 @@ const getReport = async (req, res, next) => {
       .from('analytics_reports')
       .select('*')
       .eq('id', req.params.id)
-      .eq('user_id', req.user.id)
       .single();
 
     if (error || !data) return res.status(404).json({ error: 'Report not found' });
@@ -69,11 +67,11 @@ const generateReport = async (req, res, next) => {
   try {
     const userId = req.user.id;
 
-    // Pull data from all modules for this user
+    // Office analytics is based on shared organisational data.
     const [hrRes, financeRes, supportRes] = await Promise.all([
-      supabase.from('hr_reports').select('recommendation, ai_score, job_title').eq('user_id', userId).order('created_at', { ascending: false }).limit(50),
-      supabase.from('finance_records').select('category, amount, severity').eq('user_id', userId).order('created_at', { ascending: false }).limit(50),
-      supabase.from('support_tickets').select('urgency, sentiment, status, escalated').eq('user_id', userId).order('created_at', { ascending: false }).limit(50),
+      supabase.from('hr_reports').select('recommendation, ai_score, job_title').order('created_at', { ascending: false }).limit(50),
+      supabase.from('finance_records').select('category, amount, severity').order('created_at', { ascending: false }).limit(50),
+      supabase.from('support_tickets').select('urgency, sentiment, status, escalated').order('created_at', { ascending: false }).limit(50),
     ]);
 
     const aiResult = await generateAnalyticsReport({
@@ -117,7 +115,6 @@ const getLatestKPI = async (req, res, next) => {
     const { data, error } = await supabase
       .from('analytics_reports')
       .select('kpi_snapshot, overall_score, performance_rating, created_at')
-      .eq('user_id', req.user.id)
       .order('created_at', { ascending: false })
       .limit(1)
       .single();
@@ -135,8 +132,7 @@ const deleteReport = async (req, res, next) => {
     const { error } = await supabase
       .from('analytics_reports')
       .delete()
-      .eq('id', req.params.id)
-      .eq('user_id', req.user.id);
+      .eq('id', req.params.id);
 
     if (error) throw error;
     res.json({ message: 'Report deleted' });

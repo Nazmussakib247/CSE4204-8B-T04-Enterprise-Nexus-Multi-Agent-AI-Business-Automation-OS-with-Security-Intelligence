@@ -3,13 +3,13 @@ const { generateJson, AiUnavailableError } = require('../ai/client');
 const { writeAuditLog } = require('../utils/audit');
 const { buildExecutivePdf } = require('../utils/pdf');
 
-// Shared: gather the cross-domain briefing snapshot for a user
-const gatherBriefing = async (userId) => {
+// Shared: gather the cross-domain briefing snapshot for the office.
+const gatherBriefing = async () => {
   const [hrRes, financeRes, supportRes, analyticsRes] = await Promise.all([
-    supabase.from('hr_reports').select('id, candidate_name, recommendation, ai_score').eq('user_id', userId).order('created_at', { ascending: false }).limit(5),
-    supabase.from('finance_records').select('id, category, amount, severity').eq('user_id', userId).order('created_at', { ascending: false }).limit(5),
-    supabase.from('support_tickets').select('id, urgency, sentiment, status, escalated').eq('user_id', userId).order('created_at', { ascending: false }).limit(5),
-    supabase.from('analytics_reports').select('overall_score, performance_rating, kpi_snapshot').eq('user_id', userId).order('created_at', { ascending: false }).limit(1),
+    supabase.from('hr_reports').select('id, candidate_name, recommendation, ai_score').order('created_at', { ascending: false }).limit(5),
+    supabase.from('finance_records').select('id, category, amount, severity').order('created_at', { ascending: false }).limit(5),
+    supabase.from('support_tickets').select('id, urgency, sentiment, status, escalated').order('created_at', { ascending: false }).limit(5),
+    supabase.from('analytics_reports').select('overall_score, performance_rating, kpi_snapshot').order('created_at', { ascending: false }).limit(1),
   ]);
 
   return {
@@ -29,7 +29,6 @@ const getReports = async (req, res, next) => {
     const { data, error, count } = await supabase
       .from('executive_reports')
       .select('*', { count: 'exact' })
-      .eq('user_id', req.user.id)
       .order('created_at', { ascending: false })
       .range(offset, offset + Number(limit) - 1);
 
@@ -46,7 +45,6 @@ const getLatestReport = async (req, res, next) => {
     const { data, error } = await supabase
       .from('executive_reports')
       .select('*')
-      .eq('user_id', req.user.id)
       .order('created_at', { ascending: false })
       .limit(1)
       .single();
@@ -65,7 +63,6 @@ const getReport = async (req, res, next) => {
       .from('executive_reports')
       .select('*')
       .eq('id', req.params.id)
-      .eq('user_id', req.user.id)
       .single();
 
     if (error || !data) return res.status(404).json({ error: 'Report not found' });
@@ -109,7 +106,7 @@ const createReport = async (req, res, next) => {
 // GET /api/executive/briefing — cross-domain daily briefing
 const getDailyBriefing = async (req, res, next) => {
   try {
-    const briefing = await gatherBriefing(req.user.id);
+    const briefing = await gatherBriefing();
     res.json({ briefing, generated_at: new Date().toISOString() });
   } catch (err) {
     next(err);
@@ -119,7 +116,7 @@ const getDailyBriefing = async (req, res, next) => {
 // GET /api/executive/briefing/pdf — export the daily briefing as a PDF (FR-28 / UC-12)
 const exportBriefingPdf = async (req, res, next) => {
   try {
-    const briefing = await gatherBriefing(req.user.id);
+    const briefing = await gatherBriefing();
     const generatedAt = new Date().toISOString();
     const fileName = `executive-briefing-${generatedAt.slice(0, 10)}.pdf`;
 
@@ -153,10 +150,10 @@ const askAI = async (req, res, next) => {
 
     // Gather context from all modules
     const [hrRes, financeRes, supportRes, analyticsRes] = await Promise.all([
-      supabase.from('hr_reports').select('candidate_name, recommendation, ai_score, job_title').eq('user_id', userId).order('created_at', { ascending: false }).limit(10),
-      supabase.from('finance_records').select('category, amount, severity, expense_date, description').eq('user_id', userId).order('created_at', { ascending: false }).limit(10),
-      supabase.from('support_tickets').select('query, intent, urgency, sentiment, status, escalated').eq('user_id', userId).order('created_at', { ascending: false }).limit(10),
-      supabase.from('analytics_reports').select('overall_score, performance_rating, ai_insights, action_items, kpi_snapshot').eq('user_id', userId).order('created_at', { ascending: false }).limit(3),
+      supabase.from('hr_reports').select('candidate_name, recommendation, ai_score, job_title').order('created_at', { ascending: false }).limit(10),
+      supabase.from('finance_records').select('category, amount, severity, expense_date, description').order('created_at', { ascending: false }).limit(10),
+      supabase.from('support_tickets').select('query, intent, urgency, sentiment, status, escalated').order('created_at', { ascending: false }).limit(10),
+      supabase.from('analytics_reports').select('overall_score, performance_rating, ai_insights, action_items, kpi_snapshot').order('created_at', { ascending: false }).limit(3),
     ]);
 
     const context = {

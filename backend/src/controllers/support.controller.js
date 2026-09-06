@@ -3,8 +3,7 @@ const { analyseSentiment } = require('../utils/gemini');
 const { notifyN8n } = require('../utils/webhook');
 const { sendEscalationEmail } = require('../utils/email');
 const { writeAuditLog } = require('../utils/audit');
-const STAFF_ROLES = ['admin', 'manager', 'employee'];
-const isStaff = (user) => STAFF_ROLES.includes(user.role);
+const { isOfficeUser } = require('../middleware/roles');
 
 // GET /api/support/tickets
 const getTickets = async (req, res, next) => {
@@ -18,7 +17,7 @@ const getTickets = async (req, res, next) => {
       .order('created_at', { ascending: false })
       .range(offset, offset + Number(limit) - 1);
 
-    if (!isStaff(req.user)) query = query.eq('user_id', req.user.id);
+    if (!isOfficeUser(req.user)) query = query.eq('user_id', req.user.id);
 
     if (status) query = query.eq('status', status);
     if (urgency) query = query.eq('urgency', urgency);
@@ -41,7 +40,7 @@ const getTicket = async (req, res, next) => {
       .from('support_tickets')
       .select('*')
       .eq('id', req.params.id);
-    if (!isStaff(req.user)) query = query.eq('user_id', req.user.id);
+    if (!isOfficeUser(req.user)) query = query.eq('user_id', req.user.id);
     const { data, error } = await query.single();
 
     if (error || !data) return res.status(404).json({ error: 'Ticket not found' });
@@ -61,7 +60,7 @@ const createTicket = async (req, res, next) => {
     let linkedProduct = null;
     if (order_id) {
       let orderQuery = supabase.from('orders').select('id, customer_id, product_id, status, quantity, total, created_at').eq('id', order_id);
-      if (!isStaff(req.user)) orderQuery = orderQuery.eq('customer_id', req.user.id);
+      if (!isOfficeUser(req.user)) orderQuery = orderQuery.eq('customer_id', req.user.id);
       const { data, error } = await orderQuery.single();
       if (error || !data) return res.status(400).json({ error: 'Linked order was not found or is not yours' });
       linkedOrder = data;
@@ -141,13 +140,9 @@ const updateTicket = async (req, res, next) => {
     if (ticketQuery !== undefined) updates.query = ticketQuery;
     updates.updated_at = new Date().toISOString();
 
-    const { data, error } = await supabase
-      .from('support_tickets')
-      .update(updates)
-      .eq('id', req.params.id)
-      .eq('user_id', req.user.id)
-      .select()
-      .single();
+    let updateQuery = supabase.from('support_tickets').update(updates).eq('id', req.params.id);
+    if (!isOfficeUser(req.user)) updateQuery = updateQuery.eq('user_id', req.user.id);
+    const { data, error } = await updateQuery.select().single();
 
     if (error) throw error;
     if (!data) return res.status(404).json({ error: 'Ticket not found' });
@@ -170,13 +165,12 @@ const updateTicket = async (req, res, next) => {
 // PATCH /api/support/tickets/:id/escalate
 const escalateTicket = async (req, res, next) => {
   try {
-    const { data, error } = await supabase
+    let updateQuery = supabase
       .from('support_tickets')
       .update({ escalated: true, status: 'escalated', updated_at: new Date().toISOString() })
-      .eq('id', req.params.id)
-      .eq('user_id', req.user.id)
-      .select()
-      .single();
+      .eq('id', req.params.id);
+    if (!isOfficeUser(req.user)) updateQuery = updateQuery.eq('user_id', req.user.id);
+    const { data, error } = await updateQuery.select().single();
 
     if (error) throw error;
     if (!data) return res.status(404).json({ error: 'Ticket not found' });
@@ -220,7 +214,7 @@ const getSentimentReport = async (req, res, next) => {
     let query = supabase
       .from('support_tickets')
       .select('sentiment, urgency, status, escalated, created_at');
-    if (!isStaff(req.user)) query = query.eq('user_id', req.user.id);
+    if (!isOfficeUser(req.user)) query = query.eq('user_id', req.user.id);
     const { data, error } = await query;
 
     if (error) throw error;
@@ -251,13 +245,12 @@ const getSentimentReport = async (req, res, next) => {
 // PATCH /api/support/tickets/:id/resolve
 const resolveTicket = async (req, res, next) => {
   try {
-    const { data, error } = await supabase
+    let updateQuery = supabase
       .from('support_tickets')
       .update({ status: 'resolved', updated_at: new Date().toISOString() })
-      .eq('id', req.params.id)
-      .eq('user_id', req.user.id)
-      .select()
-      .single();
+      .eq('id', req.params.id);
+    if (!isOfficeUser(req.user)) updateQuery = updateQuery.eq('user_id', req.user.id);
+    const { data, error } = await updateQuery.select().single();
 
     if (error) throw error;
     if (!data) return res.status(404).json({ error: 'Ticket not found' });
