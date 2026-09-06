@@ -1,0 +1,34 @@
+{
+  "name": "06 · Store Review Support Agent",
+  "nodes": [
+    {
+      "parameters": { "path": "store-review", "httpMethod": "POST", "responseMode": "onReceived", "options": {} },
+      "id": "store-review-webhook", "name": "Store review received", "type": "n8n-nodes-base.webhook", "typeVersion": 2, "position": [240, 300], "webhookId": "enterprise-nexus-store-review"
+    },
+    {
+      "parameters": {
+        "jsCode": "const incoming = $input.first().json;\nif (incoming.headers?.['x-nexus-secret'] !== $env.N8N_SECRET) throw new Error('Invalid webhook secret');\nconst body = incoming.body || incoming;\nfor (const key of ['review_id', 'product_name', 'rating', 'comment']) if (body[key] === undefined || body[key] === null) throw new Error(`Missing ${key}`);\nconst prompt = `You are a professional customer-support agent. Analyse this product review and reply directly to the customer. Return only JSON: {sentiment: positive|neutral|negative, urgency: low|medium|high, support_reply: string}. The reply must be empathetic, specific, under 120 words, and must not invent refunds, policy, or delivery facts. Product: ${body.product_name}. Rating: ${body.rating}/5. Review: ${body.comment}`;\nreturn [{ json: { review_id: body.review_id, geminiBody: { contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: 'application/json' } } } }];"
+      },
+      "id": "store-review-prompt", "name": "Prepare review analysis", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [500, 300]
+    },
+    {
+      "parameters": { "method": "POST", "url": "={{ 'https://generativelanguage.googleapis.com/v1beta/models/' + ($env.GEMINI_MODEL || 'gemini-1.5-flash') + ':generateContent?key=' + $env.GEMINI_API_KEY }}", "sendBody": true, "contentType": "json", "jsonBody": "={{ JSON.stringify($json.geminiBody) }}", "options": {} },
+      "id": "store-review-gemini", "name": "Gemini review analysis", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [760, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.candidates?.[0]?.content?.parts?.[0]?.text;\nif (!raw) throw new Error('Gemini returned no review analysis');\nconst result = JSON.parse(raw);\nconst source = $('Prepare review analysis').first().json;\nreturn [{ json: { review_id: source.review_id, sentiment: ['positive','neutral','negative'].includes(result.sentiment) ? result.sentiment : 'neutral', urgency: ['low','medium','high'].includes(result.urgency) ? result.urgency : 'low', support_reply: String(result.support_reply || '').slice(0, 2000) } }];"
+      },
+      "id": "store-review-normalise", "name": "Normalise review result", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [1020, 300]
+    },
+    {
+      "parameters": { "method": "POST", "url": "={{ $env.NEXUS_API_URL + '/webhook/store-review-analysed' }}", "sendHeaders": true, "headerParameters": { "parameters": [{ "name": "x-nexus-secret", "value": "={{ $env.N8N_SECRET }}" }] }, "sendBody": true, "contentType": "json", "jsonBody": "={{ JSON.stringify($json) }}", "options": {} },
+      "id": "store-review-callback", "name": "Save review result", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [1280, 300]
+    }
+  ],
+  "connections": { "Store review received": { "main": [[{ "node": "Prepare review analysis", "type": "main", "index": 0 }]] }, "Prepare review analysis": { "main": [[{ "node": "Gemini review analysis", "type": "main", "index": 0 }]] }, "Gemini review analysis": { "main": [[{ "node": "Normalise review result", "type": "main", "index": 0 }]] }, "Normalise review result": { "main": [[{ "node": "Save review result", "type": "main", "index": 0 }]] } },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "id": "wf-store-review-support-agent-006",
+  "tags": [{ "name": "Store" }, { "name": "Support" }, { "name": "Enterprise NeXus" }]
+}

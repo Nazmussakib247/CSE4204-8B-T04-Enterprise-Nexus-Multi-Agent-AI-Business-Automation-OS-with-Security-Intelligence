@@ -129,14 +129,15 @@ const createTicket = async (req, res, next) => {
       req,
     });
 
-    if (aiResult) {
-      notifyN8n('support-ticket', {
+    // n8n retries only failed AI analysis. Successful requests already have a
+    // synchronous customer-facing response and must not be overwritten later.
+    if (!aiResult) {
+      notifyN8n('store-support-retry', {
         ticket_id: data.id,
         user_id: req.user.id,
-        urgency: aiResult.urgency,
-        sentiment: aiResult.sentiment,
-        intent: aiResult.intent,
-        escalated: data.escalated,
+        query,
+        order_id: linkedOrder?.id || null,
+        product_id: linkedProductId,
         created_at: data.created_at,
       });
     }

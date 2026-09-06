@@ -1,6 +1,7 @@
 const supabase = require('../config/supabase');
 const { analyseSentiment } = require('../utils/gemini');
 const { writeAuditLog } = require('../utils/audit');
+const { notifyN8n } = require('../utils/webhook');
 
 const getProductReviews = async (req, res, next) => {
   try {
@@ -45,6 +46,17 @@ const createReview = async (req, res, next) => {
     }).select('*, users!product_reviews_customer_id_fkey(name)').single();
     if (error) throw error;
     writeAuditLog({ userId: req.user.id, action: 'product.review.create', resourceType: 'product_review', resourceId: data.id, metadata: { product_id, rating, flagged }, req });
+    // n8n independently produces the customer-facing Support Agent reply.
+    // It may also retry a pending sentiment analysis without losing this row.
+    notifyN8n('store-review', {
+      review_id: data.id,
+      product_id,
+      product_name: product.name,
+      customer_id: req.user.id,
+      rating,
+      comment,
+      ai_status: aiStatus,
+    });
     res.status(201).json({
       message: flagged
         ? 'Review submitted and flagged for Support review'

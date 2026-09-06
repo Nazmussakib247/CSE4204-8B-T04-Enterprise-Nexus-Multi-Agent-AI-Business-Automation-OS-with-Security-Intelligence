@@ -1,0 +1,34 @@
+{
+  "name": "07 · Store Support AI Retry",
+  "nodes": [
+    {
+      "parameters": { "path": "store-support-retry", "httpMethod": "POST", "responseMode": "onReceived", "options": {} },
+      "id": "store-support-webhook", "name": "Failed support analysis received", "type": "n8n-nodes-base.webhook", "typeVersion": 2, "position": [240, 300], "webhookId": "enterprise-nexus-store-support-retry"
+    },
+    {
+      "parameters": {
+        "jsCode": "const incoming = $input.first().json;\nif (incoming.headers?.['x-nexus-secret'] !== $env.N8N_SECRET) throw new Error('Invalid webhook secret');\nconst body = incoming.body || incoming;\nfor (const key of ['ticket_id', 'query']) if (!body[key]) throw new Error(`Missing ${key}`);\nconst prompt = `You are a customer support AI. Analyse the customer message below. Return only JSON: {sentiment: positive|neutral|negative, urgency: low|medium|high, intent: short label, confidence: number 0 to 1, ai_response: helpful concise reply}. Do not invent policy or compensation. Customer message: ${body.query}`;\nreturn [{ json: { ticket_id: body.ticket_id, geminiBody: { contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: 'application/json' } } } }];"
+      },
+      "id": "store-support-prompt", "name": "Prepare support retry", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [500, 300]
+    },
+    {
+      "parameters": { "method": "POST", "url": "={{ 'https://generativelanguage.googleapis.com/v1beta/models/' + ($env.GEMINI_MODEL || 'gemini-1.5-flash') + ':generateContent?key=' + $env.GEMINI_API_KEY }}", "sendBody": true, "contentType": "json", "jsonBody": "={{ JSON.stringify($json.geminiBody) }}", "options": {} },
+      "id": "store-support-gemini", "name": "Gemini support retry", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [760, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.candidates?.[0]?.content?.parts?.[0]?.text;\nif (!raw) throw new Error('Gemini returned no support analysis');\nconst result = JSON.parse(raw);\nconst source = $('Prepare support retry').first().json;\nreturn [{ json: { ticket_id: source.ticket_id, sentiment: ['positive','neutral','negative'].includes(result.sentiment) ? result.sentiment : 'neutral', urgency: ['low','medium','high'].includes(result.urgency) ? result.urgency : 'low', intent: String(result.intent || 'general inquiry').slice(0, 120), confidence: Math.max(0, Math.min(1, Number(result.confidence) || 0.5)), ai_response: String(result.ai_response || '').slice(0, 2000) } }];"
+      },
+      "id": "store-support-normalise", "name": "Normalise support result", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [1020, 300]
+    },
+    {
+      "parameters": { "method": "POST", "url": "={{ $env.NEXUS_API_URL + '/webhook/store-support-analysed' }}", "sendHeaders": true, "headerParameters": { "parameters": [{ "name": "x-nexus-secret", "value": "={{ $env.N8N_SECRET }}" }] }, "sendBody": true, "contentType": "json", "jsonBody": "={{ JSON.stringify($json) }}", "options": {} },
+      "id": "store-support-callback", "name": "Save support retry", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [1280, 300]
+    }
+  ],
+  "connections": { "Failed support analysis received": { "main": [[{ "node": "Prepare support retry", "type": "main", "index": 0 }]] }, "Prepare support retry": { "main": [[{ "node": "Gemini support retry", "type": "main", "index": 0 }]] }, "Gemini support retry": { "main": [[{ "node": "Normalise support result", "type": "main", "index": 0 }]] }, "Normalise support result": { "main": [[{ "node": "Save support retry", "type": "main", "index": 0 }]] } },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "id": "wf-store-support-ai-retry-007",
+  "tags": [{ "name": "Store" }, { "name": "Support" }, { "name": "Enterprise NeXus" }]
+}

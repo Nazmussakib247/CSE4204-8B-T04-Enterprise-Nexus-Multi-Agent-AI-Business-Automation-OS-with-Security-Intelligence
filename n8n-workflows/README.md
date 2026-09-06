@@ -20,7 +20,7 @@ Backend (Express)
 
 ---
 
-## The 5 Workflows
+## The 7 Workflows
 
 | # | File | Trigger | What it does |
 |---|------|---------|--------------|
@@ -29,6 +29,8 @@ Backend (Express)
 | 03 | `03-support-auto-escalation.json` | **Every 1 hour** (cron) | Polls pending support tasks → escalates old high-urgency tickets |
 | 04 | `04-daily-executive-briefing.json` | **Every day at 8:00 AM** | Fetches all agent data → calls Gemini → saves executive report |
 | 05 | `05-weekly-analytics-kpi.json` | **Every Monday at 9:00 AM** | Fetches HR+Finance+Support stats → calculates KPI → Gemini insights → saves analytics report |
+| 06 | `06-store-review-support-agent.json` | Webhook (new product review) | Analyses review sentiment/urgency, saves it, and posts a customer-visible Support Agent reply |
+| 07 | `07-store-support-ai-retry.json` | Webhook (only after AI outage) | Retries a saved failed support-ticket analysis and restores its AI reply/escalation state |
 
 ---
 
@@ -44,7 +46,7 @@ Or use [n8n Cloud](https://app.n8n.cloud) (free tier available).
 ### 2. Import workflows
 1. Open n8n → Workflows → Import
 2. Import each `.json` file from this folder
-3. You'll see all 5 workflows imported
+3. You'll see all 7 workflows imported
 
 ### 3. Set n8n Environment Variables
 In n8n → Settings → Environment Variables, add:
@@ -72,6 +74,22 @@ N8N_SECRET=change-me-to-a-random-secret
 ## How webhooks work (Workflows 01 & 02)
 
 ```
+
+## Store customer-care workflows (06 & 07)
+
+`06-store-review-support-agent.json` runs for every product review. It persists sentiment/urgency and publishes a safe Support Agent reply to the exact review. Negative or high-urgency results are also placed in the dashboard human-intervention queue.
+
+`07-store-support-ai-retry.json` runs only if the backend could not reach Gemini while creating a support ticket. The ticket is already saved with `ai_status = failed`; n8n restores the same sentiment, urgency, intent, AI response, and escalation state through a protected callback.
+
+Both inbound n8n webhooks verify `x-nexus-secret`, and both callbacks require the same secret. Keep all three values identical: backend `N8N_SECRET`, n8n `$env.N8N_SECRET`, and the Render environment variable.
+
+### Required activation order
+
+1. Set `NEXUS_API_URL`, `N8N_SECRET`, `GEMINI_API_KEY`, and optional `GEMINI_MODEL` in n8n.
+2. Set backend `N8N_WEBHOOK_URL` to the n8n production webhook base URL (without the trailing workflow path).
+3. Import workflows 06 and 07 and activate them.
+4. Submit a product review. It should gain a Support Agent reply after the n8n run.
+5. To test 07, temporarily make the backend Gemini configuration unavailable, submit a ticket, restore the configuration, and confirm the saved ticket gains its AI response after n8n receives the retry webhook.
 1. User submits CV / Finance record in the frontend
 2. Backend saves to Supabase + calls Gemini AI
 3. Backend fires POST to n8n webhook URL (fire & forget)
