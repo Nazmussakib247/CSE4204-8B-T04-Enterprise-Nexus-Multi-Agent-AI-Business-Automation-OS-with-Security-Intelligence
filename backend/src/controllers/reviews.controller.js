@@ -6,7 +6,7 @@ const getProductReviews = async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('product_reviews')
-      .select('id, rating, comment, sentiment, urgency, created_at, users!product_reviews_customer_id_fkey(name)')
+      .select('id, rating, comment, sentiment, urgency, ai_status, created_at, users!product_reviews_customer_id_fkey(name)')
       .eq('product_id', req.params.productId)
       .order('created_at', { ascending: false });
     if (error) throw error;
@@ -20,15 +20,37 @@ const createReview = async (req, res, next) => {
     const { product_id, rating, comment } = req.body;
     const { data: product, error: productError } = await supabase.from('products').select('id, name, status').eq('id', product_id).single();
     if (productError || !product || product.status !== 'active') return res.status(404).json({ error: 'Product not found' });
-    const ai = await analyseSentiment({ query: comment });
-    const flagged = ai.sentiment === 'negative' || ai.urgency === 'high';
+    // A review is customer data first.  AI enrichment must never make a
+    // legitimate customer submission disappear when Gemini/n8n is offline.
+    // Pending rows are picked up by the store-review n8n workflow later.
+    let ai = null;
+    let aiStatus = 'completed';
+    try {
+      ai = await analyseSentiment({ query: comment });
+    } catch (aiError) {
+      aiStatus = 'pending';
+      console.warn('[reviews] AI analysis deferred:', aiError.message);
+    }
+
+    const flagged = ai?.sentiment === 'negative' || ai?.urgency === 'high';
     const { data, error } = await supabase.from('product_reviews').insert({
       product_id, customer_id: req.user.id, rating, comment,
-      sentiment: ai.sentiment, urgency: ai.urgency, flagged_as_complaint: flagged,
+      sentiment: ai?.sentiment || null,
+      urgency: ai?.urgency || null,
+      ai_status: aiStatus,
+      flagged_as_complaint: flagged,
     }).select('*, users!product_reviews_customer_id_fkey(name)').single();
     if (error) throw error;
     writeAuditLog({ userId: req.user.id, action: 'product.review.create', resourceType: 'product_review', resourceId: data.id, metadata: { product_id, rating, flagged }, req });
-    res.status(201).json({ message: flagged ? 'Review submitted and flagged for Support review' : 'Review submitted', data, ai_analysis: ai });
+    res.status(201).json({
+      message: flagged
+        ? 'Review submitted and flagged for Support review'
+        : aiStatus === 'pending'
+          ? 'Review submitted. AI analysis will run shortly.'
+          : 'Review submitted',
+      data,
+      ai_analysis: ai,
+    });
   } catch (err) { next(err); }
 };
 

@@ -23,6 +23,8 @@ export default function BuyButton({ productId }: { productId: string }) {
     try {
       const { data } = await ordersApi.create(productId, qty)
       setPlacedOrder(data.data)
+      router.prefetch('/store/orders')
+      router.refresh()
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 401) {
         toast('Sign in to place an order', { icon: '🔒' })

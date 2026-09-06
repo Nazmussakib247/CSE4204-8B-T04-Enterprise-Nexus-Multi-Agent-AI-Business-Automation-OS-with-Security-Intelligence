@@ -4,6 +4,9 @@ const { writeAuditLog } = require('../utils/audit');
 // POST /api/orders — customer places a mock order (no real payment gateway)
 const createOrder = async (req, res, next) => {
   try {
+    if (req.user.role !== 'customer') {
+      return res.status(403).json({ error: 'A customer account is required to place an order' });
+    }
     const { product_id, quantity = 1 } = req.body;
 
     const { data: product, error: productErr } = await supabase
