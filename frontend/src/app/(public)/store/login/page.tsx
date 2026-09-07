@@ -27,7 +27,7 @@ export default function StoreLoginPage() {
       const returnTo = new URLSearchParams(window.location.search).get('returnTo')
       router.replace(returnTo?.startsWith('/store') ? returnTo : '/store/orders')
     } catch (err) {
-      toast.error(getApiErrorMessage(err, 'Invalid email or password'))
+      toast.error(getApiErrorMessage(err, 'Sign-in service is waking up. Please wait a moment and try again.'))
     } finally {
       setLoading(false)
     }

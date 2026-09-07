@@ -141,7 +141,11 @@ const login = async (req, res, next) => {
       .eq('email', email)
       .single();
 
-    if (error || !user) {
+    if (error) {
+      console.error('[auth.login] user lookup failed:', error.message);
+      return res.status(503).json({ error: 'Sign-in service is temporarily unavailable. Please try again in a moment.' });
+    }
+    if (!user) {
       writeAuditLog({ action: 'auth.login', metadata: { email }, req, success: false });
       return res.status(401).json({ error: 'Invalid credentials' });
     }

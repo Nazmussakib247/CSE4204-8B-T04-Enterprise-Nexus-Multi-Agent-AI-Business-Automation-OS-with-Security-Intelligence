@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth'
+import { getApiErrorMessage } from '@/lib/api'
 import toast from 'react-hot-toast'
 import AlreadySignedInGate from '@/components/auth/AlreadySignedInGate'
 
@@ -23,8 +24,7 @@ export default function LoginPage() {
       const signedInUser = await login(email, password)
       router.push(['customer', 'candidate'].includes(signedInUser.role) ? '/store' : '/dashboard')
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
-      toast.error(msg ?? 'Invalid credentials')
+      toast.error(getApiErrorMessage(err, 'Sign-in service is waking up. Please wait a moment and try again.'))
     } finally {
       setLoading(false)
     }

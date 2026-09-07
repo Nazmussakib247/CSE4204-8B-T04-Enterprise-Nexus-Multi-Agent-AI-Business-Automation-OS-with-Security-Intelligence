@@ -11,7 +11,7 @@ if (process.env.SENTRY_DSN) {
 }
 
 // ── Env validation — fail fast ────────────────────────────────────────────────
-const REQUIRED_ENV = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'JWT_SECRET', 'N8N_SECRET'];
+const REQUIRED_ENV = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'JWT_SECRET', 'N8N_SECRET', 'GEMINI_API_KEY'];
 const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
 if (missing.length) {
   console.error(`[FATAL] Missing env vars: ${missing.join(', ')}`);
@@ -56,6 +56,10 @@ const reviewsRoutes = require('./routes/reviews.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Preserve each visitor's address through Vercel's same-origin API rewrite.
+// Otherwise login rate limits can treat many unrelated visitors as one IP.
+app.set('trust proxy', 1);
 
 // ── Security & compression ────────────────────────────────────────────────────
 app.use(helmet());

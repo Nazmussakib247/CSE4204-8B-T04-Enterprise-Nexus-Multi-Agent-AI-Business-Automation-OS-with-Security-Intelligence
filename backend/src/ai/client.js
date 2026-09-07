@@ -1,139 +1,73 @@
-/**
- * Hardened Gemini client.
- *
- * - Model name from env (GEMINI_MODEL, default gemini-1.5-flash)
- * - Hard timeout per attempt (AI_TIMEOUT_MS, default 30s)
- * - 2 retries with exponential backoff + jitter (retries only transient errors)
- * - Native JSON mode via generationConfig.responseMimeType + responseSchema —
- *   the model returns strict JSON, no markdown code-fence stripping needed.
- *
- * All failures surface as a typed AiUnavailableError so callers never have to
- * invent fallback data.
- */
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+/** Maintained Gemini SDK client for strict JSON responses. */
+const { GoogleGenAI } = require('@google/genai');
 const logger = require('../utils/logger');
 const { AiUnavailableError, AiOutputValidationError } = require('./errors');
 
-const DEFAULTS = {
-  model: 'gemini-1.5-flash',
-  timeoutMs: 30_000,
-  maxRetries: 2, // 2 retries => up to 3 attempts
-  baseBackoffMs: 500,
-  thinkingBudget: 0, // fastest — no internal reasoning tokens by default
-};
+const DEFAULTS = { model: 'gemini-3.7-flash', timeoutMs: 45_000, maxRetries: 1, baseBackoffMs: 1000, thinkingLevel: 'low' };
+let client;
+let configuredKey;
 
-let _genAI = null;
-const getGenAI = () => {
-  if (!process.env.GEMINI_API_KEY) {
-    throw new AiUnavailableError('GEMINI_API_KEY is not configured', { reason: 'not_configured' });
+const getClient = () => {
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  if (!apiKey) throw new AiUnavailableError('GEMINI_API_KEY is not configured', { reason: 'not_configured' });
+  if (!client || configuredKey !== apiKey) {
+    client = new GoogleGenAI({ apiKey });
+    configuredKey = apiKey;
   }
-  if (!_genAI) _genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  return _genAI;
+  return client;
 };
-
-const getModelName = () => process.env.GEMINI_MODEL || DEFAULTS.model;
+const getModelName = () => process.env.GEMINI_MODEL?.trim() || DEFAULTS.model;
 const getTimeoutMs = () => Number(process.env.AI_TIMEOUT_MS) || DEFAULTS.timeoutMs;
-
+const getMaxRetries = () => Number.isInteger(Number(process.env.AI_MAX_RETRIES)) ? Math.max(0, Math.min(2, Number(process.env.AI_MAX_RETRIES))) : DEFAULTS.maxRetries;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-/** Errors worth retrying: timeouts, rate limits, 5xx / network hiccups. */
 const isTransient = (err) => {
-  if (err && err.reason === 'timeout') return true;
+  if (err?.reason === 'timeout') return true;
   const status = err?.status ?? err?.response?.status;
-  if (status === 429 || (status >= 500 && status < 600)) return true;
-  const msg = String(err?.message || '');
-  return /429|rate limit|quota|ECONNRESET|ETIMEDOUT|ENOTFOUND|fetch failed|503|500|overloaded|unavailable/i.test(msg);
+  return status === 429 || (status >= 500 && status < 600) || /429|rate limit|quota|ECONNRESET|ETIMEDOUT|ENOTFOUND|fetch failed|503|500|overloaded|unavailable/i.test(String(err?.message || ''));
 };
-
-const withTimeout = async (promise, ms) => {
+const reasonFor = (err) => {
+  if (err?.reason === 'timeout') return 'timeout';
+  const status = err?.status ?? err?.response?.status;
+  return status === 429 || /429|rate limit|quota/i.test(String(err?.message || '')) ? 'rate_limit' : 'api_error';
+};
+const withTimeout = async (promise, timeoutMs) => {
   let timer;
   try {
-    return await Promise.race([
-      promise,
-      new Promise((_resolve, reject) => {
-        timer = setTimeout(() => {
-          const e = new Error(`Gemini call timed out after ${ms}ms`);
-          e.reason = 'timeout';
-          reject(e);
-        }, ms);
-      }),
-    ]);
-  } finally {
-    clearTimeout(timer);
-  }
+    return await Promise.race([promise, new Promise((_resolve, reject) => {
+      timer = setTimeout(() => { const err = new Error(`Gemini call timed out after ${timeoutMs}ms`); err.reason = 'timeout'; reject(err); }, timeoutMs);
+    })]);
+  } finally { clearTimeout(timer); }
 };
 
-/**
- * Call Gemini in native JSON mode and return the parsed object.
- *
- * @param {object} opts
- * @param {string} opts.prompt             user prompt
- * @param {object} opts.responseSchema     Gemini response schema (OpenAPI-style)
- * @param {string} [opts.systemInstruction]
- * @param {number} [opts.timeoutMs]        override per-attempt timeout
- * @param {number} [opts.maxRetries]       override retry count
- * @returns {Promise<object>} parsed JSON object
- * @throws {AiUnavailableError}
- */
-async function generateJson({
-  prompt,
-  responseSchema,
-  systemInstruction,
-  timeoutMs = getTimeoutMs(),
-  maxRetries = DEFAULTS.maxRetries,
-  // Newer "thinking"-capable models (2.5+/3.x) spend extra latency reasoning
-  // before answering. For short, structured, schema-constrained calls like
-  // ours that reasoning rarely changes the output, so default it low.
-  // Pass a higher number (or omit via null) for tasks that truly need it.
-  thinkingBudget = DEFAULTS.thinkingBudget,
-}) {
-  const model = getGenAI().getGenerativeModel({
-    model: getModelName(),
-    ...(systemInstruction ? { systemInstruction } : {}),
-    generationConfig: {
-      responseMimeType: 'application/json',
-      ...(responseSchema ? { responseSchema } : {}),
-      ...(thinkingBudget !== null ? { thinkingConfig: { thinkingBudget } } : {}),
-    },
-  });
-
+async function generateJson({ prompt, responseSchema, systemInstruction, timeoutMs = getTimeoutMs(), maxRetries = getMaxRetries(), thinkingLevel = process.env.GEMINI_THINKING_LEVEL?.trim() || DEFAULTS.thinkingLevel }) {
   let lastErr;
   const attempts = maxRetries + 1;
-
+  let attempted = 0;
   for (let attempt = 1; attempt <= attempts; attempt++) {
+    attempted = attempt;
     try {
-      const result = await withTimeout(model.generateContent(prompt), timeoutMs);
-      const text = result.response.text();
-      try {
-        return JSON.parse(text);
-      } catch (parseErr) {
-        throw new AiOutputValidationError(`Gemini returned non-JSON output: ${parseErr.message}`, {
-          cause: parseErr,
-          attempts: attempt,
-        });
-      }
+      const result = await withTimeout(getClient().models.generateContent({
+        model: getModelName(), contents: prompt,
+        config: {
+          ...(systemInstruction ? { systemInstruction } : {}),
+          responseMimeType: 'application/json',
+          ...(responseSchema ? { responseJsonSchema: responseSchema } : {}),
+          ...(thinkingLevel ? { thinkingConfig: { thinkingLevel } } : {}),
+        },
+      }), timeoutMs);
+      const text = typeof result.text === 'function' ? result.text() : result.text;
+      try { return JSON.parse(text); }
+      catch (cause) { throw new AiOutputValidationError(`Gemini returned non-JSON output: ${cause.message}`, { cause, attempts: attempt }); }
     } catch (err) {
       lastErr = err;
-      // Invalid output and non-transient API errors are not retried.
-      if (err instanceof AiOutputValidationError) throw err;
-      if (!isTransient(err) || attempt === attempts) break;
-
-      const backoff = DEFAULTS.baseBackoffMs * 2 ** (attempt - 1) + Math.random() * 100;
-      logger.warn('[AI] Gemini attempt failed, retrying', {
-        attempt,
-        backoffMs: Math.round(backoff),
-        error: err.message,
-      });
-      await sleep(backoff);
+      if (err instanceof AiOutputValidationError || !isTransient(err) || attempt === attempts) break;
+      const backoffMs = DEFAULTS.baseBackoffMs * 2 ** (attempt - 1) + Math.random() * 250;
+      logger.warn('[AI] Gemini attempt failed, retrying', { attempt, backoffMs: Math.round(backoffMs), reason: reasonFor(err), error: err.message });
+      await sleep(backoffMs);
     }
   }
-
   if (lastErr instanceof AiUnavailableError) throw lastErr;
-  throw new AiUnavailableError(`Gemini unavailable: ${lastErr?.message || 'unknown error'}`, {
-    cause: lastErr,
-    reason: lastErr?.reason === 'timeout' ? 'timeout' : 'api_error',
-    attempts,
-  });
+  throw new AiUnavailableError(`Gemini unavailable: ${lastErr?.message || 'unknown error'}`, { cause: lastErr, reason: reasonFor(lastErr), attempts: attempted });
 }
 
-module.exports = { generateJson, getModelName, getTimeoutMs, DEFAULTS, AiUnavailableError };
+module.exports = { generateJson, getModelName, getTimeoutMs, getMaxRetries, DEFAULTS, AiUnavailableError };
