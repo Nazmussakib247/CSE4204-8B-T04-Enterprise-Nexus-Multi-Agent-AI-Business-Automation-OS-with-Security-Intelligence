@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
-import { supportApi } from '@/lib/api'
+import { getApiErrorMessage, supportApi } from '@/lib/api'
 import ConfirmModal from '@/components/ui/ConfirmModal'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
@@ -97,8 +97,8 @@ export default function SupportDetailPage() {
       setTicket(data.data)
       setReply('')
       toast.success('Reply sent to the customer')
-    } catch {
-      toast.error('Could not send reply')
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Could not send reply'))
     } finally { setReplyLoading(false) }
   }
 

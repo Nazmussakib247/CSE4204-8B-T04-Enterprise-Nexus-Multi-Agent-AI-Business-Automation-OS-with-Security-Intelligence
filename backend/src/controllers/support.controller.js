@@ -255,7 +255,20 @@ const replyToTicket = async (req, res, next) => {
       .select()
       .single();
 
-    if (error || !data) return res.status(404).json({ error: 'Ticket not found' });
+    // Do not turn a database/schema error into a misleading 404. In
+    // particular, a deployment whose database has not received migration 011
+    // cannot store the human reply fields yet.
+    if (error) {
+      const missingReplyColumns = error.code === 'PGRST204'
+        || /human_(response|intervention)/i.test(error.message || '');
+      if (missingReplyColumns) {
+        return res.status(503).json({
+          error: 'Support reply storage is not ready. Apply Supabase migration 011_store_support_reply_lifecycle.sql, then try again.',
+        });
+      }
+      throw error;
+    }
+    if (!data) return res.status(404).json({ error: 'Ticket not found' });
     writeAuditLog({ userId: req.user.id, action: 'support.ticket.reply', resourceType: 'support_ticket', resourceId: data.id, metadata: { response_length: response.length }, req });
     res.json({ message: 'Support reply sent to customer', data });
   } catch (err) { next(err); }
