@@ -228,7 +228,6 @@ const saveStoreSupportAnalysis = async (req, res, next) => {
         human_intervention_reason: requiresHuman ? 'High urgency detected by Support Agent' : null,
         human_intervention_status: requiresHuman ? 'pending' : 'not_required',
         status: requiresHuman ? 'escalated' : 'open',
-        updated_at: new Date().toISOString(),
       })
       .eq('id', ticket_id)
       .eq('ai_status', 'failed')

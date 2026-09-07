@@ -160,7 +160,6 @@ const updateTicket = async (req, res, next) => {
     const updates = {};
     if (status !== undefined) updates.status = status;
     if (ticketQuery !== undefined) updates.query = ticketQuery;
-    updates.updated_at = new Date().toISOString();
 
     let updateQuery = supabase.from('support_tickets').update(updates).eq('id', req.params.id);
     if (!isOfficeUser(req.user)) updateQuery = updateQuery.eq('user_id', req.user.id);
@@ -195,7 +194,6 @@ const escalateTicket = async (req, res, next) => {
         human_intervention_required: true,
         human_intervention_reason: 'Manually escalated by support staff',
         human_intervention_status: 'pending',
-        updated_at: new Date().toISOString(),
       })
       .eq('id', req.params.id);
     if (!isOfficeUser(req.user)) updateQuery = updateQuery.eq('user_id', req.user.id);
@@ -249,7 +247,6 @@ const replyToTicket = async (req, res, next) => {
         human_response_at: new Date().toISOString(),
         human_intervention_status: 'handled',
         status: 'in_progress',
-        updated_at: new Date().toISOString(),
       })
       .eq('id', req.params.id)
       .select()
@@ -313,7 +310,7 @@ const resolveTicket = async (req, res, next) => {
   try {
     let updateQuery = supabase
       .from('support_tickets')
-      .update({ status: 'resolved', updated_at: new Date().toISOString() })
+      .update({ status: 'resolved' })
       .eq('id', req.params.id);
     if (!isOfficeUser(req.user)) updateQuery = updateQuery.eq('user_id', req.user.id);
     const { data, error } = await updateQuery.select().single();
