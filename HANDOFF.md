@@ -1,6 +1,6 @@
 # Enterprise NeXus — Session Handoff
 
-**Last updated:** 2026-09-05
+**Last updated:** 2026-09-10
 **Branch:** `development/mid-review-before-bug-test`
 
 This file exists so any future session (human or AI) can pick up context fast without re-discovering what changed. Update it whenever a meaningful change lands.
@@ -49,6 +49,9 @@ HR, Finance, Support, Analytics, Executive — CV screening, expense anomaly det
 
 ### External auth
 `POST /auth/register-external` — separate from the internal `/auth/register` — creates `customer` or `candidate` accounts.
+
+### Office account approval
+Internal `admin`, `manager`, and `employee` registrations still enter the admin approval list first, but the backend auto-approves them after 30 seconds. The worker persists its decision in Supabase and re-scans every 5 seconds, so a Render restart cannot lose a pending registration. Customer/candidate accounts are not included in this auto-approval rule.
 
 ### Auth cookies — one session cookie, not access+refresh
 Originally this used a short-lived `accessToken` (15m) + separate `refreshToken` (7d, path-scoped to `/api/auth`), with `sameSite: 'none'` since Vercel and Render are different domains. That got replaced by a `next.config.js` `rewrites()` proxy so the browser only ever talks to the Vercel domain (`/api/*` gets proxied server-side to Render) — making cookies first-party and letting `sameSite: 'lax'` work, avoiding third-party-cookie blocking in strict browsers.

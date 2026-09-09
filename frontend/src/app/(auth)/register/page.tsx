@@ -207,8 +207,8 @@ export default function RegisterPage() {
             <span className="material-symbols-outlined text-[30px] text-primary icon-filled animate-pulse">hourglass_top</span>
           </div>
           <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">Request submitted</p>
-          <h2 className="mt-2 font-display text-[23px] font-bold text-on-surface">Your access is awaiting approval</h2>
-          <p className="mt-3 font-body text-[14px] leading-relaxed text-on-surface-variant">An administrator will review your requested role. Please wait for approval before signing in.</p>
+          <h2 className="mt-2 font-display text-[23px] font-bold text-on-surface">Your access is being prepared</h2>
+          <p className="mt-3 font-body text-[14px] leading-relaxed text-on-surface-variant">An administrator can approve your requested role immediately. Otherwise, access is approved automatically within 30 seconds.</p>
           <button
             onClick={() => router.push('/login')}
             className="mt-7 w-full rounded-xl bg-primary py-3 font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-on-primary transition-colors hover:bg-primary/90"
