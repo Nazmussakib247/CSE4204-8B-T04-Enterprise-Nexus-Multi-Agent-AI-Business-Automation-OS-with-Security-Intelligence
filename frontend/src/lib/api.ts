@@ -146,6 +146,7 @@ export const supportApi = {
   escalateTicket: (id: string) => api.patch(`/support/tickets/${id}/escalate`),
   resolveTicket: (id: string) => api.patch(`/support/tickets/${id}/resolve`),
   replyToTicket: (id: string, response: string) => api.patch(`/support/tickets/${id}/reply`, { response }),
+  createMessage: (id: string, body: string) => api.post(`/support/tickets/${id}/messages`, { body }),
   getSentimentReport: () => api.get('/support/sentiment-report'),
 }
 

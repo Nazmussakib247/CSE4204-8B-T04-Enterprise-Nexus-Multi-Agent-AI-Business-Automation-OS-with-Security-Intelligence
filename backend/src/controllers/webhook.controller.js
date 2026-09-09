@@ -202,7 +202,7 @@ const saveStoreReviewAnalysis = async (req, res, next) => {
 };
 
 // POST /api/webhook/store-support-analysed
-// n8n rehydrates the exact same analysis fields used by the synchronous path.
+// n8n enriches a ticket after it has already been saved for the customer.
 const saveStoreSupportAnalysis = async (req, res, next) => {
   try {
     const { ticket_id, sentiment, urgency, intent, confidence, ai_response } = req.body;
@@ -230,10 +230,16 @@ const saveStoreSupportAnalysis = async (req, res, next) => {
         status: requiresHuman ? 'escalated' : 'open',
       })
       .eq('id', ticket_id)
-      .eq('ai_status', 'failed')
+      .in('ai_status', ['pending', 'failed'])
       .select()
       .single();
     if (error || !data) return res.status(404).json({ error: 'Pending support ticket not found' });
+    const { error: messageError } = await supabase.from('support_messages').insert({
+      ticket_id: data.id,
+      sender_type: 'ai',
+      body: ai_response.trim(),
+    });
+    if (messageError) throw messageError;
     res.json({ message: 'Store support analysis saved', data });
   } catch (err) { next(err); }
 };

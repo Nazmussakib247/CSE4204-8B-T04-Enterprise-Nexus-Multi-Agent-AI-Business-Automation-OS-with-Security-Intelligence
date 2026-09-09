@@ -12,6 +12,7 @@ interface Ticket {
   urgency: string; sentiment: string; confidence: number
   escalated: boolean; status: string; created_at: string; updated_at?: string
   human_response?: string | null; human_response_at?: string | null
+  support_messages?: Array<{ id: string; sender_type: 'customer' | 'staff' | 'ai'; body: string; created_at: string }>
 }
 
 const urgBadge = (u: string) =>
@@ -230,6 +231,14 @@ export default function SupportDetailPage() {
               <div className="flex-1"><p className="font-mono text-[10px] font-semibold text-primary uppercase tracking-wider mb-1.5">Support team</p><div className="rounded-xl px-4 py-3 bg-primary/5 border border-primary-container/20"><p className="font-body text-[14px] text-on-surface whitespace-pre-wrap">{ticket.human_response}</p></div></div>
             </div>
           )}
+
+          {/* Customer follow-ups are kept in the same ticket thread. */}
+          {(ticket.support_messages ?? []).filter(message => message.sender_type === 'customer' && message.body !== ticket.query).map(message => (
+            <div key={message.id} className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center flex-shrink-0 mt-0.5"><span className="material-symbols-outlined text-[16px] text-on-surface-variant">person</span></div>
+              <div className="flex-1"><div className="flex items-center gap-2 mb-1.5"><span className="font-mono text-[10px] font-semibold text-on-surface uppercase tracking-wider">Customer follow-up</span><span className="font-mono text-[10px] text-on-surface-variant/50">{new Date(message.created_at).toLocaleTimeString()}</span></div><div className="bg-surface-container-low rounded-xl px-4 py-3"><p className="font-body text-[14px] text-on-surface leading-relaxed whitespace-pre-wrap">{message.body}</p></div></div>
+            </div>
+          ))}
 
           {/* Status update if resolved/escalated */}
           {(ticket.status === 'resolved' || ticket.status === 'escalated') && (

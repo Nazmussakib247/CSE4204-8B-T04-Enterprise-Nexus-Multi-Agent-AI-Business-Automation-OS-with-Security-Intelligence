@@ -1,5 +1,4 @@
 const supabase = require('../config/supabase');
-const { analyseSentiment } = require('../utils/gemini');
 const { notifyN8n } = require('../utils/webhook');
 const { sendEscalationEmail } = require('../utils/email');
 const { writeAuditLog } = require('../utils/audit');
@@ -13,7 +12,7 @@ const getTickets = async (req, res, next) => {
 
     let query = supabase
       .from('support_tickets')
-      .select('*', { count: 'exact' })
+      .select('*, support_messages(id, sender_id, sender_type, body, created_at)', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(offset, offset + Number(limit) - 1);
 
@@ -38,7 +37,7 @@ const getTicket = async (req, res, next) => {
   try {
     let query = supabase
       .from('support_tickets')
-      .select('*')
+      .select('*, support_messages(id, sender_id, sender_type, body, created_at)')
       .eq('id', req.params.id);
     if (!isOfficeUser(req.user)) query = query.eq('user_id', req.user.id);
     const { data, error } = await query.single();
@@ -50,14 +49,13 @@ const getTicket = async (req, res, next) => {
   }
 };
 
-// POST /api/support/tickets — Gemini sentiment analysis
+// POST /api/support/tickets — persist immediately; AI enrichment is async.
 const createTicket = async (req, res, next) => {
   try {
     const { query, order_id, product_id } = req.body;
     if (!query) return res.status(400).json({ error: 'query is required' });
 
     let linkedOrder = null;
-    let linkedProduct = null;
     if (order_id) {
       let orderQuery = supabase.from('orders').select('id, customer_id, product_id, status, quantity, total, created_at').eq('id', order_id);
       if (!isOfficeUser(req.user)) orderQuery = orderQuery.eq('customer_id', req.user.id);
@@ -70,48 +68,18 @@ const createTicket = async (req, res, next) => {
       const { data: product, error } = await supabase.from('products').select('id, name').eq('id', linkedProductId).single();
       if (error || !product) return res.status(400).json({ error: 'Linked product was not found' });
       if (linkedOrder && linkedOrder.product_id !== linkedProductId) return res.status(400).json({ error: 'Linked product does not match the selected order' });
-      linkedProduct = product;
     }
-
-    // Give the AI the order/product context so its auto-reply is grounded in
-    // the actual purchase, not just the raw complaint text.
-    const contextLines = [];
-    if (linkedProduct) contextLines.push(`Product: ${linkedProduct.name}`);
-    if (linkedOrder) {
-      contextLines.push(`Order #${linkedOrder.id.slice(0, 8)} — status: ${linkedOrder.status}, quantity: ${linkedOrder.quantity}, placed: ${new Date(linkedOrder.created_at).toISOString().slice(0, 10)}`);
-    }
-    const aiQuery = contextLines.length
-      ? `${query}\n\n[Order context — use this to ground your reply, e.g. reference the order status directly]\n${contextLines.join('\n')}`
-      : query;
-
-    // Keep the customer's message even when the AI provider is down. This
-    // creates a durable failed-analysis row that n8n can retry later.
-    let aiResult = null;
-    let aiStatus = 'completed';
-    try {
-      aiResult = await analyseSentiment({ query: aiQuery });
-    } catch (aiError) {
-      aiStatus = 'failed';
-      console.warn('[support] AI analysis deferred:', aiError.message);
-    }
-    const requiresHuman = aiResult?.urgency === 'high';
 
     const { data, error } = await supabase
       .from('support_tickets')
       .insert({
         user_id: req.user.id,
         query,
-        ai_response: aiResult?.ai_response || null,
-        intent: aiResult?.intent || null,
-        urgency: aiResult?.urgency || null,
-        sentiment: aiResult?.sentiment || null,
-        confidence: aiResult?.confidence || null,
-        ai_status: aiStatus,
+        ai_status: 'pending',
         status: 'open',
-        escalated: requiresHuman,
-        human_intervention_required: requiresHuman,
-        human_intervention_reason: requiresHuman ? 'High urgency detected by AI' : null,
-        human_intervention_status: requiresHuman ? 'pending' : 'not_required',
+        escalated: false,
+        human_intervention_required: false,
+        human_intervention_status: 'not_required',
         order_id: linkedOrder?.id || null,
         product_id: linkedProductId,
       })
@@ -120,33 +88,28 @@ const createTicket = async (req, res, next) => {
 
     if (error) throw error;
 
+    const { error: messageError } = await supabase.from('support_messages').insert({
+      ticket_id: data.id, sender_id: req.user.id, sender_type: 'customer', body: query,
+    });
+    if (messageError) throw messageError;
+
     writeAuditLog({
       userId: req.user.id,
       action: 'support.ticket.create',
       resourceType: 'support_ticket',
       resourceId: data.id,
-      metadata: { urgency: aiResult?.urgency || null, sentiment: aiResult?.sentiment || null, ai_status: aiStatus, order_id: linkedOrder?.id || null, product_id: linkedProductId },
+      metadata: { ai_status: 'pending', order_id: linkedOrder?.id || null, product_id: linkedProductId },
       req,
     });
 
-    // n8n retries only failed AI analysis. Successful requests already have a
-    // synchronous customer-facing response and must not be overwritten later.
-    if (!aiResult) {
-      notifyN8n('store-support-retry', {
-        ticket_id: data.id,
-        user_id: req.user.id,
-        query,
-        order_id: linkedOrder?.id || null,
-        product_id: linkedProductId,
-        created_at: data.created_at,
-      });
-    }
+    // This is deliberately non-blocking: a slow Gemini/Render/n8n call must
+    // never make the customer's send action feel stuck.
+    notifyN8n('store-support-retry', { ticket_id: data.id, user_id: req.user.id, query, order_id: linkedOrder?.id || null, product_id: linkedProductId, created_at: data.created_at });
 
     res.status(201).json({
-      message: aiResult ? 'Ticket created with AI analysis' : 'Ticket created. AI analysis will retry shortly.',
+      message: 'Support request sent. Our team will reply in this conversation.',
       data,
-      ai_analysis: aiResult,
-      ...(aiResult ? {} : { warning: 'AI analysis is temporarily unavailable; your ticket was saved.' }),
+      ai_analysis: null,
     });
   } catch (err) {
     next(err);
@@ -266,8 +229,36 @@ const replyToTicket = async (req, res, next) => {
       throw error;
     }
     if (!data) return res.status(404).json({ error: 'Ticket not found' });
+    const { error: messageError } = await supabase.from('support_messages').insert({
+      ticket_id: data.id, sender_id: req.user.id, sender_type: 'staff', body: response,
+    });
+    if (messageError) throw messageError;
     writeAuditLog({ userId: req.user.id, action: 'support.ticket.reply', resourceType: 'support_ticket', resourceId: data.id, metadata: { response_length: response.length }, req });
     res.json({ message: 'Support reply sent to customer', data });
+  } catch (err) { next(err); }
+};
+
+// POST /api/support/tickets/:id/messages — customer or office follow-up
+const createMessage = async (req, res, next) => {
+  try {
+    let ticketQuery = supabase.from('support_tickets').select('id, user_id, status').eq('id', req.params.id);
+    if (!isOfficeUser(req.user)) ticketQuery = ticketQuery.eq('user_id', req.user.id);
+    const { data: ticket, error: ticketError } = await ticketQuery.single();
+    if (ticketError || !ticket) return res.status(404).json({ error: 'Ticket not found' });
+
+    const sender_type = isOfficeUser(req.user) ? 'staff' : 'customer';
+    const { data, error } = await supabase.from('support_messages').insert({
+      ticket_id: ticket.id, sender_id: req.user.id, sender_type, body: req.body.body,
+    }).select().single();
+    if (error) throw error;
+
+    if (sender_type === 'customer') {
+      await supabase.from('support_tickets').update({ status: 'open', human_intervention_required: true, human_intervention_status: 'pending', human_intervention_reason: 'Customer sent a follow-up message' }).eq('id', ticket.id);
+    } else {
+      await supabase.from('support_tickets').update({ status: 'in_progress', human_intervention_status: 'handled' }).eq('id', ticket.id);
+    }
+    writeAuditLog({ userId: req.user.id, action: 'support.ticket.message', resourceType: 'support_ticket', resourceId: ticket.id, metadata: { sender_type, length: req.body.body.length }, req });
+    res.status(201).json({ message: 'Message sent', data });
   } catch (err) { next(err); }
 };
 
@@ -332,4 +323,4 @@ const resolveTicket = async (req, res, next) => {
   }
 };
 
-module.exports = { getTickets, getTicket, createTicket, updateTicket, escalateTicket, getSentimentReport, resolveTicket, replyToTicket };
+module.exports = { getTickets, getTicket, createTicket, updateTicket, escalateTicket, getSentimentReport, resolveTicket, replyToTicket, createMessage };

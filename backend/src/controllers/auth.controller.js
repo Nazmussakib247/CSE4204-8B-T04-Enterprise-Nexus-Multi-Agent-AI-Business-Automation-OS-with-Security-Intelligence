@@ -18,30 +18,26 @@ const COOKIE_BASE = {
   path: '/',
 };
 
-const setAuthCookies = (res, accessToken, refreshToken) => {
-  res.cookie('accessToken', accessToken, { ...COOKIE_BASE, maxAge: 15 * 60 * 1000 });
-  res.cookie('refreshToken', refreshToken, { ...COOKIE_BASE, maxAge: 7 * 24 * 60 * 60 * 1000, path: '/api/auth' });
+// A single long-lived session cookie, not a short access token + separate
+// refresh token. Two Set-Cookie headers on one response were silently being
+// collapsed to one by the Vercel rewrite proxy in front of Render, which
+// dropped the refresh cookie and force-logged everyone out once the old
+// 15-minute access token expired (or sporadically on reload, since only the
+// first Set-Cookie header survived the proxy). One cookie sidesteps that
+// proxy limitation entirely — there's nothing to drop.
+const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+const setAuthCookies = (res, token) => {
+  res.cookie('session', token, { ...COOKIE_BASE, maxAge: SESSION_MAX_AGE_MS });
 };
 
 const clearAuthCookies = (res) => {
-  res.clearCookie('accessToken', { ...COOKIE_BASE });
-  res.clearCookie('refreshToken', { ...COOKIE_BASE, path: '/api/auth' });
+  res.clearCookie('session', COOKIE_BASE);
 };
 
 // ── Token helpers ─────────────────────────────────────────────
-const generateTokens = (userId) => {
-  const accessToken = jwt.sign(
-    { userId },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '15m' }
-  );
-  const refreshToken = jwt.sign(
-    { userId },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
-  );
-  return { accessToken, refreshToken };
-};
+const generateToken = (userId) =>
+  jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
 const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
 
@@ -86,11 +82,12 @@ const createAccount = async ({ name, email, password, role, req }) => {
   return { user, requiresApproval };
 };
 
+// Records the session (for audit/visibility) and sets the one auth cookie.
 const createSessionResponse = async (res, user) => {
-  const { accessToken, refreshToken } = generateTokens(user.id);
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-  await supabase.from('user_sessions').insert({ user_id: user.id, token_hash: hashToken(refreshToken), expires_at: expiresAt });
-  setAuthCookies(res, accessToken, refreshToken);
+  const token = generateToken(user.id);
+  const expiresAt = new Date(Date.now() + SESSION_MAX_AGE_MS).toISOString();
+  await supabase.from('user_sessions').insert({ user_id: user.id, token_hash: hashToken(token), expires_at: expiresAt });
+  setAuthCookies(res, token);
 };
 
 // ── POST /api/auth/register ───────────────────────────────────
@@ -166,16 +163,7 @@ const login = async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const { accessToken, refreshToken } = generateTokens(user.id);
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
-    await supabase.from('user_sessions').insert({
-      user_id: user.id,
-      token_hash: hashToken(refreshToken),
-      expires_at: expiresAt,
-    });
-
-    setAuthCookies(res, accessToken, refreshToken);
+    await createSessionResponse(res, user);
     writeAuditLog({ userId: user.id, action: 'auth.login', metadata: { role: user.roles?.name }, req, success: true });
 
     res.json({
@@ -188,45 +176,35 @@ const login = async (req, res, next) => {
 };
 
 // ── POST /api/auth/refresh ────────────────────────────────────
+// No longer a distinct refresh-token flow — there's only one cookie now.
+// This just verifies the current session and, if still valid, rotates it to
+// a fresh 7-day token (sliding expiration) so a still-active user is never
+// forced to re-login just because the cookie is getting old.
 const refresh = async (req, res, next) => {
   try {
-    const refreshToken = req.cookies?.refreshToken;
-    if (!refreshToken) return res.status(401).json({ error: 'No refresh token' });
+    const token = req.cookies?.session;
+    if (!token) return res.status(401).json({ error: 'No session' });
 
     let decoded;
     try {
-      decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
     } catch {
       clearAuthCookies(res);
-      return res.status(401).json({ error: 'Invalid or expired refresh token' });
+      return res.status(401).json({ error: 'Invalid or expired session' });
     }
 
-    const tokenHash = hashToken(refreshToken);
-    const { data: session, error } = await supabase
-      .from('user_sessions')
-      .select('id, expires_at')
-      .eq('user_id', decoded.userId)
-      .eq('token_hash', tokenHash)
-      .single();
+    await supabase.from('user_sessions').delete().eq('token_hash', hashToken(token));
 
-    if (error || !session || new Date(session.expires_at) < new Date()) {
-      clearAuthCookies(res);
-      return res.status(401).json({ error: 'Session expired or revoked' });
-    }
-
-    await supabase.from('user_sessions').delete().eq('id', session.id);
-
-    const { accessToken, refreshToken: newRefreshToken } = generateTokens(decoded.userId);
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
+    const newToken = generateToken(decoded.userId);
+    const expiresAt = new Date(Date.now() + SESSION_MAX_AGE_MS).toISOString();
     await supabase.from('user_sessions').insert({
       user_id: decoded.userId,
-      token_hash: hashToken(newRefreshToken),
+      token_hash: hashToken(newToken),
       expires_at: expiresAt,
     });
 
-    setAuthCookies(res, accessToken, newRefreshToken);
-    res.json({ message: 'Token refreshed' });
+    setAuthCookies(res, newToken);
+    res.json({ message: 'Session refreshed' });
   } catch (err) {
     next(err);
   }
@@ -235,14 +213,9 @@ const refresh = async (req, res, next) => {
 // ── POST /api/auth/logout ─────────────────────────────────────
 const logout = async (req, res, next) => {
   try {
-    const refreshToken = req.cookies?.refreshToken;
-
-    if (refreshToken) {
-      const tokenHash = hashToken(refreshToken);
-      await supabase.from('user_sessions')
-        .delete()
-        .eq('user_id', req.user.id)
-        .eq('token_hash', tokenHash);
+    const token = req.cookies?.session;
+    if (token) {
+      await supabase.from('user_sessions').delete().eq('token_hash', hashToken(token));
     }
 
     writeAuditLog({ userId: req.user?.id, action: 'auth.logout', req, success: true });

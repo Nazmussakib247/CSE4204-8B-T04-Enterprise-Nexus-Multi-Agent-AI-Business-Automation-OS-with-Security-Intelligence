@@ -3,7 +3,7 @@ const supabase = require('../config/supabase');
 
 const protect = async (req, res, next) => {
   try {
-    const token = req.cookies?.accessToken;
+    const token = req.cookies?.session;
 
     if (!token) {
       return res.status(401).json({ error: 'Not authenticated' });
