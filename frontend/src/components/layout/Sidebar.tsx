@@ -44,7 +44,11 @@ export default function Sidebar() {
   const pathname = usePathname()
   const { user, logout } = useAuth()
   const role = (user as { role?: string } | null)?.role
-  const groups = role === 'admin' ? [...navGroups, adminGroup] : navGroups
+  const groups = role === 'admin'
+    ? [...navGroups, adminGroup]
+    : navGroups.map(group => group.label === 'System'
+      ? { ...group, items: group.items.filter(item => item.href !== '/security') }
+      : group)
   const { open, close } = useSidebar()
 
   const isActive = (href: string) =>
@@ -121,7 +125,7 @@ export default function Sidebar() {
               <p className="font-mono text-[10px] text-white/30 uppercase tracking-wider">{(user as { role?: string })?.role ?? 'user'}</p>
             </div>
             <button
-              onClick={logout}
+              onClick={() => logout()}
               className="p-1.5 rounded-lg text-white/25 hover:text-error hover:bg-white/[0.04] transition-all"
               title="Sign out"
             >

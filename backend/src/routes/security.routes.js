@@ -4,7 +4,7 @@ const { protect, authorize } = require('../middleware/auth.middleware');
 const { getAuditLogs, getSecurityStats } = require('../controllers/security.controller');
 
 router.use(protect);
-router.use(authorize('admin', 'manager'));
+router.use(authorize('admin'));
 
 router.get('/audit-logs', getAuditLogs);
 router.get('/stats', getSecurityStats);

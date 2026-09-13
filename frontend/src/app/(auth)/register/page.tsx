@@ -3,18 +3,20 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth } from '@/lib/auth'
 import toast from 'react-hot-toast'
+import AlreadySignedInGate from '@/components/auth/AlreadySignedInGate'
+import { authApi, getApiErrorMessage } from '@/lib/api'
 
 export default function RegisterPage() {
-  const { login } = useAuth()
   const router = useRouter()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
+  const [role, setRole] = useState<'admin' | 'manager' | 'employee' | ''>('')
   const [loading, setLoading] = useState(false)
   const [showPass, setShowPass] = useState(false)
+  const [requestSent, setRequestSent] = useState(false)
 
   const passwordChecks = {
     length: password.length >= 8,
@@ -26,29 +28,22 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name || !email || !password) { toast.error('All fields required'); return }
+    if (!name || !email || !password || !role) { toast.error('Complete all fields, including account type'); return }
     if (password !== confirm) { toast.error('Passwords do not match'); return }
     if (!passwordValid) { toast.error('Password does not meet the requirements below'); return }
     setLoading(true)
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.details?.join(', ') || data.error || 'Registration failed')
-      await login(email, password)
-      toast.success('Welcome to Enterprise NeXus!')
-      router.push('/dashboard')
+      await authApi.register(name, email, password, role)
+      setRequestSent(true)
     } catch (err: unknown) {
-      toast.error((err as Error).message)
+      toast.error(getApiErrorMessage(err, 'Registration failed'))
     } finally {
       setLoading(false)
     }
   }
 
   return (
+    <AlreadySignedInGate dashboardPath="/dashboard">
     <div className="min-h-screen w-full flex">
       {/* Left panel */}
       <div className="hidden lg:flex w-[480px] flex-shrink-0 flex-col bg-[#1a1d1e] relative overflow-hidden">
@@ -76,7 +71,7 @@ export default function RegisterPage() {
               Get access to five specialized AI agents that automate your daily business operations.
             </p>
           </div>
-          <div className="space-y-3 mb-10">
+            <div className="space-y-3 mb-10">
             {[
               { icon: 'check_circle', text: 'AI-powered CV screening & hiring' },
               { icon: 'check_circle', text: 'Financial anomaly detection' },
@@ -89,6 +84,7 @@ export default function RegisterPage() {
                 <span className="font-body text-[14px] text-white/50">{text}</span>
               </div>
             ))}
+
           </div>
         </div>
       </div>
@@ -123,6 +119,21 @@ export default function RegisterPage() {
                 />
               </div>
             ))}
+
+            <div>
+              <label className="block font-mono text-[11px] uppercase tracking-widest text-on-surface-variant mb-2">Requested Role</label>
+              <select
+                value={role}
+                required
+                onChange={e => setRole(e.target.value as typeof role)}
+                className="w-full bg-white border border-outline-variant rounded-xl px-4 py-3 font-body text-[14px] text-on-surface focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all"
+              >
+                <option value="" disabled>Select role</option>
+                <option value="admin">Admin</option>
+                <option value="manager">Manager</option>
+                <option value="employee">Employee</option>
+              </select>
+            </div>
 
             <div>
               <label className="block font-mono text-[11px] uppercase tracking-widest text-on-surface-variant mb-2">Password</label>
@@ -189,5 +200,24 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+    {requestSent && (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#101314]/70 backdrop-blur-sm px-5 animate-fade-in">
+        <div className="w-full max-w-[420px] rounded-2xl bg-white p-8 text-center shadow-2xl animate-scale-in">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+            <span className="material-symbols-outlined text-[30px] text-primary icon-filled animate-pulse">hourglass_top</span>
+          </div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">Request submitted</p>
+          <h2 className="mt-2 font-display text-[23px] font-bold text-on-surface">Your access is being prepared</h2>
+          <p className="mt-3 font-body text-[14px] leading-relaxed text-on-surface-variant">An administrator can approve your requested role immediately. Otherwise, access is approved automatically within 30 seconds.</p>
+          <button
+            onClick={() => router.push('/login')}
+            className="mt-7 w-full rounded-xl bg-primary py-3 font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-on-primary transition-colors hover:bg-primary/90"
+          >
+            Okay
+          </button>
+        </div>
+      </div>
+    )}
+    </AlreadySignedInGate>
   )
 }

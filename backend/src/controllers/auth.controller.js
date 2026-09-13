@@ -11,80 +11,118 @@ const IS_PROD = process.env.NODE_ENV === 'production';
 const COOKIE_BASE = {
   httpOnly: true,
   secure: IS_PROD,
-  // 'none' is required for cross-site cookies (frontend on Vercel, backend on
-  // Render are different domains) — must be paired with secure:true, which it
-  // is in production. Locally frontend/backend share localhost, so 'lax' is fine.
-  sameSite: IS_PROD ? 'none' : 'lax',
+  // Production browser calls now use the Vercel same-origin /api rewrite.
+  // Lax prevents unnecessary third-party cookie exposure while allowing the
+  // normal first-party storefront and office session flow.
+  sameSite: 'lax',
   path: '/',
 };
 
-const setAuthCookies = (res, accessToken, refreshToken) => {
-  res.cookie('accessToken', accessToken, { ...COOKIE_BASE, maxAge: 15 * 60 * 1000 });
-  res.cookie('refreshToken', refreshToken, { ...COOKIE_BASE, maxAge: 7 * 24 * 60 * 60 * 1000, path: '/api/auth' });
+// A single long-lived session cookie, not a short access token + separate
+// refresh token. Two Set-Cookie headers on one response were silently being
+// collapsed to one by the Vercel rewrite proxy in front of Render, which
+// dropped the refresh cookie and force-logged everyone out once the old
+// 15-minute access token expired (or sporadically on reload, since only the
+// first Set-Cookie header survived the proxy). One cookie sidesteps that
+// proxy limitation entirely — there's nothing to drop.
+const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+const setAuthCookies = (res, token) => {
+  res.cookie('session', token, { ...COOKIE_BASE, maxAge: SESSION_MAX_AGE_MS });
 };
 
 const clearAuthCookies = (res) => {
-  res.clearCookie('accessToken', { ...COOKIE_BASE });
-  res.clearCookie('refreshToken', { ...COOKIE_BASE, path: '/api/auth' });
+  res.clearCookie('session', COOKIE_BASE);
 };
 
 // ── Token helpers ─────────────────────────────────────────────
-const generateTokens = (userId) => {
-  const accessToken = jwt.sign(
-    { userId },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '15m' }
-  );
-  const refreshToken = jwt.sign(
-    { userId },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
-  );
-  return { accessToken, refreshToken };
-};
+const generateToken = (userId) =>
+  jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
 const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
+
+const createAccount = async ({ name, email, password, role, req }) => {
+  const { data: existing } = await supabase.from('users').select('id').eq('email', email).single();
+  if (existing) {
+    const err = new Error('Email already registered');
+    err.statusCode = 409;
+    throw err;
+  }
+
+  const { data: roleRow, error: roleErr } = await supabase
+    .from('roles').select('id').eq('name', role).single();
+  if (roleErr || !roleRow) {
+    const err = new Error('Invalid account type');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const password_hash = await bcrypt.hash(password, 12);
+  const requiresApproval = role !== 'customer';
+  const { data: user, error } = await supabase
+    .from('users')
+    .insert({
+      name,
+      email,
+      password_hash,
+      role_id: roleRow.id,
+      is_active: !requiresApproval,
+      approval_status: requiresApproval ? 'pending' : 'approved',
+    })
+    .select('id, name, email, role_id, approval_status, created_at')
+    .single();
+  if (error) throw error;
+
+  writeAuditLog({
+    userId: user.id,
+    action: requiresApproval ? 'auth.registration_requested' : 'auth.customer.register',
+    metadata: { requested_role: role },
+    req,
+  });
+  return { user, requiresApproval };
+};
+
+// Records the session (for audit/visibility) and sets the one auth cookie.
+const createSessionResponse = async (res, user) => {
+  const token = generateToken(user.id);
+  const expiresAt = new Date(Date.now() + SESSION_MAX_AGE_MS).toISOString();
+  await supabase.from('user_sessions').insert({ user_id: user.id, token_hash: hashToken(token), expires_at: expiresAt });
+  setAuthCookies(res, token);
+};
 
 // ── POST /api/auth/register ───────────────────────────────────
 const register = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
-
-    const { data: existing } = await supabase
-      .from('users').select('id').eq('email', email).single();
-
-    if (existing) return res.status(409).json({ error: 'Email already registered' });
-
-    const { data: employeeRole } = await supabase
-      .from('roles').select('id').eq('name', 'employee').single();
-
-    const password_hash = await bcrypt.hash(password, 12);
-
-    const { data: user, error } = await supabase
-      .from('users')
-      .insert({ name, email, password_hash, role_id: employeeRole?.id })
-      .select('id, name, email, role_id, created_at')
-      .single();
-
-    if (error) throw error;
-
-    const { accessToken, refreshToken } = generateTokens(user.id);
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
-    await supabase.from('user_sessions').insert({
-      user_id: user.id,
-      token_hash: hashToken(refreshToken),
-      expires_at: expiresAt,
-    });
-
-    setAuthCookies(res, accessToken, refreshToken);
-    writeAuditLog({ userId: user.id, action: 'auth.register', req });
-
+    const { name, email, password, role } = req.body;
+    const { user, requiresApproval } = await createAccount({ name, email, password, role, req });
+    if (!requiresApproval) await createSessionResponse(res, user);
     res.status(201).json({
-      message: 'Registration successful',
-      user: { id: user.id, name: user.name, email: user.email },
+      message: requiresApproval ? 'Account request sent for admin approval' : 'Customer account created',
+      pending_approval: requiresApproval,
+      user: { ...user, role },
     });
   } catch (err) {
+    if (err.statusCode) return res.status(err.statusCode).json({ error: err.message });
+    next(err);
+  }
+};
+
+// ── POST /api/auth/register-external ──────────────────────────
+// Public signup for candidate/customer accounts (storefront, careers portal).
+// Kept separate from register() so the internal-staff flow is untouched and
+// role is never accepted from arbitrary input there.
+const registerExternal = async (req, res, next) => {
+  try {
+    const { name, email, password, role } = req.body;
+    const { user, requiresApproval } = await createAccount({ name, email, password, role, req });
+    if (!requiresApproval) await createSessionResponse(res, user);
+    res.status(201).json({
+      message: requiresApproval ? 'Account request sent for admin approval' : 'Customer account created',
+      pending_approval: requiresApproval,
+      user: { ...user, role },
+    });
+  } catch (err) {
+    if (err.statusCode) return res.status(err.statusCode).json({ error: err.message });
     next(err);
   }
 };
@@ -96,17 +134,27 @@ const login = async (req, res, next) => {
 
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, name, email, password_hash, is_active, role_id, roles(name)')
+      .select('id, name, email, password_hash, is_active, approval_status, role_id, roles(name)')
       .eq('email', email)
       .single();
 
-    if (error || !user) {
+    if (error) {
+      console.error('[auth.login] user lookup failed:', error.message);
+      return res.status(503).json({ error: 'Sign-in service is temporarily unavailable. Please try again in a moment.' });
+    }
+    if (!user) {
       writeAuditLog({ action: 'auth.login', metadata: { email }, req, success: false });
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    if (user.approval_status === 'pending') {
+      return res.status(403).json({ error: 'Account pending admin approval' });
+    }
+    if (user.approval_status === 'rejected') {
+      return res.status(403).json({ error: 'Account request was not approved' });
+    }
     if (!user.is_active) {
-      return res.status(403).json({ error: 'Account is deactivated' });
+      return res.status(403).json({ error: 'Account access has been revoked' });
     }
 
     const valid = await bcrypt.compare(password, user.password_hash);
@@ -115,16 +163,7 @@ const login = async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const { accessToken, refreshToken } = generateTokens(user.id);
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
-    await supabase.from('user_sessions').insert({
-      user_id: user.id,
-      token_hash: hashToken(refreshToken),
-      expires_at: expiresAt,
-    });
-
-    setAuthCookies(res, accessToken, refreshToken);
+    await createSessionResponse(res, user);
     writeAuditLog({ userId: user.id, action: 'auth.login', metadata: { role: user.roles?.name }, req, success: true });
 
     res.json({
@@ -137,45 +176,35 @@ const login = async (req, res, next) => {
 };
 
 // ── POST /api/auth/refresh ────────────────────────────────────
+// No longer a distinct refresh-token flow — there's only one cookie now.
+// This just verifies the current session and, if still valid, rotates it to
+// a fresh 7-day token (sliding expiration) so a still-active user is never
+// forced to re-login just because the cookie is getting old.
 const refresh = async (req, res, next) => {
   try {
-    const refreshToken = req.cookies?.refreshToken;
-    if (!refreshToken) return res.status(401).json({ error: 'No refresh token' });
+    const token = req.cookies?.session;
+    if (!token) return res.status(401).json({ error: 'No session' });
 
     let decoded;
     try {
-      decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
     } catch {
       clearAuthCookies(res);
-      return res.status(401).json({ error: 'Invalid or expired refresh token' });
+      return res.status(401).json({ error: 'Invalid or expired session' });
     }
 
-    const tokenHash = hashToken(refreshToken);
-    const { data: session, error } = await supabase
-      .from('user_sessions')
-      .select('id, expires_at')
-      .eq('user_id', decoded.userId)
-      .eq('token_hash', tokenHash)
-      .single();
+    await supabase.from('user_sessions').delete().eq('token_hash', hashToken(token));
 
-    if (error || !session || new Date(session.expires_at) < new Date()) {
-      clearAuthCookies(res);
-      return res.status(401).json({ error: 'Session expired or revoked' });
-    }
-
-    await supabase.from('user_sessions').delete().eq('id', session.id);
-
-    const { accessToken, refreshToken: newRefreshToken } = generateTokens(decoded.userId);
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
+    const newToken = generateToken(decoded.userId);
+    const expiresAt = new Date(Date.now() + SESSION_MAX_AGE_MS).toISOString();
     await supabase.from('user_sessions').insert({
       user_id: decoded.userId,
-      token_hash: hashToken(newRefreshToken),
+      token_hash: hashToken(newToken),
       expires_at: expiresAt,
     });
 
-    setAuthCookies(res, accessToken, newRefreshToken);
-    res.json({ message: 'Token refreshed' });
+    setAuthCookies(res, newToken);
+    res.json({ message: 'Session refreshed' });
   } catch (err) {
     next(err);
   }
@@ -184,14 +213,9 @@ const refresh = async (req, res, next) => {
 // ── POST /api/auth/logout ─────────────────────────────────────
 const logout = async (req, res, next) => {
   try {
-    const refreshToken = req.cookies?.refreshToken;
-
-    if (refreshToken) {
-      const tokenHash = hashToken(refreshToken);
-      await supabase.from('user_sessions')
-        .delete()
-        .eq('user_id', req.user.id)
-        .eq('token_hash', tokenHash);
+    const token = req.cookies?.session;
+    if (token) {
+      await supabase.from('user_sessions').delete().eq('token_hash', hashToken(token));
     }
 
     writeAuditLog({ userId: req.user?.id, action: 'auth.logout', req, success: true });
@@ -212,7 +236,12 @@ const me = async (req, res, next) => {
       .single();
 
     if (error || !user) return res.status(404).json({ error: 'User not found' });
-    res.json({ user });
+    res.json({
+      user: {
+        ...user,
+        role: user.roles?.name || null,
+      },
+    });
   } catch (err) {
     next(err);
   }
@@ -315,4 +344,4 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login, refresh, logout, me, updateMe, forgotPassword, resetPassword };
+module.exports = { register, registerExternal, login, refresh, logout, me, updateMe, forgotPassword, resetPassword };

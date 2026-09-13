@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import PageHeader from '@/components/ui/PageHeader'
 import { securityApi } from '@/lib/api'
 import toast from 'react-hot-toast'
+import { useAuth } from '@/lib/auth'
 
 interface AuditLog {
   id: string
@@ -50,12 +52,18 @@ function timeAgo(iso: string) {
 }
 
 export default function SecurityPage() {
+  const { user, loading: authLoading } = useAuth()
+  const router = useRouter()
   const [logs, setLogs] = useState<AuditLog[]>([])
   const [stats, setStats] = useState<SecurityStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'activity' | 'failed'>('activity')
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
+
+  useEffect(() => {
+    if (!authLoading && user?.role !== 'admin') router.replace('/dashboard')
+  }, [authLoading, router, user])
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -74,7 +82,11 @@ export default function SecurityPage() {
     }
   }, [page, tab])
 
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => {
+    if (!authLoading && user?.role === 'admin') fetchData()
+  }, [authLoading, fetchData, user])
+
+  if (authLoading || user?.role !== 'admin') return null
 
   const statCards = [
     { label: 'Events Today', value: stats?.eventsToday ?? '—', icon: 'event_note', color: 'text-primary', bg: 'bg-primary/10', sub: 'All audit events' },

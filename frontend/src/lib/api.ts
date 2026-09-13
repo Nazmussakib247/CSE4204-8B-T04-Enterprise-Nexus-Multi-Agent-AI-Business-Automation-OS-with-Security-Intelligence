@@ -34,9 +34,14 @@ api.interceptors.response.use(
         return api(original)
       } catch {
         if (typeof window !== 'undefined') {
-          const authPaths = ['/login', '/register', '/forgot-password', '/reset-password']
+          const authPaths = ['/login', '/register', '/forgot-password', '/reset-password', '/store/login', '/store/register', '/careers/register']
           const onAuthPage = authPaths.some((p) => window.location.pathname.startsWith(p))
-          if (!onAuthPage) window.location.href = '/login'
+          if (!onAuthPage) {
+            const isStorePath = window.location.pathname.startsWith('/store') || window.location.pathname.startsWith('/careers')
+            const loginPath = isStorePath ? '/store/login' : '/login'
+            const returnTo = isStorePath ? `?returnTo=${encodeURIComponent(window.location.pathname + window.location.search)}` : ''
+            window.location.href = `${loginPath}${returnTo}`
+          }
         }
       }
     }
@@ -47,8 +52,10 @@ api.interceptors.response.use(
 export const authApi = {
   login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }),
-  register: (name: string, email: string, password: string) =>
-    api.post('/auth/register', { name, email, password }),
+  register: (name: string, email: string, password: string, role: 'admin' | 'manager' | 'employee') =>
+    api.post('/auth/register', { name, email, password, role }),
+  registerExternal: (name: string, email: string, password: string, role: 'customer' | 'candidate') =>
+    api.post('/auth/register-external', { name, email, password, role }),
   refresh: () => api.post('/auth/refresh'),
   logout: () => api.post('/auth/logout'),
   me: () => api.get('/auth/me'),
@@ -58,6 +65,43 @@ export const authApi = {
     api.post('/auth/forgot-password', { email }),
   resetPassword: (token: string, password: string) =>
     api.post('/auth/reset-password', { token, password }),
+}
+
+export const jobsApi = {
+  getOpen: () => api.get('/jobs'),
+  get: (id: string) => api.get(`/jobs/${id}`),
+  getAllForStaff: () => api.get('/jobs/admin/all'),
+  create: (data: Record<string, unknown>) => api.post('/jobs', data),
+  update: (id: string, data: Record<string, unknown>) => api.patch(`/jobs/${id}`, data),
+  remove: (id: string) => api.delete(`/jobs/${id}`),
+  apply: (id: string, formData: FormData) => api.post(`/jobs/${id}/applications`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  getApplications: (id: string) => api.get(`/jobs/${id}/applications`),
+  updateApplication: (jobId: string, applicationId: string, status: string) => api.patch(`/jobs/${jobId}/applications/${applicationId}`, { status }),
+  removeApplication: (jobId: string, applicationId: string) => api.delete(`/jobs/${jobId}/applications/${applicationId}`),
+  confirmAndNotify: (id: string, application_ids: string[], message?: string) => api.post(`/jobs/${id}/applications/confirm-notify`, { application_ids, message }),
+}
+
+export const ordersApi = {
+  create: (product_id: string, quantity = 1) => api.post('/orders', { product_id, quantity }),
+  getAll: (params?: Record<string, unknown>) => api.get('/orders', { params }),
+  get: (id: string) => api.get(`/orders/${id}`),
+}
+
+export interface StoreProduct {
+  id: string; slug: string; name: string; tagline: string; description: string
+  price: number; icon: string; highlights: string[]; specs: { label: string; value: string }[]
+}
+
+export const productsApi = {
+  list: () => api.get('/products'),
+  getBySlug: (slug: string) => api.get(`/products/${slug}`),
+}
+
+export const reviewsApi = {
+  getForProduct: (productId: string) => api.get(`/reviews/products/${productId}`),
+  create: (data: { product_id: string; rating: number; comment: string }) => api.post('/reviews', data),
+  getFlagged: () => api.get('/reviews/flagged'),
+  reply: (id: string, response: string) => api.patch(`/reviews/${id}/reply`, { response }),
 }
 
 export const hrApi = {
@@ -101,6 +145,8 @@ export const supportApi = {
     api.patch(`/support/tickets/${id}`, data),
   escalateTicket: (id: string) => api.patch(`/support/tickets/${id}/escalate`),
   resolveTicket: (id: string) => api.patch(`/support/tickets/${id}/resolve`),
+  replyToTicket: (id: string, response: string) => api.patch(`/support/tickets/${id}/reply`, { response }),
+  createMessage: (id: string, body: string) => api.post(`/support/tickets/${id}/messages`, { body }),
   getSentimentReport: () => api.get('/support/sentiment-report'),
 }
 
@@ -188,10 +234,12 @@ export const adminApi = {
   listUsers: (params?: Record<string, unknown>) =>
     api.get('/admin/users', { params }),
   listRoles: () => api.get('/admin/roles'),
-  updateUserRole: (id: string, role: string) =>
-    api.patch(`/admin/users/${id}/role`, { role }),
-  toggleUserStatus: (id: string, is_active: boolean) =>
-    api.patch(`/admin/users/${id}/status`, { is_active }),
+  updateUserRole: (id: string, role: string, reason: string) =>
+    api.patch(`/admin/users/${id}/role`, { role, reason }),
+  toggleUserStatus: (id: string, is_active: boolean, reason: string) =>
+    api.patch(`/admin/users/${id}/status`, { is_active, reason }),
+  approveUser: (id: string, reason: string) =>
+    api.patch(`/admin/users/${id}/approve`, { reason }),
 }
 
 export interface AgentStep {

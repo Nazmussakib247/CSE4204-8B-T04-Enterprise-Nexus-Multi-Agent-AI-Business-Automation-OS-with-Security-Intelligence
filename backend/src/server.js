@@ -31,6 +31,7 @@ const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 
 const logger = require('./utils/logger');
+const { startOfficeAutoApprovalWorker } = require('./utils/officeAutoApproval');
 const correlationId = require('./middleware/correlationId.middleware');
 const errorHandler = require('./middleware/error.middleware');
 const supabase = require('./config/supabase');
@@ -169,6 +170,10 @@ if (process.env.NODE_ENV !== 'test') {
       port: PORT,
     });
   });
+
+  // New office registrations remain visible to an administrator first, but
+  // become active automatically after the requested 30-second wait.
+  startOfficeAutoApprovalWorker();
 }
 
 // ── Graceful shutdown ─────────────────────────────────────────────────────────

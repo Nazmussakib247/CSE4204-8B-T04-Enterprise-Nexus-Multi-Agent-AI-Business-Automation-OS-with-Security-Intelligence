@@ -14,8 +14,8 @@ interface User {
 interface AuthContextType {
   user: User | null
   loading: boolean
-  login: (email: string, password: string) => Promise<void>
-  logout: () => Promise<void>
+  login: (email: string, password: string) => Promise<User>
+  logout: (redirectTo?: string) => Promise<void>
   isAuthenticated: boolean
 }
 
@@ -28,23 +28,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     authApi.me()
       .then(({ data }) => setUser(data.user))
-      .catch(() => setUser(null))
+      .catch(async () => {
+        // Access tokens are short lived. A page reload must recover an
+        // otherwise valid storefront/office session using its refresh token.
+        try {
+          await authApi.refresh()
+          const { data } = await authApi.me()
+          setUser(data.user)
+        } catch {
+          setUser(null)
+        }
+      })
       .finally(() => setLoading(false))
   }, [])
 
   const login = async (email: string, password: string) => {
     const { data } = await authApi.login(email, password)
     setUser(data.user)
+    return data.user
   }
 
-  const logout = async () => {
+  const logout = async (redirectTo = '/login') => {
     try {
       await authApi.logout()
     } catch {
       // proceed to login even if request fails
     }
     setUser(null)
-    window.location.href = '/login'
+    window.location.href = redirectTo
   }
 
   return (

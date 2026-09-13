@@ -16,6 +16,17 @@ const registerSchema = Joi.object({
   name: Joi.string().min(2).max(100).required(),
   email: Joi.string().email().max(255).lowercase().required(),
   password: passwordRules,
+  // Office access requests are always pending admin approval.
+  role: Joi.string().valid('admin', 'manager', 'employee').required(),
+});
+
+// Public signup used by /store/register and /careers apply flow.
+// role is restricted to external classes only — never admin/manager/employee.
+const registerExternalSchema = Joi.object({
+  name: Joi.string().min(2).max(100).required(),
+  email: Joi.string().email().max(255).lowercase().required(),
+  password: passwordRules,
+  role: Joi.string().valid('customer', 'candidate').required(),
 });
 
 const loginSchema = Joi.object({
@@ -28,4 +39,4 @@ const updateMeSchema = Joi.object({
   password: passwordRules.optional(),
 }).min(1);
 
-module.exports = { registerSchema, loginSchema, updateMeSchema };
+module.exports = { registerSchema, registerExternalSchema, loginSchema, updateMeSchema };

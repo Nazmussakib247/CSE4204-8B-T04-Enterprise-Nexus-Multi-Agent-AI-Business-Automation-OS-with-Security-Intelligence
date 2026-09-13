@@ -10,12 +10,15 @@ import ErrorBoundary from '@/components/ui/ErrorBoundary'
 import WelcomeTour from '@/components/onboarding/WelcomeTour'
 
 function DashboardInner({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, loading } = useAuth()
+  const { user, isAuthenticated, loading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
     if (!loading && !isAuthenticated) router.push('/login')
-  }, [isAuthenticated, loading, router])
+    if (!loading && isAuthenticated && !['admin', 'manager'].includes(user?.role || '')) {
+      router.push('/store')
+    }
+  }, [isAuthenticated, loading, router, user])
 
   if (loading) {
     return (
@@ -28,7 +31,7 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
     )
   }
 
-  if (!isAuthenticated) return null
+  if (!isAuthenticated || !['admin', 'manager'].includes(user?.role || '')) return null
 
   return (
     <div className="min-h-screen bg-[#f4f5f6]">
