@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Enterprise NeXus Backend",
   "main": "src/server.js",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
@@ -25,6 +28,7 @@
     ]
   },
   "dependencies": {
+    "@google/genai": "^2.21.0",
     "@google/generative-ai": "^0.24.1",
     "@langchain/core": "^1.2.1",
     "@langchain/google-genai": "^2.2.0",

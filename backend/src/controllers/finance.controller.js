@@ -4,6 +4,7 @@ const { detectAnomaly, parseInvoice } = require('../utils/gemini');
 const { extractText } = require('../utils/fileExtract');
 const { notifyN8n } = require('../utils/webhook');
 const { writeAuditLog } = require('../utils/audit');
+const { getStoreSalesSummary } = require('../utils/storeSales');
 
 // Insert one finance record with AI anomaly analysis (shared by manual + upload flows)
 const insertRecordWithAnomaly = async (userId, { category, amount, expense_date, description }) => {
@@ -65,7 +66,6 @@ const getRecords = async (req, res, next) => {
     let query = supabase
       .from('finance_records')
       .select('*', { count: 'exact' })
-      .eq('user_id', req.user.id)
       .order('expense_date', { ascending: false })
       .range(offset, offset + Number(limit) - 1);
 
@@ -90,7 +90,6 @@ const getRecord = async (req, res, next) => {
       .from('finance_records')
       .select('*')
       .eq('id', req.params.id)
-      .eq('user_id', req.user.id)
       .single();
 
     if (error || !data) return res.status(404).json({ error: 'Record not found' });
@@ -169,7 +168,6 @@ const updateRecord = async (req, res, next) => {
       .from('finance_records')
       .update(updates)
       .eq('id', req.params.id)
-      .eq('user_id', req.user.id)
       .select()
       .single();
 
@@ -196,8 +194,7 @@ const deleteRecord = async (req, res, next) => {
     const { error } = await supabase
       .from('finance_records')
       .delete()
-      .eq('id', req.params.id)
-      .eq('user_id', req.user.id);
+      .eq('id', req.params.id);
 
     if (error) throw error;
 
@@ -221,7 +218,6 @@ const getAnomalies = async (req, res, next) => {
     const { data, error } = await supabase
       .from('finance_records')
       .select('*')
-      .eq('user_id', req.user.id)
       .in('severity', ['high', 'critical'])
       .order('expense_date', { ascending: false });
 
@@ -235,10 +231,10 @@ const getAnomalies = async (req, res, next) => {
 // GET /api/finance/summary — aggregate stats
 const getSummary = async (req, res, next) => {
   try {
-    const { data, error } = await supabase
-      .from('finance_records')
-      .select('category, amount, severity')
-      .eq('user_id', req.user.id);
+    const [{ data, error }, sales] = await Promise.all([
+      supabase.from('finance_records').select('category, amount, severity'),
+      getStoreSalesSummary(),
+    ]);
 
     if (error) throw error;
 
@@ -257,6 +253,7 @@ const getSummary = async (req, res, next) => {
       by_category,
       anomaly_count,
       record_count: data.length,
+      sales,
     });
   } catch (err) {
     next(err);

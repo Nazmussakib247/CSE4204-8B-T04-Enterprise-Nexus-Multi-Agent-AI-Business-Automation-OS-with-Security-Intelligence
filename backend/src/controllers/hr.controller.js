@@ -13,7 +13,6 @@ const getReports = async (req, res, next) => {
     let query = supabase
       .from('hr_reports')
       .select('*', { count: 'exact' })
-      .eq('user_id', req.user.id)
       .order('created_at', { ascending: false })
       .range(offset, offset + Number(limit) - 1);
 
@@ -35,7 +34,6 @@ const getReport = async (req, res, next) => {
       .from('hr_reports')
       .select('*')
       .eq('id', req.params.id)
-      .eq('user_id', req.user.id)
       .single();
 
     if (error || !data) return res.status(404).json({ error: 'Report not found' });
@@ -113,7 +111,6 @@ const updateReport = async (req, res, next) => {
       .from('hr_reports')
       .update(updates)
       .eq('id', req.params.id)
-      .eq('user_id', req.user.id)
       .select()
       .single();
 
@@ -140,8 +137,7 @@ const deleteReport = async (req, res, next) => {
     const { error } = await supabase
       .from('hr_reports')
       .delete()
-      .eq('id', req.params.id)
-      .eq('user_id', req.user.id);
+      .eq('id', req.params.id);
 
     if (error) throw error;
 
@@ -167,9 +163,9 @@ const getStats = async (req, res, next) => {
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
 
     const [allRes, thisMonthRes, lastMonthRes] = await Promise.all([
-      supabase.from('hr_reports').select('recommendation, ai_score').eq('user_id', req.user.id),
-      supabase.from('hr_reports').select('id', { count: 'exact', head: true }).eq('user_id', req.user.id).gte('created_at', startOfThisMonth),
-      supabase.from('hr_reports').select('id', { count: 'exact', head: true }).eq('user_id', req.user.id).gte('created_at', startOfLastMonth).lt('created_at', startOfThisMonth),
+      supabase.from('hr_reports').select('recommendation, ai_score'),
+      supabase.from('hr_reports').select('id', { count: 'exact', head: true }).gte('created_at', startOfThisMonth),
+      supabase.from('hr_reports').select('id', { count: 'exact', head: true }).gte('created_at', startOfLastMonth).lt('created_at', startOfThisMonth),
     ]);
 
     if (allRes.error) throw allRes.error;

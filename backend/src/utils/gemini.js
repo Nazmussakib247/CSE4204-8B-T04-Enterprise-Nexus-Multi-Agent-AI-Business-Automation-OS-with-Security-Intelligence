@@ -32,6 +32,25 @@ const CV_SCHEMA = {
   required: ['ai_score', 'confidence', 'recommendation', 'narrative_summary', 'score_breakdown'],
 };
 
+const JOB_CV_SCHEMA = {
+  ...CV_SCHEMA,
+  properties: {
+    ...CV_SCHEMA.properties,
+    skill_scores: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          skill: { type: 'string' },
+          score: { type: 'integer' },
+        },
+        required: ['skill', 'score'],
+      },
+    },
+  },
+  required: [...CV_SCHEMA.required, 'skill_scores'],
+};
+
 const ANOMALY_SCHEMA = {
   type: 'object',
   properties: {
@@ -96,7 +115,12 @@ const INVOICE_SCHEMA = {
  * CV Screening — returns { ai_score, confidence, recommendation, narrative_summary, score_breakdown }
  * @throws {AiUnavailableError}
  */
-async function screenCV({ candidate_name, job_title, cv_text = '' }) {
+async function screenCV({ candidate_name, job_title, cv_text = '', required_skills = [], screening_criteria = '' }) {
+  const isJobSpecific = Array.isArray(required_skills) && required_skills.length > 0;
+  const skills = isJobSpecific
+    ? `\nRequired skills (score every one from 0-100):\n${required_skills.map(({ skill, weight }) => `- ${skill} (weight ${weight}%)`).join('\n')}\nScreening criteria: ${screening_criteria || 'Use the role description and CV.'}`
+    : '';
+
   return generateJson({
     systemInstruction:
       'You are an expert HR AI assistant. Evaluate candidates rigorously and return only the requested JSON.',
@@ -106,10 +130,11 @@ Candidate: ${candidate_name}
 Job Title: ${job_title}
 CV / Profile:
 ${cv_text || '(No CV text provided — evaluate based on name and job title alone)'}
+${skills}
 
 Fields: ai_score (0-100), confidence (0-1), recommendation (shortlist|review|reject),
-narrative_summary (2-3 sentences), score_breakdown with skills_match/experience/communication/culture_fit (each 0-100).`,
-    responseSchema: CV_SCHEMA,
+narrative_summary (2-3 sentences), score_breakdown with skills_match/experience/communication/culture_fit (each 0-100).${isJobSpecific ? '\nAlso return skill_scores as one {skill, score} item for every required skill, using exactly the supplied skill names.' : ''}`,
+    responseSchema: isJobSpecific ? JOB_CV_SCHEMA : CV_SCHEMA,
   });
 }
 
