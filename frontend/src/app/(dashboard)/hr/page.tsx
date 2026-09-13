@@ -6,6 +6,8 @@ import { hrApi } from '@/lib/api'
 import PageHeader from '@/components/ui/PageHeader'
 import EmptyState from '@/components/ui/EmptyState'
 import CVUploadModal from '@/components/modals/CVUploadModal'
+import PostJobModal from '@/components/modals/PostJobModal'
+import JobApplicationsPanel from '@/components/hr/JobApplicationsPanel'
 import Pagination from '@/components/ui/Pagination'
 import { SkeletonCards, SkeletonTableRows } from '@/components/ui/Skeleton'
 import toast from 'react-hot-toast'
@@ -52,6 +54,8 @@ export default function HRPage() {
   const [loading, setLoading] = useState(true)
   const [statsLoading, setStatsLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
+  const [postJobOpen, setPostJobOpen] = useState(false)
+  const [jobsRefreshKey, setJobsRefreshKey] = useState(0)
   const [exportLoading, setExportLoading] = useState(false)
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -108,11 +112,16 @@ export default function HRPage() {
   return (
     <div className="space-y-6 max-w-[1400px]">
       <CVUploadModal open={modalOpen} onClose={() => setModalOpen(false)} onCreated={refresh} />
+      <PostJobModal open={postJobOpen} onClose={() => setPostJobOpen(false)} onCreated={() => setJobsRefreshKey(key => key + 1)} />
       <PageHeader
         title="HR Agent"
         subtitle="AI-powered CV screening and candidate intelligence"
         action={
           <div className="flex items-center gap-2">
+            <button onClick={() => setPostJobOpen(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-mono text-[11px] uppercase tracking-widest font-bold text-primary border border-primary/40 hover:bg-primary/5">
+              <span className="material-symbols-outlined text-[16px]">work</span> Post a Job
+            </button>
             <button
               onClick={handleExport}
               disabled={exportLoading}
@@ -152,6 +161,8 @@ export default function HRPage() {
           ))
         ) : null}
       </div>
+
+      <JobApplicationsPanel refreshKey={jobsRefreshKey} />
 
       {/* Table */}
       <div className="bg-white rounded-2xl border border-outline-variant/50 overflow-hidden">
