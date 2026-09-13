@@ -1,8 +1,8 @@
 const supabase = require('../config/supabase');
-const { analyseSentiment } = require('../utils/gemini');
 const { notifyN8n } = require('../utils/webhook');
 const { sendEscalationEmail } = require('../utils/email');
 const { writeAuditLog } = require('../utils/audit');
+const { isOfficeUser } = require('../middleware/roles');
 
 // GET /api/support/tickets
 const getTickets = async (req, res, next) => {
@@ -12,10 +12,11 @@ const getTickets = async (req, res, next) => {
 
     let query = supabase
       .from('support_tickets')
-      .select('*', { count: 'exact' })
-      .eq('user_id', req.user.id)
+      .select('*, support_messages(id, sender_id, sender_type, body, created_at)', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(offset, offset + Number(limit) - 1);
+
+    if (!isOfficeUser(req.user)) query = query.eq('user_id', req.user.id);
 
     if (status) query = query.eq('status', status);
     if (urgency) query = query.eq('urgency', urgency);
@@ -34,12 +35,12 @@ const getTickets = async (req, res, next) => {
 // GET /api/support/tickets/:id
 const getTicket = async (req, res, next) => {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('support_tickets')
-      .select('*')
-      .eq('id', req.params.id)
-      .eq('user_id', req.user.id)
-      .single();
+      .select('*, support_messages(id, sender_id, sender_type, body, created_at)')
+      .eq('id', req.params.id);
+    if (!isOfficeUser(req.user)) query = query.eq('user_id', req.user.id);
+    const { data, error } = await query.single();
 
     if (error || !data) return res.status(404).json({ error: 'Ticket not found' });
     res.json({ data });
@@ -48,52 +49,68 @@ const getTicket = async (req, res, next) => {
   }
 };
 
-// POST /api/support/tickets — Gemini sentiment analysis
+// POST /api/support/tickets — persist immediately; AI enrichment is async.
 const createTicket = async (req, res, next) => {
   try {
-    const { query } = req.body;
+    const { query, order_id, product_id } = req.body;
     if (!query) return res.status(400).json({ error: 'query is required' });
 
-    const aiResult = await analyseSentiment({ query });
+    let linkedOrder = null;
+    if (order_id) {
+      let orderQuery = supabase.from('orders').select('id, customer_id, product_id, status, quantity, total, created_at').eq('id', order_id);
+      if (!isOfficeUser(req.user)) orderQuery = orderQuery.eq('customer_id', req.user.id);
+      const { data, error } = await orderQuery.single();
+      if (error || !data) return res.status(400).json({ error: 'Linked order was not found or is not yours' });
+      linkedOrder = data;
+    }
+    const linkedProductId = product_id || linkedOrder?.product_id || null;
+    if (linkedProductId) {
+      const { data: product, error } = await supabase.from('products').select('id, name').eq('id', linkedProductId).single();
+      if (error || !product) return res.status(400).json({ error: 'Linked product was not found' });
+      if (linkedOrder && linkedOrder.product_id !== linkedProductId) return res.status(400).json({ error: 'Linked product does not match the selected order' });
+    }
 
     const { data, error } = await supabase
       .from('support_tickets')
       .insert({
         user_id: req.user.id,
         query,
-        ai_response: aiResult.ai_response,
-        intent: aiResult.intent,
-        urgency: aiResult.urgency,
-        sentiment: aiResult.sentiment,
-        confidence: aiResult.confidence,
+        ai_status: 'pending',
         status: 'open',
-        escalated: aiResult.urgency === 'high',
+        escalated: false,
+        human_intervention_required: false,
+        human_intervention_status: 'not_required',
+        order_id: linkedOrder?.id || null,
+        product_id: linkedProductId,
       })
       .select()
       .single();
 
     if (error) throw error;
 
+    const { error: messageError } = await supabase.from('support_messages').insert({
+      ticket_id: data.id, sender_id: req.user.id, sender_type: 'customer', body: query,
+    });
+    if (messageError) throw messageError;
+
     writeAuditLog({
       userId: req.user.id,
       action: 'support.ticket.create',
       resourceType: 'support_ticket',
       resourceId: data.id,
-      metadata: { urgency: aiResult.urgency, sentiment: aiResult.sentiment },
+      metadata: { ai_status: 'pending', order_id: linkedOrder?.id || null, product_id: linkedProductId },
       req,
     });
 
-    notifyN8n('support-ticket', {
-      ticket_id: data.id,
-      user_id: req.user.id,
-      urgency: aiResult.urgency,
-      sentiment: aiResult.sentiment,
-      intent: aiResult.intent,
-      escalated: data.escalated,
-      created_at: data.created_at,
-    });
+    // This is deliberately non-blocking: a slow Gemini/Render/n8n call must
+    // never make the customer's send action feel stuck.
+    notifyN8n('store-support-retry', { ticket_id: data.id, user_id: req.user.id, query, order_id: linkedOrder?.id || null, product_id: linkedProductId, created_at: data.created_at });
 
-    res.status(201).json({ message: 'Ticket created with AI analysis', data, ai_analysis: aiResult });
+    res.status(201).json({
+      message: 'Support request sent. Our team will reply in this conversation.',
+      data,
+      ai_analysis: null,
+    });
   } catch (err) {
     next(err);
   }
@@ -106,15 +123,10 @@ const updateTicket = async (req, res, next) => {
     const updates = {};
     if (status !== undefined) updates.status = status;
     if (ticketQuery !== undefined) updates.query = ticketQuery;
-    updates.updated_at = new Date().toISOString();
 
-    const { data, error } = await supabase
-      .from('support_tickets')
-      .update(updates)
-      .eq('id', req.params.id)
-      .eq('user_id', req.user.id)
-      .select()
-      .single();
+    let updateQuery = supabase.from('support_tickets').update(updates).eq('id', req.params.id);
+    if (!isOfficeUser(req.user)) updateQuery = updateQuery.eq('user_id', req.user.id);
+    const { data, error } = await updateQuery.select().single();
 
     if (error) throw error;
     if (!data) return res.status(404).json({ error: 'Ticket not found' });
@@ -137,13 +149,18 @@ const updateTicket = async (req, res, next) => {
 // PATCH /api/support/tickets/:id/escalate
 const escalateTicket = async (req, res, next) => {
   try {
-    const { data, error } = await supabase
+    let updateQuery = supabase
       .from('support_tickets')
-      .update({ escalated: true, status: 'escalated', updated_at: new Date().toISOString() })
-      .eq('id', req.params.id)
-      .eq('user_id', req.user.id)
-      .select()
-      .single();
+      .update({
+        escalated: true,
+        status: 'escalated',
+        human_intervention_required: true,
+        human_intervention_reason: 'Manually escalated by support staff',
+        human_intervention_status: 'pending',
+      })
+      .eq('id', req.params.id);
+    if (!isOfficeUser(req.user)) updateQuery = updateQuery.eq('user_id', req.user.id);
+    const { data, error } = await updateQuery.select().single();
 
     if (error) throw error;
     if (!data) return res.status(404).json({ error: 'Ticket not found' });
@@ -181,13 +198,78 @@ const escalateTicket = async (req, res, next) => {
   }
 };
 
+// PATCH /api/support/tickets/:id/reply — office support reply visible to customer
+const replyToTicket = async (req, res, next) => {
+  try {
+    const { response } = req.body;
+    const { data, error } = await supabase
+      .from('support_tickets')
+      .update({
+        human_response: response,
+        human_response_by: req.user.id,
+        human_response_at: new Date().toISOString(),
+        human_intervention_status: 'handled',
+        status: 'in_progress',
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    // Do not turn a database/schema error into a misleading 404. In
+    // particular, a deployment whose database has not received migration 011
+    // cannot store the human reply fields yet.
+    if (error) {
+      const missingReplyColumns = error.code === 'PGRST204'
+        || /human_(response|intervention)/i.test(error.message || '');
+      if (missingReplyColumns) {
+        return res.status(503).json({
+          error: 'Support reply storage is not ready. Apply Supabase migration 011_store_support_reply_lifecycle.sql, then try again.',
+        });
+      }
+      throw error;
+    }
+    if (!data) return res.status(404).json({ error: 'Ticket not found' });
+    const { error: messageError } = await supabase.from('support_messages').insert({
+      ticket_id: data.id, sender_id: req.user.id, sender_type: 'staff', body: response,
+    });
+    if (messageError) throw messageError;
+    writeAuditLog({ userId: req.user.id, action: 'support.ticket.reply', resourceType: 'support_ticket', resourceId: data.id, metadata: { response_length: response.length }, req });
+    res.json({ message: 'Support reply sent to customer', data });
+  } catch (err) { next(err); }
+};
+
+// POST /api/support/tickets/:id/messages — customer or office follow-up
+const createMessage = async (req, res, next) => {
+  try {
+    let ticketQuery = supabase.from('support_tickets').select('id, user_id, status').eq('id', req.params.id);
+    if (!isOfficeUser(req.user)) ticketQuery = ticketQuery.eq('user_id', req.user.id);
+    const { data: ticket, error: ticketError } = await ticketQuery.single();
+    if (ticketError || !ticket) return res.status(404).json({ error: 'Ticket not found' });
+
+    const sender_type = isOfficeUser(req.user) ? 'staff' : 'customer';
+    const { data, error } = await supabase.from('support_messages').insert({
+      ticket_id: ticket.id, sender_id: req.user.id, sender_type, body: req.body.body,
+    }).select().single();
+    if (error) throw error;
+
+    if (sender_type === 'customer') {
+      await supabase.from('support_tickets').update({ status: 'open', human_intervention_required: true, human_intervention_status: 'pending', human_intervention_reason: 'Customer sent a follow-up message' }).eq('id', ticket.id);
+    } else {
+      await supabase.from('support_tickets').update({ status: 'in_progress', human_intervention_status: 'handled' }).eq('id', ticket.id);
+    }
+    writeAuditLog({ userId: req.user.id, action: 'support.ticket.message', resourceType: 'support_ticket', resourceId: ticket.id, metadata: { sender_type, length: req.body.body.length }, req });
+    res.status(201).json({ message: 'Message sent', data });
+  } catch (err) { next(err); }
+};
+
 // GET /api/support/sentiment-report
 const getSentimentReport = async (req, res, next) => {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('support_tickets')
-      .select('sentiment, urgency, status, escalated, created_at')
-      .eq('user_id', req.user.id);
+      .select('sentiment, urgency, status, escalated, created_at');
+    if (!isOfficeUser(req.user)) query = query.eq('user_id', req.user.id);
+    const { data, error } = await query;
 
     if (error) throw error;
 
@@ -217,13 +299,12 @@ const getSentimentReport = async (req, res, next) => {
 // PATCH /api/support/tickets/:id/resolve
 const resolveTicket = async (req, res, next) => {
   try {
-    const { data, error } = await supabase
+    let updateQuery = supabase
       .from('support_tickets')
-      .update({ status: 'resolved', updated_at: new Date().toISOString() })
-      .eq('id', req.params.id)
-      .eq('user_id', req.user.id)
-      .select()
-      .single();
+      .update({ status: 'resolved' })
+      .eq('id', req.params.id);
+    if (!isOfficeUser(req.user)) updateQuery = updateQuery.eq('user_id', req.user.id);
+    const { data, error } = await updateQuery.select().single();
 
     if (error) throw error;
     if (!data) return res.status(404).json({ error: 'Ticket not found' });
@@ -242,4 +323,4 @@ const resolveTicket = async (req, res, next) => {
   }
 };
 
-module.exports = { getTickets, getTicket, createTicket, updateTicket, escalateTicket, getSentimentReport, resolveTicket };
+module.exports = { getTickets, getTicket, createTicket, updateTicket, escalateTicket, getSentimentReport, resolveTicket, replyToTicket, createMessage };

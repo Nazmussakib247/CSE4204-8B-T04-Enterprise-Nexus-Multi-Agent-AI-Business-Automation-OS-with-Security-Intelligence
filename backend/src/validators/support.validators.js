@@ -2,6 +2,8 @@ const Joi = require('joi');
 
 const createTicketSchema = Joi.object({
   query: Joi.string().min(5).max(5000).required(),
+  order_id: Joi.string().guid({ version: 'uuidv4' }).allow(null),
+  product_id: Joi.string().guid({ version: 'uuidv4' }).allow(null),
 });
 
 const updateTicketSchema = Joi.object({
@@ -9,4 +11,12 @@ const updateTicketSchema = Joi.object({
   query: Joi.string().min(5).max(5000),
 }).min(1);
 
-module.exports = { createTicketSchema, updateTicketSchema };
+const replyTicketSchema = Joi.object({
+  response: Joi.string().trim().min(3).max(2000).required(),
+});
+
+const createMessageSchema = Joi.object({
+  body: Joi.string().trim().min(1).max(2000).required(),
+});
+
+module.exports = { createTicketSchema, updateTicketSchema, replyTicketSchema, createMessageSchema };

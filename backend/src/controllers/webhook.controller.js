@@ -149,6 +149,101 @@ const escalateTicket = async (req, res, next) => {
   }
 };
 
+// POST /api/webhook/job-application-screened
+// n8n calls this after its screening/routing workflow has completed.
+const saveJobApplicationScreening = async (req, res, next) => {
+  try {
+    const { application_id, ai_score, ai_confidence, ai_recommendation, skill_scores, narrative_summary, status = 'ai_screened' } = req.body;
+    if (!application_id) return res.status(400).json({ error: 'application_id is required' });
+    const updates = { status, updated_at: new Date().toISOString() };
+    if (Number.isInteger(ai_score) && ai_score >= 0 && ai_score <= 100) updates.ai_score = ai_score;
+    if (['low', 'medium', 'high'].includes(ai_confidence)) updates.ai_confidence = ai_confidence;
+    if (['shortlist', 'review', 'reject'].includes(ai_recommendation)) updates.ai_recommendation = ai_recommendation;
+    if (Array.isArray(skill_scores)) updates.skill_scores = skill_scores;
+    if (typeof narrative_summary === 'string') updates.narrative_summary = narrative_summary;
+    const { data, error } = await supabase.from('job_applications').update(updates).eq('id', application_id).select().single();
+    if (error || !data) return res.status(404).json({ error: 'Job application not found' });
+    res.json({ message: 'Job application screening saved', data });
+  } catch (err) { next(err); }
+};
+
+// POST /api/webhook/store-review-analysed
+// n8n persists the review sentiment and its Support Agent response.
+const saveStoreReviewAnalysis = async (req, res, next) => {
+  try {
+    const { review_id, sentiment, urgency, support_reply } = req.body;
+    if (!review_id) return res.status(400).json({ error: 'review_id is required' });
+    if (!['positive', 'neutral', 'negative'].includes(sentiment) || !['low', 'medium', 'high'].includes(urgency)) {
+      return res.status(400).json({ error: 'sentiment and urgency have invalid values' });
+    }
+    if (typeof support_reply !== 'string' || support_reply.trim().length < 3 || support_reply.length > 2000) {
+      return res.status(400).json({ error: 'support_reply must contain 3 to 2000 characters' });
+    }
+    const flagged = sentiment === 'negative' || urgency === 'high';
+    const { data, error } = await supabase
+      .from('product_reviews')
+      .update({
+        sentiment,
+        urgency,
+        ai_status: 'completed',
+        flagged_as_complaint: flagged,
+        human_intervention_required: flagged,
+        human_intervention_reason: flagged ? 'Negative sentiment or high urgency detected by Support Agent' : null,
+        human_intervention_status: flagged ? 'pending' : 'not_required',
+        support_reply: support_reply.trim(),
+        support_replied_at: new Date().toISOString(),
+      })
+      .eq('id', review_id)
+      .select()
+      .single();
+    if (error || !data) return res.status(404).json({ error: 'Product review not found' });
+    res.json({ message: 'Store review analysis saved', data });
+  } catch (err) { next(err); }
+};
+
+// POST /api/webhook/store-support-analysed
+// n8n enriches a ticket after it has already been saved for the customer.
+const saveStoreSupportAnalysis = async (req, res, next) => {
+  try {
+    const { ticket_id, sentiment, urgency, intent, confidence, ai_response } = req.body;
+    if (!ticket_id) return res.status(400).json({ error: 'ticket_id is required' });
+    if (!['positive', 'neutral', 'negative'].includes(sentiment) || !['low', 'medium', 'high'].includes(urgency)) {
+      return res.status(400).json({ error: 'sentiment and urgency have invalid values' });
+    }
+    if (typeof intent !== 'string' || !intent.trim() || typeof ai_response !== 'string' || ai_response.trim().length < 3 || ai_response.length > 2000) {
+      return res.status(400).json({ error: 'intent and ai_response are required' });
+    }
+    const requiresHuman = urgency === 'high';
+    const { data, error } = await supabase
+      .from('support_tickets')
+      .update({
+        sentiment,
+        urgency,
+        intent: intent.trim(),
+        confidence: Number.isFinite(Number(confidence)) ? Number(confidence) : null,
+        ai_response: ai_response.trim(),
+        ai_status: 'completed',
+        escalated: requiresHuman,
+        human_intervention_required: requiresHuman,
+        human_intervention_reason: requiresHuman ? 'High urgency detected by Support Agent' : null,
+        human_intervention_status: requiresHuman ? 'pending' : 'not_required',
+        status: requiresHuman ? 'escalated' : 'open',
+      })
+      .eq('id', ticket_id)
+      .in('ai_status', ['pending', 'failed'])
+      .select()
+      .single();
+    if (error || !data) return res.status(404).json({ error: 'Pending support ticket not found' });
+    const { error: messageError } = await supabase.from('support_messages').insert({
+      ticket_id: data.id,
+      sender_type: 'ai',
+      body: ai_response.trim(),
+    });
+    if (messageError) throw messageError;
+    res.json({ message: 'Store support analysis saved', data });
+  } catch (err) { next(err); }
+};
+
 // GET /api/webhook/pending-tasks
 // n8n polls this to pick up pending tasks (alternative to push)
 const getPendingTasks = async (req, res, next) => {
@@ -179,4 +274,4 @@ const getPendingTasks = async (req, res, next) => {
   }
 };
 
-module.exports = { verifySecret, taskUpdate, saveExecutiveBriefing, saveAnalyticsKPI, escalateTicket, getPendingTasks };
+module.exports = { verifySecret, taskUpdate, saveExecutiveBriefing, saveAnalyticsKPI, escalateTicket, saveJobApplicationScreening, saveStoreReviewAnalysis, saveStoreSupportAnalysis, getPendingTasks };
