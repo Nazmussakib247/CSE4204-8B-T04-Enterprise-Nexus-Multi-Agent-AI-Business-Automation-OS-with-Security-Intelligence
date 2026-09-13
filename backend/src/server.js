@@ -11,7 +11,7 @@ if (process.env.SENTRY_DSN) {
 }
 
 // ── Env validation — fail fast ────────────────────────────────────────────────
-const REQUIRED_ENV = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'JWT_SECRET', 'N8N_SECRET'];
+const REQUIRED_ENV = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'JWT_SECRET', 'N8N_SECRET', 'GEMINI_API_KEY'];
 const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
 if (missing.length) {
   console.error(`[FATAL] Missing env vars: ${missing.join(', ')}`);
