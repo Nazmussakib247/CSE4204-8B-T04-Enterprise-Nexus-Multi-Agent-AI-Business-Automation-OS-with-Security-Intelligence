@@ -9,7 +9,6 @@ interface JobPosting {
   title: string
   department: string | null
   description: string
-  required_skills: { skill: string; weight: number }[]
 }
 
 export default function CareersPage() {
@@ -53,13 +52,6 @@ export default function CareersPage() {
                   <h2 className="font-display text-[16px] font-semibold text-on-surface group-hover:text-primary transition-colors">{job.title}</h2>
                   {job.department && <p className="font-mono text-[11px] text-on-surface-variant mt-1 uppercase tracking-wide">{job.department}</p>}
                   <p className="font-body text-[13px] text-on-surface-variant mt-2 line-clamp-2">{job.description}</p>
-                  <div className="flex flex-wrap gap-1.5 mt-3">
-                    {(job.required_skills || []).map(s => (
-                      <span key={s.skill} className="font-mono text-[10px] px-2 py-1 rounded-lg bg-surface-container-low text-on-surface-variant">
-                        {s.skill}
-                      </span>
-                    ))}
-                  </div>
                 </div>
                 <span className="material-symbols-outlined text-[18px] text-on-surface-variant shrink-0 group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
               </div>

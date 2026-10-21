@@ -12,7 +12,6 @@ interface JobPosting {
   title: string
   department: string | null
   description: string
-  required_skills: { skill: string; weight: number }[]
 }
 
 export default function JobDetailPage() {
@@ -67,17 +66,6 @@ export default function JobDetailPage() {
       {job.department && <p className="font-mono text-[12px] text-on-surface-variant mt-1.5 uppercase tracking-wide">{job.department}</p>}
 
       <p className="font-body text-[14px] text-on-surface leading-relaxed mt-5">{job.description}</p>
-
-      <div className="mt-6">
-        <p className="font-mono text-[11px] uppercase tracking-widest text-on-surface-variant mb-2">What we&apos;ll evaluate</p>
-        <div className="flex flex-wrap gap-2">
-          {(job.required_skills || []).map(s => (
-            <span key={s.skill} className="font-body text-[13px] px-3 py-1.5 rounded-lg bg-surface-container-low text-on-surface">
-              {s.skill} <span className="text-on-surface-variant">· {s.weight}%</span>
-            </span>
-          ))}
-        </div>
-      </div>
 
       <div className="mt-6 flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-xl px-4 py-3">
         <span className="material-symbols-outlined text-[18px] text-primary">psychology</span>

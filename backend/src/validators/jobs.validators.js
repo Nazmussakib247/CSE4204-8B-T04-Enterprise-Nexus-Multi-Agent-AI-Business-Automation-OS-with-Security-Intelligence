@@ -12,7 +12,7 @@ const jobFields = {
   // A concise keyword such as "Python" is a valid screening signal too.
   screening_criteria: Joi.string().trim().min(2).max(10000),
   required_skills: Joi.array().items(skillSchema).min(1).max(30),
-  status: Joi.string().valid('draft', 'open', 'closed'),
+  status: Joi.string().valid('draft', 'open', 'paused', 'closed'),
 };
 
 const weightsMustTotal100 = (value, helpers) => {

@@ -10,6 +10,7 @@ const { generateJson } = require('../ai/client');
 const STAFF_ROLES = ['admin', 'manager', 'employee'];
 const isStaff = (user) => STAFF_ROLES.includes(user.role);
 const confidenceBand = (value) => value >= 0.8 ? 'high' : value >= 0.5 ? 'medium' : 'low';
+const publicJob = ({ required_skills, screening_criteria, ...job }) => job;
 
 const JOB_SUGGESTION_SCHEMA = {
   type: 'object',
@@ -34,7 +35,7 @@ const getOpenJobs = async (_req, res, next) => {
       .select('id, title, department, description, required_skills, status, created_at')
       .eq('status', 'open').order('created_at', { ascending: false });
     if (error) throw error;
-    res.json({ data, total: data.length });
+    res.json({ data: data.map(publicJob), total: data.length });
   } catch (err) { next(err); }
 };
 
@@ -45,7 +46,7 @@ const getJob = async (req, res, next) => {
       .eq('id', req.params.id).eq('status', 'open');
     const { data, error } = await query.single();
     if (error || !data) return res.status(404).json({ error: 'Job not found' });
-    res.json({ data });
+    res.json({ data: publicJob(data) });
   } catch (err) { next(err); }
 };
 
