@@ -1,8 +1,8 @@
 const supabase = require('../config/supabase');
-const { generateJson, AiUnavailableError } = require('../ai/client');
+const { generateJson } = require('../ai/client');
 const { writeAuditLog } = require('../utils/audit');
 const { buildExecutivePdf } = require('../utils/pdf');
-const { createExecutiveAgent } = require('../agents/executive.agent');
+const { getStoreSalesSummary } = require('../utils/storeSales');
 const {
   getOrCreateConversation, loadRecentMessages, appendMessages, updateRollingSummary,
   listConversations, getConversationMessages, buildContextPrompt,
@@ -146,7 +146,7 @@ const exportBriefingPdf = async (req, res, next) => {
   }
 };
 
-// POST /api/executive/ask — Gemini Q&A over enterprise data
+// POST /api/executive/ask — Groq Q&A over enterprise data
 const askAI = async (req, res, next) => {
   try {
     const { question } = req.body;
@@ -186,6 +186,8 @@ QUESTION: ${question}
 Provide a direct, data-driven answer. If the data doesn't contain enough information to answer, say so clearly.`;
 
     const { answer } = await generateJson({
+      preferProvider: 'groq',
+      strictProvider: true,
       systemInstruction: 'You are an executive AI assistant. Return only the requested JSON.',
       prompt,
       responseSchema: {
@@ -208,15 +210,106 @@ Provide a direct, data-driven answer. If the data doesn't contain enough informa
   }
 };
 
-const runGroqFallback = async (question, conversation, recentMessages) => {
-  const briefing = await gatherBriefing();
-  const answer = await generateJson({
+const SOURCE_CONFIG = {
+  hr: { label: 'HR', terms: ['job', 'recruit', 'recruitment', 'hiring', 'hire', 'candidate', 'application', 'applicant', 'cv', 'resume', 'employee', 'hr', 'চাকরি', 'রিক্রুট', 'নিয়োগ', 'প্রার্থী'] },
+  finance: { label: 'Finance', terms: ['sale', 'sales', 'revenue', 'store', 'order', 'finance', 'expense', 'transaction', 'budget', 'profit', 'payment', 'সেল', 'বিক্রয়', 'রাজস্ব', 'অর্ডার', 'ফাইন্যান্স', 'খরচ'] },
+  analytics: { label: 'Analytics', terms: ['sale', 'sales', 'revenue', 'store', 'order', 'analytics', 'metric', 'kpi', 'performance', 'trend', 'compare', 'insight', 'সেল', 'বিক্রয়', 'রাজস্ব', 'অর্ডার', 'অ্যানালিটিক্স', 'পারফরম্যান্স'] },
+  support: { label: 'Support', terms: ['support', 'ticket', 'customer', 'complaint', 'issue', 'helpdesk', 'সাপোর্ট', 'টিকেট', 'কাস্টমার', 'অভিযোগ'] },
+  security: { label: 'Security', terms: ['security', 'audit', 'login', 'breach', 'threat', 'attack', 'suspicious', 'access', 'vulnerability', 'সিকিউরিটি', 'নিরাপত্তা', 'অডিট', 'লগইন', 'হুমকি'] },
+};
+
+const selectedSources = (question) => {
+  const normalized = question.toLowerCase();
+  const sources = Object.entries(SOURCE_CONFIG)
+    .filter(([, config]) => config.terms.some((term) => normalized.includes(term)))
+    .map(([agent]) => agent);
+  return sources.length ? sources : ['analytics'];
+};
+
+const assertData = ({ data, error }, fallback = []) => {
+  if (error) throw error;
+  return data || fallback;
+};
+
+const collectFinance = async () => {
+  const [sales, records] = await Promise.all([
+    getStoreSalesSummary(),
+    supabase.from('finance_records').select('category, amount, severity, expense_date, description').order('created_at', { ascending: false }).limit(20),
+  ]);
+  return { store_sales: sales, recent_finance_records: assertData(records) };
+};
+
+const collectAnalytics = async () => {
+  const [sales, hr, finance, support, reports] = await Promise.all([
+    getStoreSalesSummary(),
+    supabase.from('hr_reports').select('id', { count: 'exact', head: true }),
+    supabase.from('finance_records').select('id', { count: 'exact', head: true }),
+    supabase.from('support_tickets').select('id, status, urgency', { count: 'exact' }).order('created_at', { ascending: false }).limit(20),
+    supabase.from('analytics_reports').select('overall_score, performance_rating, kpi_snapshot, ai_insights').order('created_at', { ascending: false }).limit(1),
+  ]);
+  return {
+    storefront_sales: sales,
+    record_counts: { hr_reports: hr.count || 0, finance_records: finance.count || 0, support_tickets: support.count || 0 },
+    recent_support_tickets: assertData(support),
+    latest_analytics_report: assertData(reports)[0] || null,
+  };
+};
+
+const collectHr = async () => {
+  const [jobs, applications, reports] = await Promise.all([
+    supabase.from('job_postings').select('id, title, department, status, created_at').order('created_at', { ascending: false }).limit(20),
+    supabase.from('job_applications').select('id, status, ai_score, ai_recommendation, created_at').order('created_at', { ascending: false }).limit(30),
+    supabase.from('hr_reports').select('candidate_name, job_title, recommendation, ai_score, created_at').order('created_at', { ascending: false }).limit(20),
+  ]);
+  return { job_postings: assertData(jobs), applications: assertData(applications), recent_candidate_reports: assertData(reports) };
+};
+
+const collectSupport = async () => {
+  const tickets = await supabase.from('support_tickets').select('id, query, intent, urgency, sentiment, status, escalated, created_at').order('created_at', { ascending: false }).limit(30);
+  return { recent_tickets: assertData(tickets) };
+};
+
+const collectSecurity = async () => {
+  const events = await supabase.from('audit_logs').select('action, resource_type, success, created_at').order('created_at', { ascending: false }).limit(50);
+  const recent = assertData(events);
+  return {
+    audit_summary: { recent_event_count: recent.length, failed_event_count: recent.filter((event) => event.success === false).length },
+    recent_audit_events: recent,
+  };
+};
+
+const COLLECTORS = { hr: collectHr, finance: collectFinance, analytics: collectAnalytics, support: collectSupport, security: collectSecurity };
+
+const runGroqExecutive = async ({ question, conversation, recentMessages, req, onDelegation }) => {
+  const sources = selectedSources(question);
+  const delegations = sources.map((agent) => ({ agent, label: SOURCE_CONFIG[agent].label, question, status: 'started' }));
+  delegations.forEach(onDelegation);
+
+  const settled = await Promise.all(sources.map(async (agent, index) => {
+    try {
+      const data = await COLLECTORS[agent]();
+      const delegation = { ...delegations[index], status: 'completed', answer_preview: 'Live database context retrieved' };
+      delegations[index] = delegation;
+      onDelegation(delegation);
+      await writeAuditLog({ userId: req.user.id, action: `agent:${agent}.executive_query`, resourceType: 'agent_activity', metadata: { question_preview: question.slice(0, 160), data_source: 'live_database' }, req });
+      return [agent, data];
+    } catch (error) {
+      const delegation = { ...delegations[index], status: 'failed', answer_preview: 'Data source could not be read' };
+      delegations[index] = delegation;
+      onDelegation(delegation);
+      return [agent, { error: 'Data source unavailable for this request.' }];
+    }
+  }));
+
+  const liveContext = Object.fromEntries(settled);
+  const response = await generateJson({
     preferProvider: 'groq',
-    systemInstruction: 'You are Enterprise NeXus Executive Agent. Answer conversationally in the user\'s language. Use the supplied business context when relevant, explain project questions clearly, and never invent internal facts. Return JSON only.',
-    prompt: `${buildContextPrompt(conversation, recentMessages, question)}\n\nLIVE BUSINESS CONTEXT:\n${JSON.stringify(briefing)}`,
+    strictProvider: true,
+    systemInstruction: 'You are the Enterprise NeXus Executive Agent. Every answer is generated by Groq. Answer in the user\'s language, using only the verified live data supplied. Give a direct useful answer with concise numbers and next steps when useful. Never fabricate a fact or say information is unavailable if relevant data is supplied. For store revenue, use only the supplied total_revenue, which includes paid, shipped, and delivered orders. If a supplied dataset is empty, state that it currently has no matching records. Return JSON only.',
+    prompt: `${buildContextPrompt(conversation, recentMessages, question)}\n\nVERIFIED LIVE DATA FROM SELECTED AGENTS:\n${JSON.stringify(liveContext)}`,
     responseSchema: { type: 'object', properties: { answer: { type: 'string' } }, required: ['answer'] },
   });
-  return answer.answer;
+  return { answer: response.answer, delegations };
 };
 
 // POST /api/v1/executive/ask — persistent topic-based executive chat.
@@ -240,20 +333,15 @@ const askConversation = async (req, res, next) => {
       res.flushHeaders?.();
     }
 
-    let answer;
-    try {
-      const agent = createExecutiveAgent(req.user.id, req, {
-        onDelegation: (delegation) => {
-          delegations.push(delegation);
-          if (streaming) sse(res, 'delegation', delegation);
-        },
-      });
-      const output = await agent.run(buildContextPrompt(conversation, recentMessages, question.trim()), { userId: req.user.id, req });
-      answer = output.answer;
-    } catch (error) {
-      if (!(error instanceof AiUnavailableError)) throw error;
-      answer = await runGroqFallback(question.trim(), conversation, recentMessages);
-    }
+    const output = await runGroqExecutive({
+      question: question.trim(), conversation, recentMessages, req,
+      onDelegation: (delegation) => {
+        const existing = delegations.findIndex((item) => item.agent === delegation.agent);
+        if (existing === -1) delegations.push(delegation); else delegations[existing] = delegation;
+        if (streaming) sse(res, 'delegation', delegation);
+      },
+    });
+    const answer = output.answer;
 
     const toolMessages = delegations
       .filter((item) => item.status === 'completed')

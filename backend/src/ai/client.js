@@ -14,8 +14,8 @@ const isTransient = (err) => err?.reason === 'timeout' || [429, 500, 502, 503, 5
 const reasonFor = (err) => err?.reason === 'timeout' ? 'timeout' : ([429].includes(err?.status ?? err?.response?.status) || /429|rate limit|quota/i.test(String(err?.message || '')) ? 'rate_limit' : 'api_error');
 const withTimeout = async (promise, timeoutMs) => { let timer; try { return await Promise.race([promise, new Promise((_resolve, reject) => { timer = setTimeout(() => { const err = new Error(`Gemini call timed out after ${timeoutMs}ms`); err.reason = 'timeout'; reject(err); }, timeoutMs); })]); } finally { clearTimeout(timer); } };
 
-async function generateJson({ prompt, responseSchema, systemInstruction, timeoutMs = getTimeoutMs(), maxRetries = getMaxRetries(), thinkingLevel = process.env.GEMINI_THINKING_LEVEL?.trim() || DEFAULTS.thinkingLevel, preferProvider = null }) {
-  if (process.env.NODE_ENV !== 'test') return generateJsonWithFailover({ prompt, responseSchema, systemInstruction, timeoutMs, preferProvider });
+async function generateJson({ prompt, responseSchema, systemInstruction, timeoutMs = getTimeoutMs(), maxRetries = getMaxRetries(), thinkingLevel = process.env.GEMINI_THINKING_LEVEL?.trim() || DEFAULTS.thinkingLevel, preferProvider = null, strictProvider = false }) {
+  if (process.env.NODE_ENV !== 'test') return generateJsonWithFailover({ prompt, responseSchema, systemInstruction, timeoutMs, preferProvider, strictProvider });
   let lastErr; const attempts = maxRetries + 1;
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {

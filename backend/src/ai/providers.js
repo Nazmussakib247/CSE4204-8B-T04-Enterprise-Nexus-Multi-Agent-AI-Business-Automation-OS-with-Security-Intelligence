@@ -53,8 +53,10 @@ async function generate(provider, { prompt, systemInstruction, responseSchema, t
 }
 async function withTimeout(promise, ms, name) { let timer; try { return await Promise.race([promise, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(`${name} timed out after ${ms}ms`)), ms); })]); } finally { clearTimeout(timer); } }
 async function generateJsonWithFailover(opts) {
-  const providers = [...await getProviders()]; if (!providers.length) throw new AiUnavailableError('No enabled AI provider is configured', { reason: 'not_configured' });
-  if (opts.preferProvider) providers.sort((a, b) => (a.provider === opts.preferProvider ? -1 : b.provider === opts.preferProvider ? 1 : 0));
+  let providers = [...await getProviders()]; if (!providers.length) throw new AiUnavailableError('No enabled AI provider is configured', { reason: 'not_configured' });
+  if (opts.preferProvider && opts.strictProvider) providers = providers.filter((provider) => provider.provider === opts.preferProvider);
+  else if (opts.preferProvider) providers.sort((a, b) => (a.provider === opts.preferProvider ? -1 : b.provider === opts.preferProvider ? 1 : 0));
+  if (!providers.length) throw new AiUnavailableError(`The requested AI provider (${opts.preferProvider}) is not configured`, { reason: 'not_configured' });
   let lastError; for (const provider of providers) { try { const value = await generate(provider, opts); if (!value || typeof value !== 'object') throw new AiOutputValidationError(`${provider.provider} returned invalid JSON`); return value; } catch (error) { lastError = error; logger.warn('[AI] Provider failed; trying next provider', { provider: provider.provider, error: error.message }); } }
   throw new AiUnavailableError(`All AI providers failed: ${lastError?.message || 'unknown error'}`, { cause: lastError, reason: 'api_error' });
 }
