@@ -24,7 +24,11 @@ export default function LoginPage() {
       const signedInUser = await login(email, password)
       router.push(signedInUser.role === 'candidate' ? '/careers' : signedInUser.role === 'customer' ? '/store' : '/dashboard')
     } catch (err: unknown) {
-      toast.error(getApiErrorMessage(err, 'Sign-in service is waking up. Please wait a moment and try again.'))
+      const message = getApiErrorMessage(err, 'Sign-in service is waking up. Please wait a moment and try again.')
+      if (message.toLowerCase().includes('verify the email code')) {
+        toast('Verify your email code to continue')
+        router.push(`/verify-office-email?email=${encodeURIComponent(email)}`)
+      } else toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -166,9 +170,6 @@ export default function LoginPage() {
                 Create one
               </Link>
             </p>
-            <Link href="/verify-office-email" className="inline-block mt-3 font-mono text-[10px] uppercase tracking-widest text-primary hover:underline">
-              Verify office email / resend code
-            </Link>
           </div>
 
           <div className="mt-10 pt-6 border-t border-outline-variant/50 flex gap-5 justify-center">

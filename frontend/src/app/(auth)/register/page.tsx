@@ -16,9 +16,6 @@ export default function RegisterPage() {
   const [role, setRole] = useState<'admin' | 'manager' | 'employee' | ''>('')
   const [loading, setLoading] = useState(false)
   const [showPass, setShowPass] = useState(false)
-  const [requestSent, setRequestSent] = useState(false)
-  const [verificationCode, setVerificationCode] = useState('')
-  const [verifying, setVerifying] = useState(false)
 
   const passwordChecks = {
     length: password.length >= 8,
@@ -27,15 +24,6 @@ export default function RegisterPage() {
     special: /[^A-Za-z0-9]/.test(password),
   }
 
-  const verifyEmail = async () => {
-    if (!/^\d{6}$/.test(verificationCode)) { toast.error('Enter the six-digit code from your email'); return }
-    setVerifying(true)
-    try {
-      await authApi.verifyOfficeEmail(email, verificationCode)
-      toast.success('Email verified. Your office account will be approved shortly.')
-      router.push('/login')
-    } catch (err: unknown) { toast.error(getApiErrorMessage(err, 'Verification failed')) } finally { setVerifying(false) }
-  }
   const passwordValid = Object.values(passwordChecks).every(Boolean)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,7 +34,7 @@ export default function RegisterPage() {
     setLoading(true)
     try {
       await authApi.register(name, email, password, role)
-      setRequestSent(true)
+      router.push(`/verify-office-email?email=${encodeURIComponent(email)}`)
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, 'Registration failed'))
     } finally {
@@ -212,27 +200,6 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
-    {requestSent && (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#101314]/70 backdrop-blur-sm px-5 animate-fade-in">
-        <div className="w-full max-w-[420px] rounded-2xl bg-white p-8 text-center shadow-2xl animate-scale-in">
-          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-            <span className="material-symbols-outlined text-[30px] text-primary icon-filled animate-pulse">hourglass_top</span>
-          </div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">Request submitted</p>
-          <h2 className="mt-2 font-display text-[23px] font-bold text-on-surface">Your access is being prepared</h2>
-          <p className="mt-3 font-body text-[14px] leading-relaxed text-on-surface-variant">We sent a six-digit code to <strong>{email}</strong>. Verify it before office access can be approved.</p>
-          <input value={verificationCode} onChange={e => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" placeholder="000000" className="mt-5 w-full rounded-xl border border-outline-variant px-4 py-3 text-center font-mono text-lg tracking-[0.35em] focus:outline-none focus:border-primary" />
-          <button
-            onClick={verifyEmail}
-            disabled={verifying}
-            className="mt-4 w-full rounded-xl bg-primary py-3 font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-on-primary transition-colors hover:bg-primary/90 disabled:opacity-60"
-          >
-            {verifying ? 'Verifying…' : 'Verify email'}
-          </button>
-          <button onClick={() => authApi.resendOfficeVerification(email).then(() => toast.success('A new code was sent')).catch(() => toast.error('Could not resend code'))} className="mt-3 font-mono text-[10px] uppercase tracking-widest text-primary hover:underline">Resend code</button>
-        </div>
-      </div>
-    )}
     </AlreadySignedInGate>
   )
 }

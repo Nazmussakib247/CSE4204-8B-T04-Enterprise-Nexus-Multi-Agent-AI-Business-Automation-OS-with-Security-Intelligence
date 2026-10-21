@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
@@ -12,6 +12,7 @@ export default function VerifyOfficeEmailPage() {
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [resending, setResending] = useState(false)
+  useEffect(() => { setEmail(new URLSearchParams(window.location.search).get('email') || '') }, [])
 
   const verify = async (event: React.FormEvent) => {
     event.preventDefault()

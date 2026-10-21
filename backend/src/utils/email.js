@@ -72,11 +72,20 @@ const sendPasswordReset = async ({ to, name, resetToken, resetCode }) => {
 
 const sendOfficeVerificationCode = async ({ to, name, code }) => {
   const t = await getTransporter();
-  return t.sendMail({
-    from: FROM, to, subject: 'Verify your Enterprise NeXus office account',
-    html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto"><h2 style="color:#00c2a8">Verify your email</h2><p>Hi ${name || 'there'},</p><p>Enter this code to verify your office account:</p><p style="font-size:30px;font-weight:bold;letter-spacing:8px;color:#008f7b">${code}</p><p>This code expires in 15 minutes. Do not share it with anyone.</p></div>`,
-    text: `Your Enterprise NeXus office verification code is: ${code}. It expires in 15 minutes.`,
-  });
+  try {
+    const info = await t.sendMail({
+      from: FROM, to, subject: 'Verify your Enterprise NeXus office account',
+      html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto"><h2 style="color:#00c2a8">Verify your email</h2><p>Hi ${name || 'there'},</p><p>Enter this code to verify your office account:</p><p style="font-size:30px;font-weight:bold;letter-spacing:8px;color:#008f7b">${code}</p><p>This code expires in 15 minutes. Do not share it with anyone.</p></div>`,
+      text: `Your Enterprise NeXus office verification code is: ${code}. It expires in 15 minutes.`,
+    });
+    logger.info('[Email] Office verification code delivered', { to: String(to).replace(/(^.).*(@.*$)/, '$1***$2'), response: info.response });
+    return info;
+  } catch (error) {
+    logger.error('[Email] Office verification delivery failed', { code: error.code, command: error.command, responseCode: error.responseCode, error: error.message });
+    const deliveryError = new Error('Could not send the verification email. Please contact your administrator.');
+    deliveryError.statusCode = 503;
+    throw deliveryError;
+  }
 };
 
 const sendEscalationEmail = async ({ to, ticketId, subject, priority, description, assigneeName }) => {

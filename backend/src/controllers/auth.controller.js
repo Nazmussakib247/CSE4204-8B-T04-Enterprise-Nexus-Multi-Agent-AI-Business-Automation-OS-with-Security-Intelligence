@@ -108,7 +108,13 @@ const register = async (req, res, next) => {
     const { name, email, password, role } = req.body;
     const { user, requiresApproval } = await createAccount({ name, email, password, role, req });
     if (!requiresApproval) await createSessionResponse(res, user);
-    else await createOfficeVerificationCode(user);
+    else {
+      try { await createOfficeVerificationCode(user); }
+      catch (error) {
+        writeAuditLog({ userId: user.id, action: 'auth.office_verification_email_failed', metadata: { message: error.message }, req, success: false });
+        return res.status(503).json({ error: error.message, verification_required: true, email: user.email });
+      }
+    }
     res.status(201).json({
       message: requiresApproval ? 'Verification code sent. Verify your email to continue the approval process.' : 'Account created',
       pending_approval: requiresApproval,
