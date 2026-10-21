@@ -139,7 +139,14 @@ const login = async (req, res, next) => {
       .single();
 
     if (error) {
-      console.error('[auth.login] user lookup failed:', error.message);
+      // PostgREST returns PGRST116 when .single() finds no row. That is a
+      // normal bad-credentials case, not a database outage.
+      if (error.code === 'PGRST116') {
+        writeAuditLog({ action: 'auth.login', metadata: { email }, req, success: false });
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      console.error('[auth.login] user lookup failed:', { code: error.code, message: error.message });
       return res.status(503).json({ error: 'Sign-in service is temporarily unavailable. Please try again in a moment.' });
     }
     if (!user) {
