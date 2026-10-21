@@ -62,7 +62,8 @@ export default function CVUploadModal({ open, onClose, onCreated }: Props) {
     if (!files.length) return toast.error('Choose at least one CV file')
     setLoading(true); setProgress({ completed: 0, total: files.length })
     let succeeded = 0; let failed = 0
-    for (const [index, file] of files.entries()) {
+    for (let index = 0; index < files.length; index += 1) {
+      const file = files[index]
       try {
         const data = new FormData(); data.append('cv', file); data.append('candidate_name', nameFromFile(file.name)); data.append('job_title', selectedJob.title); data.append('job_id', selectedJob.id)
         await hrUploadApi.uploadCV(data); succeeded += 1
