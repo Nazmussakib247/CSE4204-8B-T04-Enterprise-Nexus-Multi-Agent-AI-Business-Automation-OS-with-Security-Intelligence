@@ -11,10 +11,14 @@ if (process.env.SENTRY_DSN) {
 }
 
 // ── Env validation — fail fast ────────────────────────────────────────────────
-const REQUIRED_ENV = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'JWT_SECRET', 'N8N_SECRET', 'GEMINI_API_KEY'];
+const REQUIRED_ENV = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'JWT_SECRET', 'N8N_SECRET'];
 const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
 if (missing.length) {
   console.error(`[FATAL] Missing env vars: ${missing.join(', ')}`);
+  process.exit(1);
+}
+if (!process.env.GEMINI_API_KEY && !process.env.GROQ_API_KEY) {
+  console.error('[FATAL] Set GEMINI_API_KEY or GROQ_API_KEY.');
   process.exit(1);
 }
 if (process.env.JWT_SECRET.length < 32) {

@@ -5,7 +5,7 @@ const getProviders = async (_req, res, next) => { try { res.json({ data: await p
 const updateProviders = async (req, res, next) => {
   try {
     const providers = req.body?.providers;
-    if (!Array.isArray(providers) || providers.length < 1 || providers.some((item) => !['gemini', 'grok'].includes(item.provider))) return res.status(400).json({ error: 'Valid provider settings are required' });
+    if (!Array.isArray(providers) || providers.length < 1 || providers.some((item) => !['gemini', 'groq'].includes(item.provider))) return res.status(400).json({ error: 'Valid provider settings are required' });
     if (providers.some((item) => ![1, 2].includes(Number(item.priority)))) return res.status(400).json({ error: 'Priority must be 1 or 2' });
     const data = await saveProviders(providers, req.user.id);
     writeAuditLog({ userId: req.user.id, action: 'admin.ai_provider.update', resourceType: 'ai_provider', metadata: { providers: providers.map(({ provider, enabled, priority, model, api_key }) => ({ provider, enabled, priority, model, key_updated: Boolean(api_key) })) }, req });

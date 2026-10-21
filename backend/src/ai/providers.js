@@ -17,7 +17,7 @@ const decrypt = (value) => {
 };
 const envConfig = () => ([
   { provider: 'gemini', enabled: Boolean(process.env.GEMINI_API_KEY), priority: 1, apiKey: process.env.GEMINI_API_KEY, model: process.env.GEMINI_MODEL || 'gemini-2.5-flash' },
-  { provider: 'grok', enabled: Boolean(process.env.GROK_API_KEY), priority: 2, apiKey: process.env.GROK_API_KEY, model: process.env.GROK_MODEL || 'grok-4-fast-reasoning' },
+  { provider: 'groq', enabled: Boolean(process.env.GROQ_API_KEY), priority: 2, apiKey: process.env.GROQ_API_KEY, model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile' },
 ]);
 async function getProviders() {
   if (cached && Date.now() - cachedAt < CACHE_MS) return cached;
@@ -47,8 +47,9 @@ async function generate(provider, { prompt, systemInstruction, responseSchema, t
   if (provider.provider === 'gemini') {
     const result = await withTimeout(new GoogleGenAI({ apiKey: provider.apiKey }).models.generateContent({ model: provider.model, contents: prompt, config: { ...(systemInstruction ? { systemInstruction } : {}), responseMimeType: 'application/json', ...(responseSchema ? { responseJsonSchema: responseSchema } : {}), thinkingConfig: { thinkingLevel: 'low' } } }), timeoutMs, 'Gemini'); return JSON.parse(typeof result.text === 'function' ? result.text() : result.text);
   }
-  const response = await withTimeout(fetch('https://api.x.ai/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${provider.apiKey}` }, body: JSON.stringify({ model: provider.model, temperature: 0, response_format: { type: 'json_object' }, messages: [{ role: 'system', content: `${systemInstruction || 'Return strict JSON only.'}\nReturn JSON matching this schema: ${JSON.stringify(responseSchema || {})}` }, { role: 'user', content: prompt }] }) }), timeoutMs, 'Grok');
-  if (!response.ok) throw new Error(`Grok HTTP ${response.status}: ${(await response.text()).slice(0, 300)}`); const body = await response.json(); return JSON.parse(body.choices?.[0]?.message?.content || '');
+  if (provider.provider !== 'groq') throw new Error(`Unsupported AI provider: ${provider.provider}`);
+  const response = await withTimeout(fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${provider.apiKey}` }, body: JSON.stringify({ model: provider.model, temperature: 0, response_format: { type: 'json_object' }, messages: [{ role: 'system', content: `${systemInstruction || 'Return strict JSON only.'}\nReturn JSON matching this schema: ${JSON.stringify(responseSchema || {})}` }, { role: 'user', content: prompt }] }) }), timeoutMs, 'Groq');
+  if (!response.ok) throw new Error(`Groq HTTP ${response.status}: ${(await response.text()).slice(0, 300)}`); const body = await response.json(); return JSON.parse(body.choices?.[0]?.message?.content || '');
 }
 async function withTimeout(promise, ms, name) { let timer; try { return await Promise.race([promise, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(`${name} timed out after ${ms}ms`)), ms); })]); } finally { clearTimeout(timer); } }
 async function generateJsonWithFailover(opts) {
