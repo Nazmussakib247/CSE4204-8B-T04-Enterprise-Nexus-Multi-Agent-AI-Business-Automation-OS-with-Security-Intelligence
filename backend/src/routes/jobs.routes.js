@@ -4,11 +4,12 @@ const { protect, authorize } = require('../middleware/auth.middleware');
 const { OFFICE_ROLES } = require('../middleware/roles');
 const validate = require('../middleware/validate.middleware');
 const { upload } = require('../middleware/upload.middleware');
-const { createJobSchema, updateJobSchema, bulkNotifySchema, updateApplicationSchema } = require('../validators/jobs.validators');
+const { createJobSchema, updateJobSchema, suggestJobSchema, bulkNotifySchema, updateApplicationSchema } = require('../validators/jobs.validators');
 const jobs = require('../controllers/jobs.controller');
 
 router.get('/', jobs.getOpenJobs);
 router.get('/admin/all', protect, authorize(...OFFICE_ROLES), jobs.getJobsForStaff);
+router.post('/suggest', protect, authorize(...OFFICE_ROLES), validate(suggestJobSchema), jobs.suggestJob);
 router.post('/', protect, authorize(...OFFICE_ROLES), validate(createJobSchema), jobs.createJob);
 router.patch('/:id', protect, authorize(...OFFICE_ROLES), validate(updateJobSchema), jobs.updateJob);
 router.delete('/:id', protect, authorize(...OFFICE_ROLES), jobs.deleteJob);

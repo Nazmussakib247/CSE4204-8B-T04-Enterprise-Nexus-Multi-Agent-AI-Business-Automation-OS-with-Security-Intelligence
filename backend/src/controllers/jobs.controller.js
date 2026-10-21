@@ -5,10 +5,21 @@ const { extractText } = require('../utils/fileExtract');
 const { notifyN8n } = require('../utils/webhook');
 const { sendApplicationNotificationEmail } = require('../utils/email');
 const { writeAuditLog } = require('../utils/audit');
+const { generateJson } = require('../ai/client');
 
 const STAFF_ROLES = ['admin', 'manager', 'employee'];
 const isStaff = (user) => STAFF_ROLES.includes(user.role);
 const confidenceBand = (value) => value >= 0.8 ? 'high' : value >= 0.5 ? 'medium' : 'low';
+
+const JOB_SUGGESTION_SCHEMA = {
+  type: 'object',
+  properties: {
+    description: { type: 'string' },
+    required_skills: { type: 'array', items: { type: 'string' } },
+    screening_criteria: { type: 'string' },
+  },
+  required: ['description', 'required_skills', 'screening_criteria'],
+};
 
 const withSignedCvUrl = async (application) => {
   if (!application?.cv_url?.startsWith('storage://job-cvs/')) return application;
@@ -19,7 +30,9 @@ const withSignedCvUrl = async (application) => {
 
 const getOpenJobs = async (_req, res, next) => {
   try {
-    const { data, error } = await supabase.from('job_postings').select('*').eq('status', 'open').order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('job_postings')
+      .select('id, title, department, description, required_skills, status, created_at')
+      .eq('status', 'open').order('created_at', { ascending: false });
     if (error) throw error;
     res.json({ data, total: data.length });
   } catch (err) { next(err); }
@@ -27,11 +40,37 @@ const getOpenJobs = async (_req, res, next) => {
 
 const getJob = async (req, res, next) => {
   try {
-    let query = supabase.from('job_postings').select('*').eq('id', req.params.id);
-    if (!req.user || !isStaff(req.user)) query = query.eq('status', 'open');
+    const query = supabase.from('job_postings')
+      .select('id, title, department, description, required_skills, status, created_at')
+      .eq('id', req.params.id).eq('status', 'open');
     const { data, error } = await query.single();
     if (error || !data) return res.status(404).json({ error: 'Job not found' });
     res.json({ data });
+  } catch (err) { next(err); }
+};
+
+const suggestJob = async (req, res, next) => {
+  try {
+    const { title, department } = req.body;
+    const suggestion = await generateJson({
+      systemInstruction: 'You are an expert, inclusive recruiter. Create realistic job posting content. Use only job-related requirements. Never include criteria based on protected traits or personal characteristics.',
+      prompt: `Draft content for this job. Return 4 to 8 concise, distinct required skills. The description should explain responsibilities and role impact in 2 to 4 short paragraphs. The screening criteria are private instructions for internal CV evaluation and must be objective, job-related, and measurable. Do not put the private screening criteria into the public description.\n\nJob title: ${title}\nDepartment: ${department}`,
+      responseSchema: JOB_SUGGESTION_SCHEMA,
+    });
+
+    const requiredSkills = [...new Set((suggestion.required_skills || [])
+      .map((skill) => String(skill).trim()).filter(Boolean))].slice(0, 8);
+    if (!suggestion.description?.trim() || !suggestion.screening_criteria?.trim() || requiredSkills.length < 1) {
+      return res.status(502).json({ error: 'AI returned an incomplete job suggestion. Please try again.' });
+    }
+
+    res.json({
+      data: {
+        description: suggestion.description.trim(),
+        screening_criteria: suggestion.screening_criteria.trim(),
+        required_skills: requiredSkills,
+      },
+    });
   } catch (err) { next(err); }
 };
 
@@ -159,4 +198,4 @@ const confirmAndNotify = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { getOpenJobs, getJob, getJobsForStaff, createJob, updateJob, deleteJob, createApplication, getApplications, updateApplication, deleteApplication, confirmAndNotify };
+module.exports = { getOpenJobs, getJob, getJobsForStaff, suggestJob, createJob, updateJob, deleteJob, createApplication, getApplications, updateApplication, deleteApplication, confirmAndNotify };

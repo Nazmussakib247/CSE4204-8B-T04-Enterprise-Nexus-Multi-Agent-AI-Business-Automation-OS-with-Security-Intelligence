@@ -30,6 +30,11 @@ const updateJobSchema = Joi.object(jobFields).min(1)
   .custom(weightsMustTotal100)
   .messages({ 'any.invalid': 'required skill weights must total 100' });
 
+const suggestJobSchema = Joi.object({
+  title: Joi.string().trim().min(2).max(200).required(),
+  department: Joi.string().trim().min(1).max(100).required(),
+});
+
 const bulkNotifySchema = Joi.object({
   application_ids: Joi.array().items(Joi.string().guid({ version: 'uuidv4' })).min(1).max(100).unique().required(),
   message: Joi.string().trim().max(3000).allow('', null),
@@ -39,4 +44,4 @@ const updateApplicationSchema = Joi.object({
   status: Joi.string().valid('applied', 'ai_screened', 'hr_confirmed', 'notified').required(),
 });
 
-module.exports = { createJobSchema, updateJobSchema, bulkNotifySchema, updateApplicationSchema };
+module.exports = { createJobSchema, updateJobSchema, suggestJobSchema, bulkNotifySchema, updateApplicationSchema };

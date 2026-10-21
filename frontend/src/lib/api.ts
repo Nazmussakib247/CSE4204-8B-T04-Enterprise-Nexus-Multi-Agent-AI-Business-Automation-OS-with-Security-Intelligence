@@ -82,6 +82,7 @@ export const jobsApi = {
   getOpen: () => api.get('/jobs'),
   get: (id: string) => api.get(`/jobs/${id}`),
   getAllForStaff: () => api.get('/jobs/admin/all'),
+  suggest: (title: string, department: string) => api.post('/jobs/suggest', { title, department }),
   create: (data: Record<string, unknown>) => api.post('/jobs', data),
   update: (id: string, data: Record<string, unknown>) => api.patch(`/jobs/${id}`, data),
   remove: (id: string) => api.delete(`/jobs/${id}`),

@@ -19,6 +19,7 @@ export default function PostJobModal({ open, onClose, onCreated }: Props) {
   const [screeningCriteria, setScreeningCriteria] = useState('')
   const [skills, setSkills] = useState<RequiredSkill[]>([{ skill: '', weight: 100 }])
   const [loading, setLoading] = useState(false)
+  const [suggesting, setSuggesting] = useState(false)
 
   if (!open) return null
 
@@ -38,6 +39,32 @@ export default function PostJobModal({ open, onClose, onCreated }: Props) {
   }
   const addSkillRow = () => setSkills(prev => [...prev, { skill: '', weight: 0 }])
   const removeSkillRow = (i: number) => setSkills(prev => prev.filter((_, idx) => idx !== i))
+
+  const suggestJobContent = async () => {
+    if (title.trim().length < 2 || !department.trim()) {
+      toast.error('Enter a job title and department first')
+      return
+    }
+
+    setSuggesting(true)
+    try {
+      const { data } = await jobsApi.suggest(title.trim(), department.trim())
+      const suggestedSkills: string[] = data.data.required_skills
+      const baseWeight = Math.floor(100 / suggestedSkills.length)
+      const remainder = 100 - baseWeight * suggestedSkills.length
+      setDescription(data.data.description)
+      setScreeningCriteria(data.data.screening_criteria)
+      setSkills(suggestedSkills.map((skill, index) => ({
+        skill,
+        weight: baseWeight + (index < remainder ? 1 : 0),
+      })))
+      toast.success('AI suggestions added — review and edit before posting')
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Could not generate suggestions'))
+    } finally {
+      setSuggesting(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -112,6 +139,13 @@ export default function PostJobModal({ open, onClose, onCreated }: Props) {
             </div>
           </div>
 
+          <button type="button" onClick={suggestJobContent}
+            disabled={suggesting || !title.trim() || !department.trim()}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl border border-primary/25 bg-primary/5 font-mono text-[10px] uppercase tracking-wider text-primary hover:bg-primary/10 transition-colors disabled:opacity-50">
+            <span className="material-symbols-outlined text-[16px]">{suggesting ? 'hourglass_empty' : 'auto_awesome'}</span>
+            {suggesting ? 'Generating suggestions…' : 'Generate content with AI'}
+          </button>
+
           <div>
             <label className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1.5">
               Description <span className="text-error">*</span>
@@ -125,6 +159,7 @@ export default function PostJobModal({ open, onClose, onCreated }: Props) {
             <label className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1.5">
               Screening Criteria <span className="text-error">*</span>
             </label>
+            <p className="font-body text-[11px] text-on-surface-variant mb-1.5">Private hiring guidance for AI CV screening. This is not shown to applicants.</p>
             <textarea value={screeningCriteria} onChange={e => setScreeningCriteria(e.target.value)} rows={2}
               placeholder="What the AI should look for when scoring CVs against this role..."
               className="w-full px-4 py-2.5 rounded-xl border border-outline-variant bg-surface-container-low text-[13px] text-on-surface focus:outline-none focus:border-primary-container transition-colors resize-none font-body" />
