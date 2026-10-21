@@ -1,6 +1,16 @@
 import axios from 'axios'
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+// A Vercel deployment must use its same-origin `/api` rewrite.  A stale
+// NEXT_PUBLIC_API_URL that points directly at Render makes the httpOnly
+// session cookie cross-site; many browsers then omit it after a reload and
+// the dashboard guard treats the user as logged out.  Keep local/custom
+// deployments configurable, but make the hosted Vercel application reliable.
+const isVercelBrowser =
+  typeof window !== 'undefined' && window.location.hostname.endsWith('.vercel.app')
+
+export const API_URL = isVercelBrowser
+  ? '/api'
+  : process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
 
 /** Extract the backend's error message from an unknown thrown value. */
 export const getApiErrorMessage = (err: unknown, fallback: string): string => {
