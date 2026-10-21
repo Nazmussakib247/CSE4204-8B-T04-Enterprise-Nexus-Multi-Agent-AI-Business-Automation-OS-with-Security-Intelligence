@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useAuth } from '@/lib/auth'
-import { authApi, aiProvidersApi, AiProviderSetting } from '@/lib/api'
+import { authApi, aiProvidersApi } from '@/lib/api'
+import type { AiProviderSetting } from '@/lib/api'
 import PageHeader from '@/components/ui/PageHeader'
 import toast from 'react-hot-toast'
 
