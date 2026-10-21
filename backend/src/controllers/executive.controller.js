@@ -263,7 +263,10 @@ const askConversation = async (req, res, next) => {
       ...toolMessages,
       { role: 'assistant', content: answer, metadata: { delegations } },
     ]);
-    await updateRollingSummary(conversation, question.trim(), answer);
+    // Persist the recent turn immediately. The AI summary is useful for long
+    // threads but must never hold up the visible reply.
+    await supabase.from('agent_conversations').update({ updated_at: new Date().toISOString() }).eq('id', conversation.id);
+    void updateRollingSummary(conversation, question.trim(), answer);
     writeAuditLog({ userId: req.user.id, action: 'executive.conversation.ask', resourceType: 'agent_conversation', resourceId: conversation.id, metadata: { question_preview: question.slice(0, 200), delegated_agents: delegations.map((item) => item.agent) }, req });
 
     if (streaming) {

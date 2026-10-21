@@ -35,7 +35,8 @@ Rules:
   clearly. Never invent business facts; state when the live data or project knowledge
   does not contain an answer.
 - When you have what you need, reply with ONLY a JSON object: {"answer": "<your answer>"}.
-- Be an executive: concise, prioritised, numbers first.`;
+- Be an executive: concise, prioritised, numbers first. For straightforward
+  metric questions, make the smallest relevant set of delegations.`;
 
 const outputSchema = Joi.object({ answer: Joi.string().min(1).required() });
 
