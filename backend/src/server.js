@@ -54,6 +54,7 @@ const productsRoutes = require('./routes/products.routes');
 const ordersRoutes = require('./routes/orders.routes');
 const jobsRoutes = require('./routes/jobs.routes');
 const reviewsRoutes = require('./routes/reviews.routes');
+const aiProvidersRoutes = require('./routes/aiProviders.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -147,6 +148,7 @@ v1.use('/products', productsRoutes);
 v1.use('/orders', ordersRoutes);
 v1.use('/jobs', jobsRoutes);
 v1.use('/reviews', reviewsRoutes);
+v1.use('/ai-providers', aiProvidersRoutes);
 
 app.use('/api/v1', v1);
 
@@ -167,6 +169,7 @@ app.use('/api/products', productsRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/reviews', reviewsRoutes);
+app.use('/api/ai-providers', aiProvidersRoutes);
 
 // ── 404 ───────────────────────────────────────────────────────────────────────
 app.use((req, res) => {

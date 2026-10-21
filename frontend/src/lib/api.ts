@@ -242,6 +242,12 @@ export const adminApi = {
     api.patch(`/admin/users/${id}/approve`, { reason }),
 }
 
+export interface AiProviderSetting { provider: 'gemini' | 'grok'; enabled: boolean; priority: 1 | 2; model: string; configured: boolean }
+export const aiProvidersApi = {
+  get: () => api.get<{ data: AiProviderSetting[] }>('/ai-providers'),
+  save: (providers: Array<Partial<AiProviderSetting> & { provider: 'gemini' | 'grok'; api_key?: string }>) => api.put<{ data: AiProviderSetting[] }>('/ai-providers', { providers }),
+}
+
 export interface AgentStep {
   tool: string
   args: Record<string, unknown>
