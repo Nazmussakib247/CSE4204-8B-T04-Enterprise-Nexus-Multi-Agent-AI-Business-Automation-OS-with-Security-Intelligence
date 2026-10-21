@@ -242,7 +242,11 @@ const me = async (req, res, next) => {
       .eq('id', req.user.id)
       .single();
 
-    if (error || !user) return res.status(404).json({ error: 'User not found' });
+    if (error) {
+      console.error('[auth.me] profile lookup failed:', { code: error.code, message: error.message });
+      return res.status(500).json({ error: 'Unable to load user profile' });
+    }
+    if (!user) return res.status(404).json({ error: 'User not found' });
     res.json({
       user: {
         ...user,
