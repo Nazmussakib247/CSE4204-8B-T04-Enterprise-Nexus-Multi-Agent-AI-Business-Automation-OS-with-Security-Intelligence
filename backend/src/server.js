@@ -36,6 +36,7 @@ const cookieParser = require('cookie-parser');
 
 const logger = require('./utils/logger');
 const { startOfficeAutoApprovalWorker } = require('./utils/officeAutoApproval');
+const { startExecutiveBriefingWorker } = require('./utils/executiveBriefingWorker');
 const correlationId = require('./middleware/correlationId.middleware');
 const errorHandler = require('./middleware/error.middleware');
 const supabase = require('./config/supabase');
@@ -194,6 +195,7 @@ const server = app.listen(PORT, () => {
 // Pending admin/manager/employee registrations become active automatically
 // after 30 seconds. An administrator may still approve one immediately.
 startOfficeAutoApprovalWorker();
+startExecutiveBriefingWorker();
 
 // ── Graceful shutdown ─────────────────────────────────────────────────────────
 const shutdown = (signal) => {

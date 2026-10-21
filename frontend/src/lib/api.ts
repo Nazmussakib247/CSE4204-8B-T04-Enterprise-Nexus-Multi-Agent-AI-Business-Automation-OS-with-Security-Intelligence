@@ -177,6 +177,8 @@ export const executiveApi = {
   getLatestReport: () => api.get('/executive/reports/latest'),
   createReport: (data: Record<string, unknown>) => api.post('/executive/reports', data),
   getDailyBriefing: () => api.get('/executive/briefing'),
+  getIntelligenceBriefing: (period: 'daily' | 'week' | 'month') => api.get('/executive/intelligence', { params: { period } }),
+  refreshIntelligenceBriefing: (period: 'daily' | 'week' | 'month') => api.post('/executive/intelligence/refresh', { period }),
   downloadBriefingPdf: () =>
     api.get('/executive/briefing/pdf', { responseType: 'blob' }),
   askAI: (question: string) => api.post('/executive/ask', { question }),

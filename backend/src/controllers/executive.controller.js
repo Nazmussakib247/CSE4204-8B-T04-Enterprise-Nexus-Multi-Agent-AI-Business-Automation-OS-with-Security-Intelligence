@@ -3,6 +3,7 @@ const { generateJson } = require('../ai/client');
 const { writeAuditLog } = require('../utils/audit');
 const { buildExecutivePdf } = require('../utils/pdf');
 const { getStoreSalesSummary } = require('../utils/storeSales');
+const { getOrCreateBriefing, PERIODS } = require('../utils/executiveBriefing');
 const {
   getOrCreateConversation, loadRecentMessages, appendMessages, updateRollingSummary,
   listConversations, getConversationMessages, buildContextPrompt,
@@ -119,6 +120,27 @@ const getDailyBriefing = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+
+// GET /api/executive/intelligence?period=daily|week|month
+// The first visit for a period creates a persistent Groq intelligence briefing;
+// later visits return the saved snapshot immediately.
+const getIntelligenceBriefing = async (req, res, next) => {
+  try {
+    const period = PERIODS[req.query.period] ? req.query.period : 'daily';
+    const data = await getOrCreateBriefing(req.user.id, period);
+    res.json({ data });
+  } catch (error) { next(error); }
+};
+
+// POST /api/executive/intelligence/refresh — manually regenerate the selected period.
+const refreshIntelligenceBriefing = async (req, res, next) => {
+  try {
+    const period = PERIODS[req.body?.period] ? req.body.period : 'daily';
+    const data = await getOrCreateBriefing(req.user.id, period, true);
+    writeAuditLog({ userId: req.user.id, action: 'executive.intelligence.refresh', resourceType: 'executive_report', resourceId: data.id, metadata: { period }, req });
+    res.status(201).json({ data });
+  } catch (error) { next(error); }
 };
 
 // GET /api/executive/briefing/pdf — export the daily briefing as a PDF (FR-28 / UC-12)
@@ -381,4 +403,4 @@ const getMessages = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
-module.exports = { getReports, getLatestReport, getReport, createReport, getDailyBriefing, exportBriefingPdf, askAI, askConversation, getConversations, getMessages };
+module.exports = { getReports, getLatestReport, getReport, createReport, getDailyBriefing, getIntelligenceBriefing, refreshIntelligenceBriefing, exportBriefingPdf, askAI, askConversation, getConversations, getMessages };
