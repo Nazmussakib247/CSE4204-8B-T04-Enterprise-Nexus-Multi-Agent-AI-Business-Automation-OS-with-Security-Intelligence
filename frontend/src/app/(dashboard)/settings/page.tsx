@@ -16,13 +16,20 @@ export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState<'profile' | 'integrations' | 'notifications' | 'danger'>('profile')
   const [n8nUrl, setN8nUrl] = useState(typeof window !== 'undefined' ? localStorage.getItem('n8n_webhook_url') || '' : '')
   const isAdmin = (user as { role?: string })?.role === 'admin'
-  const [providers, setProviders] = useState<AiProviderSetting[]>([])
+  const [providers, setProviders] = useState<AiProviderSetting[]>([
+    { provider: 'gemini', enabled: true, priority: 1, model: 'gemini-3.7-flash', configured: false },
+    { provider: 'grok', enabled: false, priority: 2, model: 'grok-4-fast-reasoning', configured: false },
+  ])
+  const [providerApiReady, setProviderApiReady] = useState(true)
   const [providerKeys, setProviderKeys] = useState<Record<string, string>>({})
   const [savingProviders, setSavingProviders] = useState(false)
 
   useEffect(() => {
     if (!isAdmin) return
-    aiProvidersApi.get().then(r => setProviders(r.data.data)).catch(() => toast.error('Unable to load AI provider settings'))
+    aiProvidersApi.get().then(r => { setProviders(r.data.data); setProviderApiReady(true) }).catch(() => {
+      setProviderApiReady(false)
+      toast.error('AI provider backend is not deployed yet')
+    })
   }, [isAdmin])
 
   const updateProvider = (provider: 'gemini' | 'grok', patch: Partial<AiProviderSetting>) =>
@@ -234,6 +241,7 @@ export default function SettingsPage() {
               {isAdmin && (
                 <div className="pt-5 border-t border-outline-variant/30 space-y-4">
                   <div><h4 className="font-display text-[15px] font-semibold text-on-surface">AI Provider Failover</h4><p className="font-body text-[12px] text-on-surface-variant mt-1">Priority 1 is called first. If it times out or fails, the next enabled provider is used automatically. Keys are encrypted server-side and never displayed again.</p></div>
+                  {!providerApiReady && <p className="rounded-lg bg-error-container/20 px-3 py-2 font-body text-[12px] text-error">Backend update is pending. Deploy the latest Render backend, then reload before saving provider keys.</p>}
                   {providers.map(p => (
                     <div key={p.provider} className="rounded-xl border border-outline-variant/50 p-4 space-y-3">
                       <div className="flex items-center justify-between gap-4"><div><p className="font-body text-[14px] font-semibold text-on-surface capitalize">{p.provider} AI</p><p className="font-mono text-[10px] uppercase tracking-wider text-on-surface-variant">{p.configured ? 'Key configured' : 'No key configured yet'}</p></div><button onClick={() => toggleProvider(p.provider)} className={`relative w-11 h-6 rounded-full ${p.enabled ? 'bg-primary-container' : 'bg-outline-variant'}`} aria-label={`Toggle ${p.provider}`}><span className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white transition-transform ${p.enabled ? 'translate-x-5' : ''}`} /></button></div>
