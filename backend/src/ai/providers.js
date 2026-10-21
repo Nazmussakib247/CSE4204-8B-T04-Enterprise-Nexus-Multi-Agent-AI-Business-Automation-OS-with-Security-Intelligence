@@ -17,7 +17,7 @@ const decrypt = (value) => {
 };
 const envConfig = () => ([
   { provider: 'gemini', enabled: Boolean(process.env.GEMINI_API_KEY), priority: 1, apiKey: process.env.GEMINI_API_KEY, model: process.env.GEMINI_MODEL || 'gemini-2.5-flash' },
-  { provider: 'groq', enabled: Boolean(process.env.GROQ_API_KEY), priority: 2, apiKey: process.env.GROQ_API_KEY, model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile' },
+  { provider: 'groq', enabled: Boolean(process.env.GROQ_API_KEY), priority: 2, apiKey: process.env.GROQ_API_KEY, model: process.env.GROQ_MODEL || 'openai/gpt-oss-120b' },
 ]);
 async function getProviders() {
   if (cached && Date.now() - cachedAt < CACHE_MS) return cached;

@@ -8,5 +8,5 @@ ALTER TABLE public.ai_provider_settings
   CHECK (provider IN ('gemini', 'grok', 'groq'));
 
 INSERT INTO public.ai_provider_settings (provider, enabled, priority, model)
-VALUES ('groq', true, 2, 'llama-3.3-70b-versatile')
+VALUES ('groq', true, 2, 'openai/gpt-oss-120b')
 ON CONFLICT (provider) DO NOTHING;
