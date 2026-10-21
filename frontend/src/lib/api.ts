@@ -67,6 +67,8 @@ export const authApi = {
     api.post('/auth/register', { name, email, password, role }),
   registerExternal: (name: string, email: string, password: string, role: 'customer' | 'candidate') =>
     api.post('/auth/register-external', { name, email, password, role }),
+  verifyOfficeEmail: (email: string, code: string) => api.post('/auth/verify-office-email', { email, code }),
+  resendOfficeVerification: (email: string) => api.post('/auth/resend-office-verification', { email }),
   refresh: () => api.post('/auth/refresh'),
   logout: () => api.post('/auth/logout'),
   me: () => api.get('/auth/me'),
@@ -74,8 +76,8 @@ export const authApi = {
     api.patch('/auth/me', data),
   forgotPassword: (email: string) =>
     api.post('/auth/forgot-password', { email }),
-  resetPassword: (token: string, password: string) =>
-    api.post('/auth/reset-password', { token, password }),
+  resetPassword: (email: string, code: string, password: string) =>
+    api.post('/auth/reset-password', { email, code, password }),
 }
 
 export const jobsApi = {

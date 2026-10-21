@@ -40,9 +40,10 @@ const getTransporter = async () => {
 const FROM = process.env.EMAIL_FROM || '"Enterprise NeXus" <noreply@enterprise-nexus.io>';
 const APP_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
-const sendPasswordReset = async ({ to, name, resetToken }) => {
+const sendPasswordReset = async ({ to, name, resetToken, resetCode }) => {
   const t = await getTransporter();
   const resetUrl = `${APP_URL}/reset-password?token=${resetToken}`;
+  const codeContent = resetCode ? `<p>Your verification code is:</p><p style="font-size:28px;font-weight:bold;letter-spacing:8px;color:#00a98f">${resetCode}</p><p>This code expires in <strong>1 hour</strong>.</p>` : '';
 
   const info = await t.sendMail({
     from: FROM,
@@ -52,7 +53,7 @@ const sendPasswordReset = async ({ to, name, resetToken }) => {
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto">
         <h2 style="color:#00c2a8">Password Reset Request</h2>
         <p>Hi ${name || 'there'},</p>
-        <p>We received a request to reset your password. Click the button below to set a new one. This link expires in <strong>1 hour</strong>.</p>
+        <p>We received a request to reset your password.</p>${codeContent}
         <a href="${resetUrl}"
            style="display:inline-block;margin:20px 0;padding:12px 28px;background:#00c2a8;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold">
           Reset Password
@@ -60,13 +61,22 @@ const sendPasswordReset = async ({ to, name, resetToken }) => {
         <p style="color:#666;font-size:13px">If you didn't request this, you can safely ignore this email.</p>
         <p style="color:#aaa;font-size:12px">Link: ${resetUrl}</p>
       </div>`,
-    text: `Reset your password: ${resetUrl}\n\nThis link expires in 1 hour.`,
+    text: resetCode ? `Your Enterprise NeXus password reset code is: ${resetCode}\n\nIt expires in 1 hour.` : `Reset your password: ${resetUrl}\n\nThis link expires in 1 hour.`,
   });
 
   if (nodemailer.getTestMessageUrl(info)) {
     logger.info(`[Email] Password reset preview: ${nodemailer.getTestMessageUrl(info)}`);
   }
   return info;
+};
+
+const sendOfficeVerificationCode = async ({ to, name, code }) => {
+  const t = await getTransporter();
+  return t.sendMail({
+    from: FROM, to, subject: 'Verify your Enterprise NeXus office account',
+    html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto"><h2 style="color:#00c2a8">Verify your email</h2><p>Hi ${name || 'there'},</p><p>Enter this code to verify your office account:</p><p style="font-size:30px;font-weight:bold;letter-spacing:8px;color:#008f7b">${code}</p><p>This code expires in 15 minutes. Do not share it with anyone.</p></div>`,
+    text: `Your Enterprise NeXus office verification code is: ${code}. It expires in 15 minutes.`,
+  });
 };
 
 const sendEscalationEmail = async ({ to, ticketId, subject, priority, description, assigneeName }) => {
@@ -117,4 +127,4 @@ const sendApplicationNotificationEmail = async ({ to, candidateName, jobTitle, m
   return info;
 };
 
-module.exports = { sendPasswordReset, sendEscalationEmail, sendApplicationNotificationEmail };
+module.exports = { sendPasswordReset, sendOfficeVerificationCode, sendEscalationEmail, sendApplicationNotificationEmail };

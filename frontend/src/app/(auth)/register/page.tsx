@@ -17,12 +17,24 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [showPass, setShowPass] = useState(false)
   const [requestSent, setRequestSent] = useState(false)
+  const [verificationCode, setVerificationCode] = useState('')
+  const [verifying, setVerifying] = useState(false)
 
   const passwordChecks = {
     length: password.length >= 8,
     upper: /[A-Z]/.test(password),
     number: /[0-9]/.test(password),
     special: /[^A-Za-z0-9]/.test(password),
+  }
+
+  const verifyEmail = async () => {
+    if (!/^\d{6}$/.test(verificationCode)) { toast.error('Enter the six-digit code from your email'); return }
+    setVerifying(true)
+    try {
+      await authApi.verifyOfficeEmail(email, verificationCode)
+      toast.success('Email verified. Your office account will be approved shortly.')
+      router.push('/login')
+    } catch (err: unknown) { toast.error(getApiErrorMessage(err, 'Verification failed')) } finally { setVerifying(false) }
   }
   const passwordValid = Object.values(passwordChecks).every(Boolean)
 
@@ -208,13 +220,16 @@ export default function RegisterPage() {
           </div>
           <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">Request submitted</p>
           <h2 className="mt-2 font-display text-[23px] font-bold text-on-surface">Your access is being prepared</h2>
-          <p className="mt-3 font-body text-[14px] leading-relaxed text-on-surface-variant">An administrator can approve your requested role immediately. Otherwise, access is approved automatically within 30 seconds.</p>
+          <p className="mt-3 font-body text-[14px] leading-relaxed text-on-surface-variant">We sent a six-digit code to <strong>{email}</strong>. Verify it before office access can be approved.</p>
+          <input value={verificationCode} onChange={e => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" placeholder="000000" className="mt-5 w-full rounded-xl border border-outline-variant px-4 py-3 text-center font-mono text-lg tracking-[0.35em] focus:outline-none focus:border-primary" />
           <button
-            onClick={() => router.push('/login')}
-            className="mt-7 w-full rounded-xl bg-primary py-3 font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-on-primary transition-colors hover:bg-primary/90"
+            onClick={verifyEmail}
+            disabled={verifying}
+            className="mt-4 w-full rounded-xl bg-primary py-3 font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-on-primary transition-colors hover:bg-primary/90 disabled:opacity-60"
           >
-            Okay
+            {verifying ? 'Verifying…' : 'Verify email'}
           </button>
+          <button onClick={() => authApi.resendOfficeVerification(email).then(() => toast.success('A new code was sent')).catch(() => toast.error('Could not resend code'))} className="mt-3 font-mono text-[10px] uppercase tracking-widest text-primary hover:underline">Resend code</button>
         </div>
       </div>
     )}
