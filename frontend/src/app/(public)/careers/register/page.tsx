@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { authApi, getApiErrorMessage } from '@/lib/api'
@@ -9,6 +9,7 @@ import AlreadySignedInGate from '@/components/auth/AlreadySignedInGate'
 
 function CandidateRegisterContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -31,8 +32,9 @@ function CandidateRegisterContent() {
     setLoading(true)
     try {
       await authApi.registerExternal(name, email, password, 'candidate')
-      toast.success('Account request sent. An admin must approve it before sign in.')
-      router.push('/store/login')
+      toast.success('Candidate account created. You can apply now.')
+      const redirect = searchParams.get('redirect')
+      router.push(redirect?.startsWith('/careers/') ? redirect : '/careers')
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Registration failed'))
     } finally {

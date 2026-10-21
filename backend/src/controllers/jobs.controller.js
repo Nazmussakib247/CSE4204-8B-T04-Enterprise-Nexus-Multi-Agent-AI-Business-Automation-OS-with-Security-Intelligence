@@ -120,33 +120,36 @@ const createApplication = async (req, res, next) => {
     const { data: existing } = await supabase.from('job_applications').select('id').eq('job_id', job.id).eq('candidate_id', req.user.id).maybeSingle();
     if (existing) return res.status(409).json({ error: 'You have already applied for this job' });
 
-    let cvText;
-    try { cvText = await extractText(req.file.buffer, req.file.mimetype); }
-    catch (err) { return res.status(422).json({ error: `CV text extraction failed: ${err.message}` }); }
-    if (cvText.length < 20) return res.status(422).json({ error: 'Could not extract meaningful text from this CV' });
-
     const safeName = req.file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
     const storagePath = `${job.id}/${req.user.id}/${crypto.randomUUID()}-${safeName}`;
     const { error: uploadError } = await supabase.storage.from('job-cvs').upload(storagePath, req.file.buffer, { contentType: req.file.mimetype, upsert: false });
     if (uploadError) throw uploadError;
 
-    const ai = await screenCV({ candidate_name: req.user.name, job_title: job.title, cv_text: cvText, required_skills: job.required_skills, screening_criteria: job.screening_criteria });
-    const skillScores = (job.required_skills || []).map(({ skill, weight }) => ({ skill, weight, score: Math.max(0, Math.min(100, Number(ai.skill_scores.find((entry) => entry.skill.toLowerCase() === skill.toLowerCase())?.score) || 0)) }));
-    const weightedScore = Math.round(skillScores.reduce((sum, item) => sum + (item.weight * item.score), 0) / 100);
+    let cvText = '';
+    try { cvText = await extractText(req.file.buffer, req.file.mimetype); } catch { /* HR can review the uploaded file manually. */ }
+
+    let aiData = { status: 'applied' };
+    if (cvText.length >= 20) {
+      try {
+        const ai = await screenCV({ candidate_name: req.user.name, job_title: job.title, cv_text: cvText, required_skills: job.required_skills, screening_criteria: job.screening_criteria });
+        const skillScores = (job.required_skills || []).map(({ skill, weight }) => ({ skill, weight, score: Math.max(0, Math.min(100, Number(ai.skill_scores.find((entry) => entry.skill.toLowerCase() === skill.toLowerCase())?.score) || 0)) }));
+        aiData = { ai_score: Math.round(skillScores.reduce((sum, item) => sum + (item.weight * item.score), 0) / 100), ai_confidence: confidenceBand(Number(ai.confidence)), ai_recommendation: ai.recommendation, skill_scores: skillScores, narrative_summary: ai.narrative_summary, status: 'ai_screened' };
+      } catch { /* The application is still recorded for HR review. */ }
+    }
+
     const { data, error } = await supabase.from('job_applications').insert({
       job_id: job.id, candidate_id: req.user.id, cv_url: `storage://job-cvs/${storagePath}`,
-      ai_score: weightedScore, ai_confidence: confidenceBand(Number(ai.confidence)), ai_recommendation: ai.recommendation,
-      skill_scores: skillScores, narrative_summary: ai.narrative_summary, status: 'ai_screened',
+      ...aiData,
     }).select('*, users!job_applications_candidate_id_fkey(name, email)').single();
     if (error) throw error;
-    writeAuditLog({ userId: req.user.id, action: 'job.application.create', resourceType: 'job_application', resourceId: data.id, metadata: { job_id: job.id, ai_score: weightedScore }, req });
-    notifyN8n('job-application', {
+    writeAuditLog({ userId: req.user.id, action: 'job.application.create', resourceType: 'job_application', resourceId: data.id, metadata: { job_id: job.id, ai_screened: data.status === 'ai_screened' }, req });
+    if (data.status === 'ai_screened') notifyN8n('job-application', {
       application_id: data.id, job_id: job.id, candidate_id: req.user.id,
       candidate_name: req.user.name, job_title: job.title,
       required_skills: job.required_skills, screening_criteria: job.screening_criteria,
-      cv_text: cvText.slice(0, 12000), ai_score: weightedScore, recommendation: ai.recommendation,
+      cv_text: cvText.slice(0, 12000), ai_score: data.ai_score, recommendation: data.ai_recommendation,
     });
-    res.status(201).json({ message: 'Application submitted and screened', data: await withSignedCvUrl(data) });
+    res.status(201).json({ message: 'Application submitted successfully', data: await withSignedCvUrl(data) });
   } catch (err) { next(err); }
 };
 

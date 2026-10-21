@@ -58,7 +58,9 @@ const createAccount = async ({ name, email, password, role, req }) => {
   }
 
   const password_hash = await bcrypt.hash(password, 12);
-  const requiresApproval = role !== 'customer';
+  // Only internal office accounts require approval. Candidates must be able to
+  // create an account and apply immediately from the public careers portal.
+  const requiresApproval = ['admin', 'manager', 'employee'].includes(role);
   const { data: user, error } = await supabase
     .from('users')
     .insert({
@@ -97,7 +99,7 @@ const register = async (req, res, next) => {
     const { user, requiresApproval } = await createAccount({ name, email, password, role, req });
     if (!requiresApproval) await createSessionResponse(res, user);
     res.status(201).json({
-      message: requiresApproval ? 'Account request sent for admin approval' : 'Customer account created',
+      message: requiresApproval ? 'Account request sent for admin approval' : 'Account created',
       pending_approval: requiresApproval,
       user: { ...user, role },
     });
@@ -117,7 +119,7 @@ const registerExternal = async (req, res, next) => {
     const { user, requiresApproval } = await createAccount({ name, email, password, role, req });
     if (!requiresApproval) await createSessionResponse(res, user);
     res.status(201).json({
-      message: requiresApproval ? 'Account request sent for admin approval' : 'Customer account created',
+      message: requiresApproval ? 'Account request sent for admin approval' : 'Account created',
       pending_approval: requiresApproval,
       user: { ...user, role },
     });

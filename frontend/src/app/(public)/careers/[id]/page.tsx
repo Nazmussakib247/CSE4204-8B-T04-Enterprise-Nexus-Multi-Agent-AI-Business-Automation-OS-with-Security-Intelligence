@@ -100,7 +100,7 @@ export default function JobDetailPage() {
         </div>
       ) : (
         <div className="mt-8 rounded-xl border border-outline-variant/60 p-5">
-          <label className="block font-mono text-[11px] uppercase tracking-wide text-on-surface-variant mb-2">Attach your CV (PDF)</label>
+          <label className="block font-mono text-[11px] uppercase tracking-wide text-on-surface-variant mb-2">Attach your CV (PDF or DOCX)</label>
           <input
             type="file"
             accept=".pdf,.doc,.docx"
@@ -112,7 +112,7 @@ export default function JobDetailPage() {
             disabled={applying}
             className="w-full mt-4 h-11 rounded-xl bg-primary text-on-primary font-body text-[14px] font-medium hover:bg-primary/90 transition-colors disabled:opacity-60"
           >
-            {applying ? 'Submitting & screening...' : 'Apply for this role'}
+            {applying ? 'Submitting...' : 'Apply for this role'}
           </button>
         </div>
       )}

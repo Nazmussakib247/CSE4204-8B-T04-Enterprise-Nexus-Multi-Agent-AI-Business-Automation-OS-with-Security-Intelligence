@@ -22,7 +22,7 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const signedInUser = await login(email, password)
-      router.push(['customer', 'candidate'].includes(signedInUser.role) ? '/store' : '/dashboard')
+      router.push(signedInUser.role === 'candidate' ? '/careers' : signedInUser.role === 'customer' ? '/store' : '/dashboard')
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, 'Sign-in service is waking up. Please wait a moment and try again.'))
     } finally {
