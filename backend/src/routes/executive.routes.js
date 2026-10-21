@@ -2,17 +2,19 @@ const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { OFFICE_ROLES } = require('../middleware/roles');
-const { getReports, getLatestReport, getReport, createReport, getDailyBriefing, exportBriefingPdf, askAI } = require('../controllers/executive.controller');
+const { getReports, getLatestReport, getReport, createReport, getDailyBriefing, exportBriefingPdf, askConversation, getConversations, getMessages } = require('../controllers/executive.controller');
 
 router.use(protect);
 router.use(authorize(...OFFICE_ROLES));
 
 router.get('/briefing/pdf', exportBriefingPdf);
 router.get('/briefing', getDailyBriefing);
+router.get('/conversations', getConversations);
+router.get('/conversations/:id/messages', getMessages);
 router.get('/reports/latest', getLatestReport);
 router.get('/reports', getReports);
 router.get('/reports/:id', getReport);
 router.post('/reports', createReport);
-router.post('/ask', askAI);
+router.post('/ask', askConversation);
 
 module.exports = router;

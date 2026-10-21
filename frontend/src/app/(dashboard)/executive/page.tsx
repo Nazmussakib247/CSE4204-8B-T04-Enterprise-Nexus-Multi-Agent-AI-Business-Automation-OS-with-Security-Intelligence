@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { executiveApi } from '@/lib/api'
 import PageHeader from '@/components/ui/PageHeader'
+import ExecutiveChat from '@/components/ui/ExecutiveChat'
 import toast from 'react-hot-toast'
 
 interface BriefingHR { id: string; candidate_name: string; recommendation: string; ai_score: number }
@@ -30,9 +31,6 @@ const urgBadge = (u: string) =>
 export default function ExecutivePage() {
   const [briefing, setBriefing] = useState<Briefing | null>(null)
   const [loading, setLoading] = useState(true)
-  const [question, setQuestion] = useState('')
-  const [aiAnswer, setAiAnswer] = useState('')
-  const [askingAI, setAskingAI] = useState(false)
   const [exporting, setExporting] = useState(false)
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 
@@ -62,21 +60,6 @@ export default function ExecutivePage() {
       .catch(() => setBriefing(null))
       .finally(() => setLoading(false))
   }, [])
-
-  const handleAsk = async () => {
-    if (!question.trim()) return
-    setAskingAI(true)
-    setAiAnswer('')
-    try {
-      const res = await executiveApi.askAI(question)
-      setAiAnswer(res.data.answer || 'No response from AI.')
-    } catch {
-      toast.error('AI query failed. Check GEMINI_API_KEY in backend.')
-      setAiAnswer('AI query failed. Make sure GEMINI_API_KEY is configured.')
-    } finally {
-      setAskingAI(false)
-    }
-  }
 
   const SectionCard = ({ title, icon, iconColor, children }: {
     title: string; icon: string; iconColor: string; children: React.ReactNode
@@ -109,42 +92,7 @@ export default function ExecutivePage() {
         }
       />
 
-      {/* AI Query Panel */}
-      <div className="rounded-2xl p-6 text-white" style={{ background: '#16191a' }}>
-        <div className="flex items-center gap-2 mb-1">
-          <span className="material-symbols-outlined text-primary-container icon-filled">psychology</span>
-          <h3 className="font-display text-[16px] font-semibold text-white">Ask the Executive Agent</h3>
-        </div>
-        <p className="font-body text-[13px] text-white/40 mb-4">Natural language Q&amp;A over your live business data — powered by Gemini.</p>
-        <div className="flex gap-3">
-          <input
-            type="text"
-            value={question}
-            onChange={e => setQuestion(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleAsk()}
-            placeholder="e.g. What are the top finance anomalies this week?"
-            className="flex-1 bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-white placeholder:text-white/25 font-body text-[14px] focus:outline-none focus:border-primary-container/50 transition-all"
-          />
-          <button
-            onClick={handleAsk}
-            disabled={askingAI || !question.trim()}
-            className="flex items-center gap-2 px-5 py-3 rounded-xl font-mono text-[11px] uppercase tracking-widest font-bold text-white disabled:opacity-50 transition-all"
-            style={{ background: 'linear-gradient(135deg,#00c2a8,#006b5c)', boxShadow: '0 4px 14px rgba(0,194,168,0.3)' }}
-          >
-            <span className="material-symbols-outlined text-[16px]">{askingAI ? 'hourglass_empty' : 'send'}</span>
-            {askingAI ? 'Thinking...' : 'Ask AI'}
-          </button>
-        </div>
-        {aiAnswer && (
-          <div className="mt-4 bg-white/[0.04] border border-white/[0.06] rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="material-symbols-outlined text-[14px] text-primary-container">auto_awesome</span>
-              <span className="font-mono text-[10px] uppercase tracking-widest text-primary-container">Gemini Response</span>
-            </div>
-            <p className="font-body text-[13px] text-white/80 leading-relaxed whitespace-pre-wrap">{aiAnswer}</p>
-          </div>
-        )}
-      </div>
+      <ExecutiveChat />
 
       {/* Briefing Sections */}
       {loading ? (

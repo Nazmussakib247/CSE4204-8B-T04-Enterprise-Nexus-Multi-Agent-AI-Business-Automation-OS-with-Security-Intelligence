@@ -2,6 +2,14 @@ const supabase = require('../config/supabase');
 const { generateJson, AiUnavailableError } = require('../ai/client');
 const { writeAuditLog } = require('../utils/audit');
 const { buildExecutivePdf } = require('../utils/pdf');
+const { createExecutiveAgent } = require('../agents/executive.agent');
+const {
+  getOrCreateConversation, loadRecentMessages, appendMessages, updateRollingSummary,
+  listConversations, getConversationMessages, buildContextPrompt,
+} = require('../agents/memory');
+
+const MAX_MESSAGE_LENGTH = 2000;
+const sse = (res, event, payload) => res.write(`event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`);
 
 // Shared: gather the cross-domain briefing snapshot for the office.
 const gatherBriefing = async () => {
@@ -200,4 +208,86 @@ Provide a direct, data-driven answer. If the data doesn't contain enough informa
   }
 };
 
-module.exports = { getReports, getLatestReport, getReport, createReport, getDailyBriefing, exportBriefingPdf, askAI };
+const runGroqFallback = async (question, conversation, recentMessages) => {
+  const briefing = await gatherBriefing();
+  const answer = await generateJson({
+    preferProvider: 'groq',
+    systemInstruction: 'You are Enterprise NeXus Executive Agent. Answer conversationally in the user\'s language. Use the supplied business context when relevant, explain project questions clearly, and never invent internal facts. Return JSON only.',
+    prompt: `${buildContextPrompt(conversation, recentMessages, question)}\n\nLIVE BUSINESS CONTEXT:\n${JSON.stringify(briefing)}`,
+    responseSchema: { type: 'object', properties: { answer: { type: 'string' } }, required: ['answer'] },
+  });
+  return answer.answer;
+};
+
+// POST /api/v1/executive/ask — persistent topic-based executive chat.
+const askConversation = async (req, res, next) => {
+  const streaming = req.headers.accept?.includes('text/event-stream');
+  try {
+    const { question, conversation_id: conversationId } = req.body || {};
+    if (!question || typeof question !== 'string' || !question.trim()) return res.status(400).json({ error: 'question is required' });
+    if (question.length > MAX_MESSAGE_LENGTH) return res.status(413).json({ error: `question too long (max ${MAX_MESSAGE_LENGTH} chars)` });
+
+    const conversation = await getOrCreateConversation(req.user.id, conversationId, question.trim());
+    if (!conversation) return res.status(404).json({ error: 'Conversation not found' });
+    const recentMessages = await loadRecentMessages(conversation.id);
+    const delegations = [];
+
+    if (streaming) {
+      res.status(200);
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache, no-transform');
+      res.setHeader('Connection', 'keep-alive');
+      res.flushHeaders?.();
+    }
+
+    let answer;
+    try {
+      const agent = createExecutiveAgent(req.user.id, req, {
+        onDelegation: (delegation) => {
+          delegations.push(delegation);
+          if (streaming) sse(res, 'delegation', delegation);
+        },
+      });
+      const output = await agent.run(buildContextPrompt(conversation, recentMessages, question.trim()), { userId: req.user.id, req });
+      answer = output.answer;
+    } catch (error) {
+      if (!(error instanceof AiUnavailableError)) throw error;
+      answer = await runGroqFallback(question.trim(), conversation, recentMessages);
+    }
+
+    const toolMessages = delegations
+      .filter((item) => item.status === 'completed')
+      .map((item) => ({ role: 'tool', content: `[${item.label || item.agent} Agent] ${item.answer_preview || 'Completed'}`, metadata: { delegation: item } }));
+    await appendMessages(conversation.id, [
+      { role: 'user', content: question.trim() },
+      ...toolMessages,
+      { role: 'assistant', content: answer, metadata: { delegations } },
+    ]);
+    await updateRollingSummary(conversation, question.trim(), answer);
+    writeAuditLog({ userId: req.user.id, action: 'executive.conversation.ask', resourceType: 'agent_conversation', resourceId: conversation.id, metadata: { question_preview: question.slice(0, 200), delegated_agents: delegations.map((item) => item.agent) }, req });
+
+    if (streaming) {
+      for (const token of answer.match(/.{1,80}(?:\s|$)/g) || [answer]) sse(res, 'token', { text: token });
+      sse(res, 'done', { conversation_id: conversation.id, delegations });
+      return res.end();
+    }
+    res.json({ answer, conversation_id: conversation.id, delegations });
+  } catch (error) {
+    if (streaming && res.headersSent) { sse(res, 'error', { message: 'The Executive Agent could not complete that request.' }); return res.end(); }
+    next(error);
+  }
+};
+
+const getConversations = async (req, res, next) => {
+  try { res.json({ data: await listConversations(req.user.id) }); } catch (error) { next(error); }
+};
+
+const getMessages = async (req, res, next) => {
+  try {
+    const data = await getConversationMessages(req.user.id, req.params.id);
+    if (!data) return res.status(404).json({ error: 'Conversation not found' });
+    res.json({ data });
+  } catch (error) { next(error); }
+};
+
+module.exports = { getReports, getLatestReport, getReport, createReport, getDailyBriefing, exportBriefingPdf, askAI, askConversation, getConversations, getMessages };
