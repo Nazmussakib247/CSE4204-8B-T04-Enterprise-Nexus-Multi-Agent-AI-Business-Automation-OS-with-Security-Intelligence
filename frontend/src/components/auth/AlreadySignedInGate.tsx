@@ -24,7 +24,10 @@ export default function AlreadySignedInGate({
     if (!loading && user) router.replace(dashboardPath)
   }, [dashboardPath, loading, router, user])
 
-  if (loading) return null
-  if (!user) return <>{children}</>
-  return null
+  // Never hide an auth page while the session check is pending. A cold Render
+  // instance or a transient network delay used to leave `/login` completely
+  // blank because this component returned null. If a valid session is found,
+  // the effect above redirects immediately; otherwise the visitor can sign in.
+  if (user) return null
+  return <>{children}</>
 }
