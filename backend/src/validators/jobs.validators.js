@@ -9,7 +9,8 @@ const jobFields = {
   title: Joi.string().trim().min(2).max(200),
   department: Joi.string().trim().max(100).allow('', null),
   description: Joi.string().trim().min(10).max(20000),
-  screening_criteria: Joi.string().trim().min(10).max(10000),
+  // A concise keyword such as "Python" is a valid screening signal too.
+  screening_criteria: Joi.string().trim().min(2).max(10000),
   required_skills: Joi.array().items(skillSchema).min(1).max(30),
   status: Joi.string().valid('draft', 'open', 'closed'),
 };

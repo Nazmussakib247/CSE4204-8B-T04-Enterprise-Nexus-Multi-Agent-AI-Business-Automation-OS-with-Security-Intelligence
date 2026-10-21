@@ -5,7 +5,8 @@ export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000
 /** Extract the backend's error message from an unknown thrown value. */
 export const getApiErrorMessage = (err: unknown, fallback: string): string => {
   if (axios.isAxiosError(err)) {
-    const data = err.response?.data as { error?: string } | undefined
+    const data = err.response?.data as { error?: string; details?: string[] } | undefined
+    if (data?.details?.length) return data.details.join(' · ')
     if (data?.error) return data.error
   }
   return fallback

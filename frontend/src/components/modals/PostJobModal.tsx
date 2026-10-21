@@ -41,8 +41,16 @@ export default function PostJobModal({ open, onClose, onCreated }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!title.trim() || !description.trim() || !screeningCriteria.trim()) {
-      toast.error('Title, description and screening criteria are required')
+    if (title.trim().length < 2) {
+      toast.error('Enter a job title with at least 2 characters')
+      return
+    }
+    if (description.trim().length < 10) {
+      toast.error('Description needs at least 10 characters')
+      return
+    }
+    if (screeningCriteria.trim().length < 2) {
+      toast.error('Add at least one screening criterion')
       return
     }
     const cleanSkills = skills.filter(s => s.skill.trim())
