@@ -9,10 +9,10 @@ import { ordersApi, supportApi, getApiErrorMessage } from '@/lib/api'
 
 interface OrderOption { id: string; products?: { name: string } }
 interface SupportMessage { id: string; sender_type: 'customer' | 'staff' | 'ai'; body: string; created_at: string }
-interface CustomerTicket { id: string; query: string; status: string; human_response?: string | null; created_at: string; support_messages?: SupportMessage[] }
+interface CustomerTicket { id: string; query: string; status: string; human_response?: string | null; human_intervention_required?: boolean; human_intervention_reason?: string | null; created_at: string; support_messages?: SupportMessage[] }
 
 const statusLabel: Record<string, string> = {
-  open: 'Awaiting support', in_progress: 'Support is working on it', escalated: 'Priority support', resolved: 'Resolved',
+  open: 'Awaiting AI support', in_progress: 'Support is working on it', escalated: 'Priority human support', resolved: 'Resolved',
 }
 
 function CustomerSupportContent() {
@@ -104,6 +104,7 @@ function CustomerSupportContent() {
           ]
           return <article key={ticket.id} className="bg-white rounded-2xl border border-outline-variant/50 p-5">
             <div className="flex items-center justify-between gap-3 mb-4"><p className="font-mono text-[11px] uppercase tracking-wider text-on-surface-variant">Request #{ticket.id.slice(0, 8)}</p><span className="font-mono text-[10px] uppercase tracking-wider text-primary">{statusLabel[ticket.status] || 'Received'}</span></div>
+            {ticket.human_intervention_required && ticket.status !== 'resolved' && <div className="mb-4 rounded-xl border border-amber-300/60 bg-amber-50 px-3 py-2.5"><p className="font-mono text-[10px] uppercase tracking-wider text-amber-800">Human support review</p><p className="mt-1 font-body text-[12px] text-amber-900">Our support specialist has been notified and will reply here shortly.</p></div>}
             <div className="space-y-3">{conversation.map(item => <div key={item.id} className={`rounded-xl border p-3 ${item.sender_type === 'customer' ? 'bg-surface border-outline-variant/40' : item.sender_type === 'staff' ? 'bg-primary/5 border-primary-container/30' : 'bg-tertiary-container/25 border-tertiary/20'}`}>
               <p className="font-mono text-[10px] uppercase tracking-wider text-primary mb-1">{item.sender_type === 'customer' ? 'You' : item.sender_type === 'staff' ? 'Support team' : 'Support assistant'}</p><p className="font-body text-[13px] text-on-surface whitespace-pre-wrap">{item.body}</p>
             </div>)}</div>
