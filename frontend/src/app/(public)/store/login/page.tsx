@@ -82,9 +82,6 @@ export default function StoreLoginPage() {
       <p className="text-center font-body text-[13px] text-on-surface-variant mt-5">
         New here? <Link href="/store/register" className="text-primary font-medium">Create an account</Link>
       </p>
-      <p className="text-center font-body text-[12px] text-on-surface-variant/60 mt-6">
-        Are you a team member? <Link href="/login" className="underline">Staff sign in</Link>
-      </p>
     </div>
     </AlreadySignedInGate>
   )
