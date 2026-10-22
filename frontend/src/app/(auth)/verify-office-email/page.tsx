@@ -31,7 +31,7 @@ export default function VerifyOfficeEmailPage() {
     try { await authApi.resendOfficeVerification(email); toast.success('If eligible, a new code was sent.') } catch { toast.error('Could not resend the code') } finally { setResending(false) }
   }
 
-  return <main className="min-h-screen bg-[#f4f5f6] flex items-center justify-center p-4"><div className="w-full max-w-md bg-white rounded-2xl border border-outline-variant/50 shadow-sm p-8">
+  return <main className="w-full min-h-[100dvh] bg-[#f4f5f6] flex items-center justify-center px-4 py-6 sm:p-8"><div className="w-full max-w-md bg-white rounded-2xl border border-outline-variant/50 shadow-sm p-6 sm:p-8">
     <div className="w-12 h-12 rounded-xl bg-primary-container/20 flex items-center justify-center mb-5"><span className="material-symbols-outlined text-primary text-[25px]">mark_email_read</span></div>
     <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-2">Office account verification</p>
     <h1 className="font-display text-[25px] font-bold text-on-surface">Verify your email</h1>
