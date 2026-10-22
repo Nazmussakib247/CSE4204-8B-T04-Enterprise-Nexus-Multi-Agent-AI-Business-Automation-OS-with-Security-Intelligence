@@ -177,6 +177,19 @@ const resendOfficeVerification = async (req, res, next) => {
 const registerExternal = async (req, res, next) => {
   try {
     const { name, email, password, role } = req.body;
+    // A customer who started signup but did not enter the OTP is allowed to
+    // continue signup. Do not expose a misleading "email already registered"
+    // error; refresh the pending account and send a new verification code.
+    if (role === 'customer') {
+      const { data: pending } = await supabase.from('users').select('id, name, email, email_verified_at, approval_status, role_id, roles(name)').eq('email', String(email).trim().toLowerCase()).maybeSingle();
+      if (pending?.roles?.name === 'customer' && !pending.email_verified_at) {
+        const password_hash = await bcrypt.hash(password, 12);
+        const { data: user, error } = await supabase.from('users').update({ name, password_hash, is_active: true, approval_status: 'approved', updated_at: new Date().toISOString() }).eq('id', pending.id).select('id, name, email, role_id, approval_status, created_at').single();
+        if (error) throw error;
+        await createCustomerVerificationCode(user);
+        return res.status(201).json({ message: 'Verification code sent. Verify your email to continue.', pending_approval: false, verification_required: true, user: { ...user, role: 'customer' } });
+      }
+    }
     const { user, requiresApproval } = await createAccount({ name, email, password, role, req });
     if (!requiresApproval) await createCustomerVerificationCode(user);
     res.status(201).json({

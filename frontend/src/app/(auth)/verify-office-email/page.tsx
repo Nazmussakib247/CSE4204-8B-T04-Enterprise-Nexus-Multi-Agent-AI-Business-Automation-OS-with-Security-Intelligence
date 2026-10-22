@@ -44,6 +44,6 @@ export default function VerifyOfficeEmailPage() {
       <button disabled={loading} className="w-full rounded-xl bg-primary py-3 text-white font-mono text-[11px] uppercase tracking-widest font-bold disabled:opacity-60">{loading ? 'Verifying…' : 'Verify email'}</button>
     </form>
     <button onClick={resend} disabled={resending} className="mt-4 w-full font-mono text-[10px] uppercase tracking-widest text-primary hover:underline disabled:opacity-60">{resending ? 'Sending…' : 'Resend code'}</button>
-    <Link href="/login" className="block mt-6 text-center font-mono text-[10px] uppercase tracking-widest text-on-surface-variant hover:text-primary">Back to sign in</Link>
+    <Link href={nextPath} className="block mt-6 text-center font-mono text-[10px] uppercase tracking-widest text-on-surface-variant hover:text-primary">Back to sign in</Link>
   </div></main>
 }
