@@ -22,6 +22,19 @@ let transporter = null;
 // HTTPS email delivery avoids SMTP port timeouts on managed hosting platforms.
 // When RESEND_API_KEY is configured it is preferred for every transactional mail.
 const sendMail = async (options) => {
+  if (process.env.BREVO_API_KEY) {
+    const senderMatch = String(options.from).match(/^(.*)<([^>]+)>$/);
+    const sender = senderMatch
+      ? { name: senderMatch[1].trim().replace(/^"|"$/g, ''), email: senderMatch[2].trim() }
+      : { name: 'Enterprise NeXus', email: String(options.from).trim() };
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sender, to: (Array.isArray(options.to) ? options.to : [options.to]).map((email) => ({ email })), subject: options.subject, htmlContent: options.html, textContent: options.text }),
+    });
+    if (!response.ok) throw new Error(`Brevo HTTP ${response.status}: ${(await response.text()).slice(0, 300)}`);
+    return { response: 'Delivered through Brevo', ...(await response.json()) };
+  }
   if (process.env.RESEND_API_KEY) {
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
