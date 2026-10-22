@@ -19,6 +19,22 @@ const createTransporter = () => {
 
 let transporter = null;
 
+// HTTPS email delivery avoids SMTP port timeouts on managed hosting platforms.
+// When RESEND_API_KEY is configured it is preferred for every transactional mail.
+const sendMail = async (options) => {
+  if (process.env.RESEND_API_KEY) {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: options.from, to: Array.isArray(options.to) ? options.to : [options.to], subject: options.subject, html: options.html, text: options.text }),
+    });
+    if (!response.ok) throw new Error(`Resend HTTP ${response.status}: ${(await response.text()).slice(0, 300)}`);
+    return { response: 'Delivered through Resend', ...(await response.json()) };
+  }
+  const t = await getTransporter();
+  return t.sendMail(options);
+};
+
 const getTransporter = async () => {
   if (transporter) return transporter;
   if (process.env.EMAIL_HOST) {
@@ -41,11 +57,10 @@ const FROM = process.env.EMAIL_FROM || '"Enterprise NeXus" <noreply@enterprise-n
 const APP_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 const sendPasswordReset = async ({ to, name, resetToken, resetCode }) => {
-  const t = await getTransporter();
   const resetUrl = `${APP_URL}/reset-password?token=${resetToken}`;
   const codeContent = resetCode ? `<p>Your verification code is:</p><p style="font-size:28px;font-weight:bold;letter-spacing:8px;color:#00a98f">${resetCode}</p><p>This code expires in <strong>1 hour</strong>.</p>` : '';
 
-  const info = await t.sendMail({
+  const info = await sendMail({
     from: FROM,
     to,
     subject: 'Reset your Enterprise NeXus password',
@@ -71,9 +86,8 @@ const sendPasswordReset = async ({ to, name, resetToken, resetCode }) => {
 };
 
 const sendOfficeVerificationCode = async ({ to, name, code }) => {
-  const t = await getTransporter();
   try {
-    const info = await t.sendMail({
+    const info = await sendMail({
       from: FROM, to, subject: 'Verify your Enterprise NeXus office account',
       html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto"><h2 style="color:#00c2a8">Verify your email</h2><p>Hi ${name || 'there'},</p><p>Enter this code to verify your office account:</p><p style="font-size:30px;font-weight:bold;letter-spacing:8px;color:#008f7b">${code}</p><p>This code expires in 15 minutes. Do not share it with anyone.</p></div>`,
       text: `Your Enterprise NeXus office verification code is: ${code}. It expires in 15 minutes.`,
@@ -89,10 +103,9 @@ const sendOfficeVerificationCode = async ({ to, name, code }) => {
 };
 
 const sendEscalationEmail = async ({ to, ticketId, subject, priority, description, assigneeName }) => {
-  const t = await getTransporter();
   const ticketUrl = `${APP_URL}/support`;
 
-  const info = await t.sendMail({
+  const info = await sendMail({
     from: FROM,
     to,
     subject: `[ESCALATED] Ticket #${ticketId} — ${subject}`,
@@ -125,7 +138,7 @@ const sendEscalationEmail = async ({ to, ticketId, subject, priority, descriptio
 const sendApplicationNotificationEmail = async ({ to, candidateName, jobTitle, message }) => {
   const t = await getTransporter();
   const body = message || `Thank you for applying for the ${jobTitle} role. Our HR team has reviewed your application and will be in touch with next steps.`;
-  const info = await t.sendMail({
+  const info = await sendMail({
     from: FROM,
     to,
     subject: `Update on your application — ${jobTitle}`,
