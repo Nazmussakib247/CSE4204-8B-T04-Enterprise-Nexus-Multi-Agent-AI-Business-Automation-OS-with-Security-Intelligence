@@ -24,8 +24,8 @@ const getReviewEligibility = async (req, res, next) => {
     if (!orderIds.length) return res.json({ data: [] });
     const { data: reviews, error: reviewError } = await supabase.from('product_reviews').select('order_id').eq('customer_id', req.user.id).in('order_id', orderIds);
     if (reviewError) throw reviewError;
-    const counts = (reviews || []).reduce((result, review) => { if (review.order_id) result[review.order_id] = (result[review.order_id] || 0) + 1; return result; }, {});
-    const eligible = orders.flatMap(order => Array.from({ length: Math.max(0, Number(order.quantity || 1) - (counts[order.id] || 0)) }, (_, index) => ({ id: order.id, unit: index + 1, purchased_at: order.created_at })));
+    const reviewedOrders = new Set((reviews || []).map(review => review.order_id).filter(Boolean));
+    const eligible = orders.filter(order => !reviewedOrders.has(order.id)).map(order => ({ id: order.id, purchased_at: order.created_at }));
     res.json({ data: eligible });
   } catch (err) { next(err); }
 };
@@ -45,7 +45,7 @@ const createReview = async (req, res, next) => {
     if (orderError || !order) return res.status(403).json({ error: 'You can review a product only after purchasing it.' });
     const { count: reviewCount, error: countError } = await supabase.from('product_reviews').select('id', { count: 'exact', head: true }).eq('order_id', order_id).eq('customer_id', req.user.id);
     if (countError) throw countError;
-    if ((reviewCount || 0) >= Number(order.quantity || 1)) return res.status(409).json({ error: 'All purchased units from this order already have a review.' });
+    if ((reviewCount || 0) >= 1) return res.status(409).json({ error: 'You already reviewed this purchase. You can edit that review instead.' });
     const { analysis: ai, ai_status } = await analyseReview(comment);
     const flagged = ai?.sentiment === 'negative' || ai?.urgency === 'high';
     const { data, error } = await supabase.from('product_reviews').insert({ product_id, customer_id: req.user.id, order_id, rating, comment, sentiment: ai?.sentiment || null, urgency: ai?.urgency || null, ai_status, flagged_as_complaint: flagged, human_intervention_required: flagged, human_intervention_reason: flagged ? 'Negative sentiment or high urgency detected by AI' : null, human_intervention_status: flagged ? 'pending' : 'not_required' }).select(PUBLIC_REVIEW_SELECT).single();
