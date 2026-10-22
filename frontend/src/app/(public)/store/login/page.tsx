@@ -27,7 +27,11 @@ export default function StoreLoginPage() {
       const returnTo = new URLSearchParams(window.location.search).get('returnTo')
       router.replace(returnTo?.startsWith('/store') ? returnTo : '/store/orders')
     } catch (err) {
-      toast.error(getApiErrorMessage(err, 'Sign-in service is waking up. Please wait a moment and try again.'))
+      const message = getApiErrorMessage(err, 'Sign-in service is waking up. Please wait a moment and try again.')
+      if (message.toLowerCase().includes('verify the email code')) {
+        toast('Verify your email code to continue')
+        router.push(`/verify-office-email?email=${encodeURIComponent(email)}&purpose=customer_registration&next=/store/login`)
+      } else toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -72,6 +76,7 @@ export default function StoreLoginPage() {
         <button type="submit" disabled={loading} className="w-full h-11 rounded-xl bg-primary text-on-primary font-body text-[14px] font-medium hover:bg-primary/90 transition-colors disabled:opacity-60">
           {loading ? 'Signing in...' : 'Sign in'}
         </button>
+        <Link href="/forgot-password" className="block text-center font-body text-[13px] text-primary mt-3">Forgot password?</Link>
       </form>
 
       <p className="text-center font-body text-[13px] text-on-surface-variant mt-5">

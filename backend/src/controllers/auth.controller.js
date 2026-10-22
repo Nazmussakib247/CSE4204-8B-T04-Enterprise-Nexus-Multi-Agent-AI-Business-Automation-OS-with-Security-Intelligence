@@ -51,6 +51,15 @@ const createOfficeVerificationCode = async (user) => {
   await sendOfficeVerificationCode({ to: user.email, name: user.name, code });
 };
 
+const createCustomerVerificationCode = async (user) => {
+  const code = makeOtp();
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+  await supabase.from('email_verification_codes').delete().eq('user_id', user.id).eq('purpose', 'customer_registration');
+  const { error } = await supabase.from('email_verification_codes').insert({ user_id: user.id, purpose: 'customer_registration', code_hash: hashToken(code), expires_at: expiresAt });
+  if (error) throw error;
+  await sendOfficeVerificationCode({ to: user.email, name: user.name, code });
+};
+
 const createAccount = async ({ name, email, password, role, req }) => {
   const { data: existing } = await supabase.from('users').select('id').eq('email', email).single();
   if (existing) {
@@ -132,42 +141,48 @@ const verifyOfficeEmail = async (req, res, next) => {
   try {
     const { email, code } = req.body || {};
     if (!email || !/^\d{6}$/.test(code || '')) return res.status(400).json({ error: 'Email and a six-digit code are required' });
+    const purpose = req.body?.purpose === 'customer_registration' ? 'customer_registration' : 'office_registration';
     const { data: user } = await supabase.from('users').select('id, email_verified_at').eq('email', email.toLowerCase()).maybeSingle();
     if (!user) return res.status(400).json({ error: 'Invalid or expired verification code' });
     if (user.email_verified_at) return res.json({ message: 'Email already verified' });
-    const { data: record } = await supabase.from('email_verification_codes').select('*').eq('user_id', user.id).eq('purpose', 'office_registration').order('created_at', { ascending: false }).limit(1).maybeSingle();
+    const { data: record } = await supabase.from('email_verification_codes').select('*').eq('user_id', user.id).eq('purpose', purpose).order('created_at', { ascending: false }).limit(1).maybeSingle();
     if (!record || record.attempts >= 5 || new Date(record.expires_at) < new Date() || record.code_hash !== hashToken(code)) {
       if (record) await supabase.from('email_verification_codes').update({ attempts: record.attempts + 1 }).eq('id', record.id);
       return res.status(400).json({ error: 'Invalid or expired verification code' });
     }
     await supabase.from('users').update({ email_verified_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', user.id);
     await supabase.from('email_verification_codes').delete().eq('id', record.id);
-    writeAuditLog({ userId: user.id, action: 'auth.office_email_verified', req });
-    res.json({ message: 'Email verified. Your office access will be approved shortly.' });
+    writeAuditLog({ userId: user.id, action: purpose === 'customer_registration' ? 'auth.customer_email_verified' : 'auth.office_email_verified', req });
+    res.json({ message: purpose === 'customer_registration' ? 'Email verified. You can now sign in.' : 'Email verified. Your office access will be approved shortly.' });
   } catch (err) { next(err); }
 };
 
 const resendOfficeVerification = async (req, res, next) => {
   try {
     const { email } = req.body || {};
+    const purpose = req.body?.purpose === 'customer_registration' ? 'customer_registration' : 'office_registration';
     const { data: user } = await supabase.from('users').select('id, name, email, email_verified_at, roles(name)').eq('email', String(email || '').toLowerCase()).maybeSingle();
-    if (user && !user.email_verified_at && ['admin', 'manager', 'employee'].includes(user.roles?.name)) await createOfficeVerificationCode(user);
+    if (user && !user.email_verified_at) {
+      if (purpose === 'customer_registration' && user.roles?.name === 'customer') await createCustomerVerificationCode(user);
+      if (purpose === 'office_registration' && ['admin', 'manager', 'employee'].includes(user.roles?.name)) await createOfficeVerificationCode(user);
+    }
     res.json({ message: 'If eligible, a verification code has been sent.' });
   } catch (err) { next(err); }
 };
 
 // ── POST /api/auth/register-external ──────────────────────────
-// Public signup for candidate/customer accounts (storefront, careers portal).
+// Public signup for customer accounts. Careers applications do not create accounts.
 // Kept separate from register() so the internal-staff flow is untouched and
 // role is never accepted from arbitrary input there.
 const registerExternal = async (req, res, next) => {
   try {
     const { name, email, password, role } = req.body;
     const { user, requiresApproval } = await createAccount({ name, email, password, role, req });
-    if (!requiresApproval) await createSessionResponse(res, user);
+    if (!requiresApproval) await createCustomerVerificationCode(user);
     res.status(201).json({
-      message: requiresApproval ? 'Account request sent for admin approval' : 'Account created',
+      message: 'Verification code sent. Verify your email to continue.',
       pending_approval: requiresApproval,
+      verification_required: true,
       user: { ...user, role },
     });
   } catch (err) {
@@ -204,7 +219,7 @@ const login = async (req, res, next) => {
     }
 
     const isOfficeUser = ['admin', 'manager', 'employee'].includes(user.roles?.name);
-    if (isOfficeUser && !user.email_verified_at) {
+    if ((isOfficeUser || user.roles?.name === 'customer') && !user.email_verified_at) {
       return res.status(403).json({ error: 'Verify the email code sent to you before signing in' });
     }
     if (user.approval_status === 'pending') {

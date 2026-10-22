@@ -112,16 +112,18 @@ const deleteJob = async (req, res, next) => {
 
 const createApplication = async (req, res, next) => {
   try {
-    if (req.user.role !== 'candidate') return res.status(403).json({ error: 'A candidate account is required to apply' });
+    const applicantName = String(req.body?.applicant_name || '').trim();
+    const applicantEmail = String(req.body?.applicant_email || '').trim().toLowerCase();
+    if (applicantName.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(applicantEmail)) return res.status(400).json({ error: 'Full name and a valid email are required' });
     if (!req.file) return res.status(400).json({ error: 'A CV file is required (field name: cv)' });
     const { data: job, error: jobError } = await supabase.from('job_postings').select('*').eq('id', req.params.id).eq('status', 'open').single();
     if (jobError || !job) return res.status(404).json({ error: 'Job not found or no longer open' });
 
-    const { data: existing } = await supabase.from('job_applications').select('id').eq('job_id', job.id).eq('candidate_id', req.user.id).maybeSingle();
+    const { data: existing } = await supabase.from('job_applications').select('id').eq('job_id', job.id).eq('applicant_email', applicantEmail).maybeSingle();
     if (existing) return res.status(409).json({ error: 'You have already applied for this job' });
 
     const safeName = req.file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const storagePath = `${job.id}/${req.user.id}/${crypto.randomUUID()}-${safeName}`;
+    const storagePath = `${job.id}/${crypto.randomUUID()}-${safeName}`;
     const { error: uploadError } = await supabase.storage.from('job-cvs').upload(storagePath, req.file.buffer, { contentType: req.file.mimetype, upsert: false });
     if (uploadError) throw uploadError;
 
@@ -131,21 +133,21 @@ const createApplication = async (req, res, next) => {
     let aiData = { status: 'applied' };
     if (cvText.length >= 20) {
       try {
-        const ai = await screenCV({ candidate_name: req.user.name, job_title: job.title, cv_text: cvText, required_skills: job.required_skills, screening_criteria: job.screening_criteria });
+        const ai = await screenCV({ candidate_name: applicantName, job_title: job.title, cv_text: cvText, required_skills: job.required_skills, screening_criteria: job.screening_criteria });
         const skillScores = (job.required_skills || []).map(({ skill, weight }) => ({ skill, weight, score: Math.max(0, Math.min(100, Number(ai.skill_scores.find((entry) => entry.skill.toLowerCase() === skill.toLowerCase())?.score) || 0)) }));
         aiData = { ai_score: Math.round(skillScores.reduce((sum, item) => sum + (item.weight * item.score), 0) / 100), ai_confidence: confidenceBand(Number(ai.confidence)), ai_recommendation: ai.recommendation, skill_scores: skillScores, narrative_summary: ai.narrative_summary, status: 'ai_screened' };
       } catch { /* The application is still recorded for HR review. */ }
     }
 
     const { data, error } = await supabase.from('job_applications').insert({
-      job_id: job.id, candidate_id: req.user.id, cv_url: `storage://job-cvs/${storagePath}`,
+      job_id: job.id, candidate_id: null, applicant_name: applicantName, applicant_email: applicantEmail, cv_url: `storage://job-cvs/${storagePath}`,
       ...aiData,
     }).select('*, users!job_applications_candidate_id_fkey(name, email)').single();
     if (error) throw error;
-    writeAuditLog({ userId: req.user.id, action: 'job.application.create', resourceType: 'job_application', resourceId: data.id, metadata: { job_id: job.id, ai_screened: data.status === 'ai_screened' }, req });
+    writeAuditLog({ action: 'job.application.create', resourceType: 'job_application', resourceId: data.id, metadata: { job_id: job.id, ai_screened: data.status === 'ai_screened', applicant_email: applicantEmail }, req });
     if (data.status === 'ai_screened') notifyN8n('job-application', {
-      application_id: data.id, job_id: job.id, candidate_id: req.user.id,
-      candidate_name: req.user.name, job_title: job.title,
+      application_id: data.id, job_id: job.id, candidate_id: null,
+      candidate_name: applicantName, applicant_email: applicantEmail, job_title: job.title,
       required_skills: job.required_skills, screening_criteria: job.screening_criteria,
       cv_text: cvText.slice(0, 12000), ai_score: data.ai_score, recommendation: data.ai_recommendation,
     });
@@ -190,11 +192,11 @@ const confirmAndNotify = async (req, res, next) => {
     const { application_ids, message } = req.body;
     const { data: job, error: jobError } = await supabase.from('job_postings').select('id, title').eq('id', req.params.id).single();
     if (jobError || !job) return res.status(404).json({ error: 'Job not found' });
-    const { data: applications, error } = await supabase.from('job_applications').select('id, candidate_id, users!job_applications_candidate_id_fkey(name, email)').eq('job_id', job.id).in('id', application_ids);
+    const { data: applications, error } = await supabase.from('job_applications').select('id, candidate_id, applicant_name, applicant_email, users!job_applications_candidate_id_fkey(name, email)').eq('job_id', job.id).in('id', application_ids);
     if (error) throw error;
     if (applications.length !== application_ids.length) return res.status(400).json({ error: 'One or more applications do not belong to this job' });
     await supabase.from('job_applications').update({ status: 'hr_confirmed', updated_at: new Date().toISOString() }).in('id', application_ids);
-    const results = await Promise.allSettled(applications.map((application) => sendApplicationNotificationEmail({ to: application.users.email, candidateName: application.users.name, jobTitle: job.title, message })));
+    const results = await Promise.allSettled(applications.map((application) => sendApplicationNotificationEmail({ to: application.applicant_email || application.users?.email, candidateName: application.applicant_name || application.users?.name, jobTitle: job.title, message })));
     const notifiedIds = applications.filter((_, index) => results[index].status === 'fulfilled').map((application) => application.id);
     if (notifiedIds.length) await supabase.from('job_applications').update({ status: 'notified', notified_at: new Date().toISOString(), updated_at: new Date().toISOString() }).in('id', notifiedIds);
     writeAuditLog({ userId: req.user.id, action: 'job.application.confirm_notify', resourceType: 'job_posting', resourceId: job.id, metadata: { requested: application_ids.length, notified: notifiedIds.length }, req });

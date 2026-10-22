@@ -65,10 +65,10 @@ export const authApi = {
     api.post('/auth/login', { email, password }),
   register: (name: string, email: string, password: string, role: 'admin' | 'manager' | 'employee') =>
     api.post('/auth/register', { name, email, password, role }),
-  registerExternal: (name: string, email: string, password: string, role: 'customer' | 'candidate') =>
+  registerExternal: (name: string, email: string, password: string, role: 'customer') =>
     api.post('/auth/register-external', { name, email, password, role }),
-  verifyOfficeEmail: (email: string, code: string) => api.post('/auth/verify-office-email', { email, code }),
-  resendOfficeVerification: (email: string) => api.post('/auth/resend-office-verification', { email }),
+  verifyOfficeEmail: (email: string, code: string, purpose = 'office_registration') => api.post('/auth/verify-office-email', { email, code, purpose }),
+  resendOfficeVerification: (email: string, purpose = 'office_registration') => api.post('/auth/resend-office-verification', { email, purpose }),
   refresh: () => api.post('/auth/refresh'),
   logout: () => api.post('/auth/logout'),
   me: () => api.get('/auth/me'),

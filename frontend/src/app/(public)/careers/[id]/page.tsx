@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
-import { useAuth } from '@/lib/auth'
 import { jobsApi, getApiErrorMessage } from '@/lib/api'
 
 interface JobPosting {
@@ -16,9 +15,10 @@ interface JobPosting {
 
 export default function JobDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { user, loading: authLoading } = useAuth()
   const [job, setJob] = useState<JobPosting | null | undefined>(undefined)
   const [file, setFile] = useState<File | null>(null)
+  const [applicantName, setApplicantName] = useState('')
+  const [applicantEmail, setApplicantEmail] = useState('')
   const [applying, setApplying] = useState(false)
   const [applied, setApplied] = useState(false)
 
@@ -29,10 +29,13 @@ export default function JobDetailPage() {
   }, [id])
 
   const handleApply = async () => {
+    if (!applicantName.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(applicantEmail)) { toast.error('Enter your full name and a valid email'); return }
     if (!file) { toast.error('Attach your CV first'); return }
     setApplying(true)
     try {
       const formData = new FormData()
+      formData.append('applicant_name', applicantName.trim())
+      formData.append('applicant_email', applicantEmail.trim())
       formData.append('cv', file)
       await jobsApi.apply(id, formData)
       setApplied(true)
@@ -44,7 +47,7 @@ export default function JobDetailPage() {
     }
   }
 
-  if (job === undefined || authLoading) return null
+  if (job === undefined) return null
 
   if (job === null) {
     return (
@@ -78,28 +81,12 @@ export default function JobDetailPage() {
           <span className="material-symbols-outlined text-[20px] text-primary">check_circle</span>
           <p className="font-body text-[14px] text-on-surface">Application submitted. You can check its status any time.</p>
         </div>
-      ) : !user ? (
-        <div className="mt-8">
-          <Link
-            href={`/careers/register?redirect=/careers/${id}`}
-            className="flex items-center justify-center h-11 px-6 rounded-xl bg-primary text-on-primary font-body text-[14px] font-medium hover:bg-primary/90 transition-colors"
-          >
-            Create a candidate account to apply
-          </Link>
-          <p className="text-center font-body text-[12px] text-on-surface-variant mt-2">
-            Already have one? <Link href="/store/login" className="text-primary">Sign in</Link>
-          </p>
-        </div>
-      ) : user.role !== 'candidate' ? (
-        <div className="mt-8 rounded-xl border border-outline-variant/60 p-5 text-center">
-          <p className="font-body text-[14px] text-on-surface">You&apos;re signed in as a {user.role}.</p>
-          <p className="font-body text-[13px] text-on-surface-variant mt-1">A candidate account is required to apply for roles.</p>
-          <Link href={`/careers/register?redirect=/careers/${id}`} className="inline-block mt-3 font-body text-[13px] text-primary font-medium">
-            Create a candidate account →
-          </Link>
-        </div>
       ) : (
         <div className="mt-8 rounded-xl border border-outline-variant/60 p-5">
+          <div className="grid gap-4 sm:grid-cols-2 mb-4">
+            <label className="font-body text-[13px] text-on-surface-variant">Full name<input value={applicantName} onChange={e => setApplicantName(e.target.value)} placeholder="Your full name" className="mt-1.5 w-full rounded-xl border border-outline-variant px-4 py-2.5 text-on-surface outline-none focus:border-primary" /></label>
+            <label className="font-body text-[13px] text-on-surface-variant">Email<input type="email" value={applicantEmail} onChange={e => setApplicantEmail(e.target.value)} placeholder="you@example.com" className="mt-1.5 w-full rounded-xl border border-outline-variant px-4 py-2.5 text-on-surface outline-none focus:border-primary" /></label>
+          </div>
           <label className="block font-mono text-[11px] uppercase tracking-wide text-on-surface-variant mb-2">Attach your CV (PDF or DOCX)</label>
           <input
             type="file"

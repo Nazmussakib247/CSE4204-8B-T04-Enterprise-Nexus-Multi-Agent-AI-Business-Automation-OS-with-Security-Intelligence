@@ -17,7 +17,7 @@ router.get('/:id/applications', protect, authorize(...OFFICE_ROLES), jobs.getApp
 router.post('/:id/applications/confirm-notify', protect, authorize(...OFFICE_ROLES), validate(bulkNotifySchema), jobs.confirmAndNotify);
 router.patch('/:id/applications/:applicationId', protect, authorize(...OFFICE_ROLES), validate(updateApplicationSchema), jobs.updateApplication);
 router.delete('/:id/applications/:applicationId', protect, authorize(...OFFICE_ROLES), jobs.deleteApplication);
-router.post('/:id/applications', protect, upload.single('cv'), jobs.createApplication);
+router.post('/:id/applications', upload.single('cv'), jobs.createApplication);
 router.get('/:id', jobs.getJob);
 
 module.exports = router;
