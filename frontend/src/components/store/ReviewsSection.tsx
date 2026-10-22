@@ -30,7 +30,7 @@ export default function ReviewsSection({ productId }: { productId: string }) {
       setReviews(response.data.data ?? [])
       if (user?.role === 'customer') {
         const eligibility = await reviewsApi.getEligibility(productId)
-        const purchases = eligibility.data.data ?? []
+        const purchases = (eligibility.data.data ?? []) as EligiblePurchase[]
         setEligiblePurchases(purchases)
         setSelectedOrderId(current => purchases.some(purchase => purchase.id === current) ? current : purchases[0]?.id || '')
       } else setEligiblePurchases([])
