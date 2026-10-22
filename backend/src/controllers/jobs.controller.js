@@ -202,9 +202,13 @@ const confirmAndNotify = async (req, res, next) => {
     if (confirmationError) throw confirmationError;
     const results = await Promise.allSettled(applications.map((application) => sendApplicationNotificationEmail({ to: application.applicant_email, candidateName: application.applicant_name, jobTitle: job.title, recommendation: application.ai_recommendation, message })));
     const notifiedIds = applications.filter((_, index) => results[index].status === 'fulfilled').map((application) => application.id);
-    if (notifiedIds.length) await supabase.from('job_applications').update({ status: 'notified', notified_at: new Date().toISOString(), updated_at: new Date().toISOString() }).in('id', notifiedIds);
-    writeAuditLog({ userId: req.user.id, action: 'job.application.confirm_notify', resourceType: 'job_posting', resourceId: job.id, metadata: { requested: application_ids.length, notified: notifiedIds.length }, req });
-    res.json({ message: `${notifiedIds.length} applicant(s) notified`, notified: notifiedIds.length, failed: application_ids.length - notifiedIds.length });
+    if (notifiedIds.length) {
+      const { error: notificationUpdateError } = await supabase.from('job_applications').update({ status: 'notified', notified_at: new Date().toISOString(), updated_at: new Date().toISOString() }).in('id', notifiedIds);
+      if (notificationUpdateError) console.error('[jobs.confirmAndNotify] notification status update failed:', notificationUpdateError.message);
+    }
+    const failed = applications.filter((_, index) => results[index].status === 'rejected').map((application, index) => ({ id: application.id, email: application.applicant_email, reason: results[applications.indexOf(application)]?.reason?.message || 'Email delivery failed' }));
+    writeAuditLog({ userId: req.user.id, action: 'job.application.confirm_notify', resourceType: 'job_posting', resourceId: job.id, metadata: { requested: application_ids.length, notified: notifiedIds.length, failed: failed.length }, req });
+    res.json({ message: notifiedIds.length === applications.length ? `${notifiedIds.length} applicant(s) notified` : `${notifiedIds.length} applicant(s) notified; ${failed.length} email(s) failed`, notified: notifiedIds.length, failed: failed.length, failures: failed });
   } catch (err) { next(err); }
 };
 
