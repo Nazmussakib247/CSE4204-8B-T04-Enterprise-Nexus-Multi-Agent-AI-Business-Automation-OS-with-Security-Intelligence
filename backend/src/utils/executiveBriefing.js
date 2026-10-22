@@ -21,7 +21,9 @@ async function buildSnapshot(period) {
   const bounds = periodBounds(period);
   const [ordersRes, financeRes, ticketsRes, jobsRes, applicationsRes, auditsRes] = await Promise.all([
     supabase.from('orders').select('total,status,created_at').gte('created_at', bounds.previousStart.toISOString()),
-    supabase.from('finance_records').select('category,amount,severity,is_anomaly,expense_date,description').gte('created_at', bounds.start.toISOString()).order('created_at', { ascending: false }).limit(100),
+    // Older production finance schemas do not have is_anomaly; severity is
+    // the canonical anomaly signal written by the current finance agent.
+    supabase.from('finance_records').select('category,amount,severity,expense_date,description').gte('created_at', bounds.start.toISOString()).order('created_at', { ascending: false }).limit(100),
     supabase.from('support_tickets').select('query,intent,urgency,sentiment,status,escalated,created_at').gte('created_at', bounds.start.toISOString()).order('created_at', { ascending: false }).limit(100),
     supabase.from('job_postings').select('title,department,status,created_at').gte('created_at', bounds.start.toISOString()).limit(100),
     supabase.from('job_applications').select('status,ai_score,ai_recommendation,created_at').gte('created_at', bounds.start.toISOString()).limit(100),
@@ -32,7 +34,7 @@ async function buildSnapshot(period) {
   const previousOrders = orders.filter((order) => new Date(order.created_at) < bounds.start);
   const currentRevenue = revenue(currentOrders);
   const previousRevenue = revenue(previousOrders);
-  const finance = mustData(financeRes);
+  const finance = mustData(financeRes).map((item) => ({ ...item, is_anomaly: Boolean(item.is_anomaly) || ['high', 'critical'].includes(item.severity) }));
   const tickets = mustData(ticketsRes);
   const applications = mustData(applicationsRes);
   const audits = mustData(auditsRes);
