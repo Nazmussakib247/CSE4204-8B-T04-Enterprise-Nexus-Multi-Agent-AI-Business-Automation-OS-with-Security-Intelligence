@@ -148,14 +148,22 @@ const sendEscalationEmail = async ({ to, ticketId, subject, priority, descriptio
   return info;
 };
 
-const sendApplicationNotificationEmail = async ({ to, candidateName, jobTitle, message }) => {
-  const t = await getTransporter();
-  const body = message || `Thank you for applying for the ${jobTitle} role. Our HR team has reviewed your application and will be in touch with next steps.`;
+const sendApplicationNotificationEmail = async ({ to, candidateName, jobTitle, recommendation, message }) => {
+  if (!to) throw new Error('Applicant email is missing');
+  const decision = ['shortlist', 'review', 'reject'].includes(String(recommendation).toLowerCase()) ? String(recommendation).toLowerCase() : 'review';
+  const bodies = {
+    shortlist: `Good news — your application for the ${jobTitle} role has been shortlisted. Our HR team will contact you with the next step shortly.`,
+    review: `Your application for the ${jobTitle} role is still under review. We are carefully comparing applications and will contact you when there is an update.`,
+    reject: `Thank you for applying for the ${jobTitle} role. After reviewing your application, we will not be moving forward at this time. We appreciate your interest in Enterprise NeXus.`,
+  };
+  const body = message || bodies[decision];
+  const safeName = String(candidateName || 'there').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+  const safeBody = String(body).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
   const info = await sendMail({
     from: FROM,
-    to,
-    subject: `Update on your application — ${jobTitle}`,
-    html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto"><h2 style="color:#00c2a8">Application update</h2><p>Hi ${candidateName || 'there'},</p><p>${body}</p><p style="color:#666;font-size:13px">Enterprise NeXus HR Team</p></div>`,
+    to: String(to).trim(),
+    subject: `${decision === 'shortlist' ? 'Next step' : 'Update'} on your application — ${jobTitle}`,
+    html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto"><h2 style="color:#00c2a8">Application update</h2><p>Hi ${safeName},</p><p>${safeBody}</p><p style="color:#666;font-size:13px">Enterprise NeXus HR Team</p></div>`,
     text: `Hi ${candidateName || 'there'},\n\n${body}\n\nEnterprise NeXus HR Team`,
   });
   if (nodemailer.getTestMessageUrl(info)) logger.info(`[Email] Application notification preview: ${nodemailer.getTestMessageUrl(info)}`);
