@@ -1,0 +1,11 @@
+ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS ai_status TEXT DEFAULT 'pending';
+ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS ai_response TEXT;
+ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS sentiment TEXT;
+ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS urgency TEXT DEFAULT 'medium';
+ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS escalated BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS human_intervention_required BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS human_intervention_reason TEXT;
+ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS human_intervention_status TEXT DEFAULT 'not_required';
+ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS human_response TEXT;
+ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS human_response_by UUID;
+ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS human_response_at TIMESTAMPTZ;
