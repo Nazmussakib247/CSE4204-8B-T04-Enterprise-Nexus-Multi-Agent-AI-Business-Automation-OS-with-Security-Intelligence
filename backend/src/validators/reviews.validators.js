@@ -10,4 +10,13 @@ const replyReviewSchema = Joi.object({
   response: Joi.string().trim().min(3).max(2000).required(),
 });
 
-module.exports = { createReviewSchema, replyReviewSchema };
+const customerReviewReplySchema = Joi.object({
+  body: Joi.string().trim().min(1).max(2000).required(),
+});
+
+const updateReviewSchema = Joi.object({
+  rating: Joi.number().integer().min(1).max(5).required(),
+  comment: Joi.string().trim().min(1).max(2000).required(),
+});
+
+module.exports = { createReviewSchema, replyReviewSchema, customerReviewReplySchema, updateReviewSchema };
