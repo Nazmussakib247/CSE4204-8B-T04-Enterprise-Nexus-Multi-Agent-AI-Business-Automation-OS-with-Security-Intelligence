@@ -12,7 +12,7 @@ interface SupportMessage { id: string; sender_type: 'customer' | 'staff' | 'ai';
 interface CustomerTicket { id: string; query: string; status: string; human_response?: string | null; human_intervention_required?: boolean; human_intervention_reason?: string | null; created_at: string; support_messages?: SupportMessage[] }
 
 const statusLabel: Record<string, string> = {
-  open: 'Awaiting AI support', in_progress: 'Support is working on it', escalated: 'Priority human support', resolved: 'Resolved',
+  open: 'Support is working on it', in_progress: 'Support is working on it', escalated: 'Human support notified', resolved: 'Resolved',
 }
 
 function CustomerSupportContent() {
@@ -62,10 +62,9 @@ function CustomerSupportContent() {
     try {
       const { data } = await supportApi.createMessage(ticketId, body)
       setTickets(current => current.map(ticket => ticket.id === ticketId ? {
-        ...ticket, status: 'open', support_messages: [...(ticket.support_messages ?? []), data.data as SupportMessage],
+        ...ticket, status: ticket.human_intervention_required ? ticket.status : 'in_progress', support_messages: [...(ticket.support_messages ?? []), data.data as SupportMessage],
       } : ticket))
       setDrafts(current => ({ ...current, [ticketId]: '' }))
-      toast.success('Follow-up sent to support')
     } catch (err) { toast.error(getApiErrorMessage(err, 'Could not send message')) } finally { setSendingTicketId(null) }
   }
 
@@ -78,8 +77,9 @@ function CustomerSupportContent() {
 
   return <div className="max-w-[560px] mx-auto px-6 py-12">
     <h1 className="font-display text-display-lg text-on-surface mb-1">Contact support</h1>
-    <p className="font-body text-[14px] text-on-surface-variant mb-8">Send us a message and continue the conversation here. Add an order for faster, order-aware help.</p>
+    <p className="font-body text-[14px] text-on-surface-variant mb-8">Start a support conversation. We’ll keep every reply in one thread and use your order details to help faster.</p>
     <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-outline-variant/50 p-6">
+      <div className="flex items-center gap-2 mb-5"><span className="material-symbols-outlined text-[20px] text-primary">forum</span><div><h2 className="font-display text-[17px] font-semibold text-on-surface">Start a new conversation</h2><p className="font-body text-[12px] text-on-surface-variant">Tell us what you need help with.</p></div></div>
       {orders.length > 0 && <div className="mb-4">
         <label className="block font-mono text-[11px] uppercase tracking-wide text-on-surface-variant mb-1.5">Related order (optional)</label>
         <select value={orderId} onChange={e => setOrderId(e.target.value)} className="w-full bg-white border border-outline-variant rounded-xl px-4 py-2.5 font-body text-[14px] text-on-surface focus:outline-none focus:border-primary-container">
@@ -91,10 +91,11 @@ function CustomerSupportContent() {
         <label className="block font-mono text-[11px] uppercase tracking-wide text-on-surface-variant mb-1.5">Describe your issue</label>
         <textarea value={message} onChange={e => setMessage(e.target.value)} rows={4} placeholder="What's going on?" className="w-full bg-white border border-outline-variant rounded-xl px-4 py-2.5 font-body text-[14px] text-on-surface resize-none focus:outline-none focus:border-primary-container" />
       </div>
-      <button type="submit" disabled={submitting} className="w-full h-11 rounded-xl bg-primary text-on-primary font-body text-[14px] font-medium hover:bg-primary/90 transition-colors disabled:opacity-60">{submitting ? 'Sending request…' : 'Send request'}</button>
+      <button type="submit" disabled={submitting} className="w-full h-11 rounded-xl bg-primary text-on-primary font-body text-[14px] font-medium hover:bg-primary/90 transition-colors disabled:opacity-60">{submitting ? 'Starting conversation…' : 'Start conversation'}</button>
     </form>
     <section className="mt-8">
-      <h2 className="font-display text-[18px] font-semibold text-on-surface mb-3">Your support requests</h2>
+      <h2 className="font-display text-[18px] font-semibold text-on-surface mb-1">Your conversations</h2>
+      <p className="font-body text-[13px] text-on-surface-variant mb-3">Continue in the thread below. New replies will appear here automatically.</p>
       {!tickets.length ? <p className="font-body text-[13px] text-on-surface-variant">No support requests yet.</p> : <div className="space-y-4">
         {tickets.map(ticket => {
           const storedMessages = ticket.support_messages ?? []
@@ -105,12 +106,12 @@ function CustomerSupportContent() {
           return <article key={ticket.id} className="bg-white rounded-2xl border border-outline-variant/50 p-5">
             <div className="flex items-center justify-between gap-3 mb-4"><p className="font-mono text-[11px] uppercase tracking-wider text-on-surface-variant">Request #{ticket.id.slice(0, 8)}</p><span className="font-mono text-[10px] uppercase tracking-wider text-primary">{statusLabel[ticket.status] || 'Received'}</span></div>
             {ticket.human_intervention_required && ticket.status !== 'resolved' && <div className="mb-4 rounded-xl border border-amber-300/60 bg-amber-50 px-3 py-2.5"><p className="font-mono text-[10px] uppercase tracking-wider text-amber-800">Human support review</p><p className="mt-1 font-body text-[12px] text-amber-900">Our support specialist has been notified and will reply here shortly.</p></div>}
-            <div className="space-y-3">{conversation.map(item => <div key={item.id} className={`rounded-xl border p-3 ${item.sender_type === 'customer' ? 'bg-surface border-outline-variant/40' : item.sender_type === 'staff' ? 'bg-primary/5 border-primary-container/30' : 'bg-tertiary-container/25 border-tertiary/20'}`}>
+            <div className="border-t border-outline-variant/30 pt-4"><p className="font-mono text-[10px] uppercase tracking-wider text-on-surface-variant mb-2">Conversation</p><div className="space-y-3">{conversation.map(item => <div key={item.id} className={`rounded-xl border p-3 ${item.sender_type === 'customer' ? 'bg-surface border-outline-variant/40' : item.sender_type === 'staff' ? 'bg-primary/5 border-primary-container/30' : 'bg-tertiary-container/25 border-tertiary/20'}`}>
               <p className="font-mono text-[10px] uppercase tracking-wider text-primary mb-1">{item.sender_type === 'customer' ? 'You' : item.sender_type === 'staff' ? 'Support team' : 'Support assistant'}</p><p className="font-body text-[13px] text-on-surface whitespace-pre-wrap">{item.body}</p>
-            </div>)}</div>
+            </div>)}</div></div>
             {ticket.status !== 'resolved' && <div className="mt-4 flex gap-2">
-              <input value={drafts[ticket.id] ?? ''} onChange={e => setDrafts(current => ({ ...current, [ticket.id]: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); sendFollowUp(ticket.id) } }} maxLength={2000} placeholder="Reply to support…" className="min-w-0 flex-1 border border-outline-variant rounded-xl px-3 py-2.5 font-body text-[13px] text-on-surface focus:outline-none focus:border-primary-container" />
-              <button type="button" disabled={sendingTicketId === ticket.id} onClick={() => sendFollowUp(ticket.id)} className="shrink-0 rounded-xl bg-primary px-4 font-body text-[13px] font-medium text-on-primary disabled:opacity-60">{sendingTicketId === ticket.id ? 'Sending…' : 'Reply'}</button>
+              <input aria-label="Reply to support" value={drafts[ticket.id] ?? ''} onChange={e => setDrafts(current => ({ ...current, [ticket.id]: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); sendFollowUp(ticket.id) } }} maxLength={2000} placeholder="Write a reply…" className="min-w-0 flex-1 border border-outline-variant rounded-xl px-3 py-2.5 font-body text-[13px] text-on-surface focus:outline-none focus:border-primary-container" />
+              <button type="button" disabled={sendingTicketId === ticket.id} onClick={() => sendFollowUp(ticket.id)} className="shrink-0 rounded-xl bg-primary px-4 font-body text-[13px] font-medium text-on-primary disabled:opacity-60">{sendingTicketId === ticket.id ? 'Sending…' : 'Send reply'}</button>
             </div>}
           </article>
         })}
