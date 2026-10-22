@@ -85,7 +85,9 @@ async function getOrCreateBriefing(userId, requestedPeriod = 'daily', force = fa
   }
   const snapshot = await buildSnapshot(bounds.period);
   const generated = await generateBriefing(snapshot);
-  const { data, error } = await supabase.from('executive_reports').insert({ user_id: userId, performance_summary: generated.summary, ai_briefing: generated.summary, briefing_data: { snapshot, alerts: generated.alerts }, recommendations: generated.recommendations, period_type: bounds.period, period_start: dateKey(bounds.start), period_end: dateKey(bounds.end) }).select().single();
+  // performance_summary is the canonical narrative. Keep the insert
+  // compatible with older production databases that predate ai_briefing.
+  const { data, error } = await supabase.from('executive_reports').insert({ user_id: userId, performance_summary: generated.summary, briefing_data: { snapshot, alerts: generated.alerts }, recommendations: generated.recommendations, period_type: bounds.period, period_start: dateKey(bounds.start), period_end: dateKey(bounds.end) }).select().single();
   if (error) throw error;
   return data;
 }
