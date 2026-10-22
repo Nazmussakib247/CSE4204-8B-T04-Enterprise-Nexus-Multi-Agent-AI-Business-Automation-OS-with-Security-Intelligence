@@ -113,7 +113,8 @@ export const productsApi = {
 
 export const reviewsApi = {
   getForProduct: (productId: string) => api.get(`/reviews/products/${productId}`),
-  create: (data: { product_id: string; rating: number; comment: string }) => api.post('/reviews', data),
+  getEligibility: (productId: string) => api.get(`/reviews/products/${productId}/eligibility`),
+  create: (data: { product_id: string; order_id: string; rating: number; comment: string }) => api.post('/reviews', data),
   update: (id: string, data: { rating: number; comment: string }) => api.patch(`/reviews/${id}`, data),
   replyAsCustomer: (id: string, body: string) => api.post(`/reviews/${id}/replies`, { body }),
   getFlagged: () => api.get('/reviews/flagged'),
