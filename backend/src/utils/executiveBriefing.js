@@ -52,13 +52,26 @@ async function buildSnapshot(period) {
 }
 
 async function generateBriefing(snapshot) {
-  const response = await generateJson({
-    preferProvider: 'groq', strictProvider: true,
-    systemInstruction: 'You are an expert business executive analyst. Use only the supplied data. Write a clear executive briefing: explain sales movement, customer sentiment and requests, finance risks/anomalies, hiring and security. State that a data point has no comparison where applicable. Give prioritized concrete recommendations. Return JSON only.',
-    prompt: `EXECUTIVE PERIOD SNAPSHOT:\n${JSON.stringify(snapshot)}`,
-    responseSchema: { type: 'object', properties: { summary: { type: 'string' }, recommendations: { type: 'array', items: { type: 'string' } }, alerts: { type: 'array', items: { type: 'string' } } }, required: ['summary', 'recommendations', 'alerts'] },
-  });
-  return response;
+  try {
+    return await generateJson({
+      preferProvider: 'groq', strictProvider: true,
+      systemInstruction: 'You are an expert business executive analyst. Use only the supplied data. Write a clear executive briefing: explain sales movement, customer sentiment and requests, finance risks/anomalies, hiring and security. State that a data point has no comparison where applicable. Give prioritized concrete recommendations. Return JSON only.',
+      prompt: `EXECUTIVE PERIOD SNAPSHOT:\n${JSON.stringify(snapshot)}`,
+      responseSchema: { type: 'object', properties: { summary: { type: 'string' }, recommendations: { type: 'array', items: { type: 'string' } }, alerts: { type: 'array', items: { type: 'string' } } }, required: ['summary', 'recommendations', 'alerts'] },
+    });
+  } catch (error) {
+    // A provider outage must not make the Executive page unusable. Persist a
+    // transparent data-backed summary and let the next refresh retry Groq.
+    const recommendations = [];
+    if (snapshot.sales.change_percent !== null && snapshot.sales.change_percent < 0) recommendations.push('Review the sales drop and focus the next campaign on the highest-value customer segments.');
+    if (snapshot.customers.open_tickets > 0) recommendations.push('Prioritize open support tickets and review repeated customer requests.');
+    if (snapshot.finance.anomalies.length || snapshot.finance.high_severity.length) recommendations.push('Review flagged finance records before approving new spending.');
+    if (!recommendations.length) recommendations.push('Continue monitoring sales, customer support, finance and hiring signals for the next review period.');
+    const alerts = [];
+    if (snapshot.finance.high_severity.length) alerts.push(`${snapshot.finance.high_severity.length} high-severity finance record(s) need review.`);
+    if (snapshot.customers.escalated_tickets) alerts.push(`${snapshot.customers.escalated_tickets} support ticket(s) are escalated for human attention.`);
+    return { summary: `Automated briefing from live business data: ${snapshot.sales.orders} booked order(s), ${snapshot.customers.open_tickets} open support ticket(s), ${snapshot.finance.total_records} finance record(s), and ${snapshot.hiring.applications} application(s) in this period. AI narrative generation is temporarily unavailable, so this factual summary is shown until the next refresh.`, recommendations, alerts };
+  }
 }
 
 async function getOrCreateBriefing(userId, requestedPeriod = 'daily', force = false) {
