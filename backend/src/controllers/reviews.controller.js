@@ -42,13 +42,21 @@ const defaultReviewReply = ({ rating, flagged, productName }) => {
 
 const publishAutomatedReply = async ({ reviewId, productName, rating, comment, flagged }) => {
   const fallback = defaultReviewReply({ rating, flagged, productName });
-  const { data: message, error: messageError } = await supabase
-    .from('product_review_messages')
-    .insert({ review_id: reviewId, sender_type: 'ai', body: fallback })
-    .select('id, sender_type, body, created_at')
-    .single();
-  if (messageError) throw messageError;
-  await supabase.from('product_reviews').update({ support_reply: fallback, support_replied_at: new Date().toISOString() }).eq('id', reviewId);
+  const repliedAt = new Date().toISOString();
+  const { error: replyError } = await supabase.from('product_reviews').update({ support_reply: fallback, support_replied_at: repliedAt }).eq('id', reviewId);
+  if (replyError) throw replyError;
+  let message = { id: `legacy-${reviewId}`, sender_type: 'ai', body: fallback, created_at: repliedAt };
+  try {
+    const { data, error: messageError } = await supabase
+      .from('product_review_messages')
+      .insert({ review_id: reviewId, sender_type: 'ai', body: fallback })
+      .select('id, sender_type, body, created_at')
+      .single();
+    if (!messageError && data) message = data;
+    else if (messageError) console.warn('[reviews] support reply thread unavailable:', messageError.message);
+  } catch (messageError) {
+    console.warn('[reviews] support reply thread unavailable:', messageError.message);
+  }
 
   // The durable fallback is visible immediately. Improve it in the background
   // when Groq is available without making review submission depend on AI uptime.
@@ -62,7 +70,7 @@ const publishAutomatedReply = async ({ reviewId, productName, rating, comment, f
       });
       const reply = String(ai.reply || '').trim();
       if (reply.length < 3) return;
-      await supabase.from('product_review_messages').update({ body: reply }).eq('id', message.id);
+      if (!message.id.startsWith('legacy-')) await supabase.from('product_review_messages').update({ body: reply }).eq('id', message.id);
       await supabase.from('product_reviews').update({ support_reply: reply, support_replied_at: new Date().toISOString() }).eq('id', reviewId);
     } catch (error) {
       console.warn('[reviews] automated support reply refinement deferred:', error.message);
