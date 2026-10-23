@@ -268,6 +268,8 @@ export const adminApi = {
     api.patch(`/admin/users/${id}/role`, { role, reason }),
   toggleUserStatus: (id: string, is_active: boolean, reason: string) =>
     api.patch(`/admin/users/${id}/status`, { is_active, reason }),
+  deleteUser: (id: string, reason: string) =>
+    api.delete(`/admin/users/${id}`, { data: { reason } }),
   approveUser: (id: string, reason: string) =>
     api.patch(`/admin/users/${id}/approve`, { reason }),
 }

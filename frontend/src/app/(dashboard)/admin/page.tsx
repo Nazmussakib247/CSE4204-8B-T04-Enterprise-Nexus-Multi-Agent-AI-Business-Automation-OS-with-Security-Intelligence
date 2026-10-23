@@ -121,6 +121,24 @@ export default function AdminPage() {
     }
   }
 
+  const handleDelete = async (u: User) => {
+    if (!window.confirm(`Permanently delete ${u.email}? This cannot be undone.`)) return
+    const reason = window.prompt(`Why are you permanently deleting ${u.email}?`)?.trim()
+    if (!reason) return
+    setActionLoading(`delete-${u.id}`)
+    try {
+      await adminApi.deleteUser(u.id, reason)
+      setUsers(current => current.filter(x => x.id !== u.id))
+      setTotal(current => Math.max(0, current - 1))
+      toast.success('Account permanently deleted')
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+      toast.error(msg ?? 'Failed to delete account')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
   return (
     <div className="space-y-6 max-w-[1200px]">
       <PageHeader
@@ -165,7 +183,7 @@ export default function AdminPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px]">
+          <table className="w-full min-w-[820px]">
             <thead>
               <tr className="bg-surface-container-low">
                 {['User', 'Email', 'Role', 'Status', 'Joined', 'Actions'].map(h => (
@@ -260,6 +278,14 @@ export default function AdminPage() {
                         >
                           <span className="material-symbols-outlined text-[14px]">{actionLoading === `status-${u.id}` ? 'hourglass_empty' : u.is_active ? 'block' : 'check_circle'}</span>
                           {u.is_active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(u)}
+                          disabled={actionLoading === `delete-${u.id}`}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-[10px] uppercase tracking-wider border border-error/40 text-error hover:bg-error-container/25 transition-all disabled:opacity-50"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">{actionLoading === `delete-${u.id}` ? 'hourglass_empty' : 'delete'}</span>
+                          Delete
                         </button>
                       </div>
                     )}
