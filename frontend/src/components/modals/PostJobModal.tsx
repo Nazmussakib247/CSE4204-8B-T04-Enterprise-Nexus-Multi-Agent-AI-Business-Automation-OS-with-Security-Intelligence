@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { jobsApi, getApiErrorMessage } from '@/lib/api'
 
@@ -19,8 +20,7 @@ export default function PostJobModal({ open, onClose, onCreated }: Props) {
   const [screeningCriteria, setScreeningCriteria] = useState('')
   const [skills, setSkills] = useState<RequiredSkill[]>([{ skill: '', weight: 100 }])
   const [loading, setLoading] = useState(false)
-
-  if (!open) return null
+  const [suggesting, setSuggesting] = useState(false)
 
   const totalWeight = skills.reduce((sum, s) => sum + (Number(s.weight) || 0), 0)
   const weightOk = totalWeight === 100
@@ -31,6 +31,20 @@ export default function PostJobModal({ open, onClose, onCreated }: Props) {
   }
   const handleClose = () => { reset(); onClose() }
 
+  useEffect(() => {
+    if (!open) return
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape' && !loading && !suggesting) handleClose() }
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open, loading, suggesting])
+
+  if (!open) return null
+
   const updateSkill = (i: number, field: 'skill' | 'weight', value: string) => {
     setSkills(prev => prev.map((s, idx) => idx === i
       ? { ...s, [field]: field === 'weight' ? Math.max(0, Math.min(100, Number(value) || 0)) : value }
@@ -39,10 +53,44 @@ export default function PostJobModal({ open, onClose, onCreated }: Props) {
   const addSkillRow = () => setSkills(prev => [...prev, { skill: '', weight: 0 }])
   const removeSkillRow = (i: number) => setSkills(prev => prev.filter((_, idx) => idx !== i))
 
+  const suggestJobContent = async () => {
+    if (title.trim().length < 2 || !department.trim()) {
+      toast.error('Enter a job title and department first')
+      return
+    }
+
+    setSuggesting(true)
+    try {
+      const { data } = await jobsApi.suggest(title.trim(), department.trim())
+      const suggestedSkills: string[] = data.data.required_skills
+      const baseWeight = Math.floor(100 / suggestedSkills.length)
+      const remainder = 100 - baseWeight * suggestedSkills.length
+      setDescription(data.data.description)
+      setScreeningCriteria(data.data.screening_criteria)
+      setSkills(suggestedSkills.map((skill, index) => ({
+        skill,
+        weight: baseWeight + (index < remainder ? 1 : 0),
+      })))
+      toast.success('AI suggestions added — review and edit before posting')
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Could not generate suggestions'))
+    } finally {
+      setSuggesting(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!title.trim() || !description.trim() || !screeningCriteria.trim()) {
-      toast.error('Title, description and screening criteria are required')
+    if (title.trim().length < 2) {
+      toast.error('Enter a job title with at least 2 characters')
+      return
+    }
+    if (description.trim().length < 10) {
+      toast.error('Description needs at least 10 characters')
+      return
+    }
+    if (screeningCriteria.trim().length < 2) {
+      toast.error('Add at least one screening criterion')
       return
     }
     const cleanSkills = skills.filter(s => s.skill.trim())
@@ -71,18 +119,25 @@ export default function PostJobModal({ open, onClose, onCreated }: Props) {
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={handleClose} />
+  if (typeof document === 'undefined') return null
 
-      <div className="relative bg-white rounded-2xl border border-outline-variant/50 w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/30">
-          <div>
-            <h2 className="font-display text-[16px] font-semibold text-on-surface">Post a Job</h2>
-            <p className="font-mono text-[10px] text-on-surface-variant mt-0.5 uppercase tracking-wider">Goes live on the public careers page instantly</p>
+  return createPortal((
+    <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="post-job-modal-title">
+      <div className="modal-backdrop" onClick={handleClose} />
+
+      <div className="modal-panel max-w-lg overflow-y-auto">
+        <div className="flex items-center justify-between gap-4 bg-gradient-to-br from-[#073c39] via-[#007c6b] to-[#00c2a8] px-6 py-5 text-white">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
+              <span className="material-symbols-outlined text-[21px] icon-filled">work</span>
+            </div>
+            <div>
+              <h2 id="post-job-modal-title" className="font-display text-[17px] font-semibold">Post a Job</h2>
+              <p className="mt-0.5 font-mono text-[10px] uppercase tracking-wider text-white/70">Goes live on the careers page instantly</p>
+            </div>
           </div>
-          <button onClick={handleClose} className="w-8 h-8 rounded-xl hover:bg-surface-container flex items-center justify-center transition-colors">
-            <span className="material-symbols-outlined text-[18px] text-on-surface-variant">close</span>
+          <button type="button" onClick={handleClose} aria-label="Close post job dialog" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 transition-colors hover:bg-white/20">
+            <span className="material-symbols-outlined text-[19px]">close</span>
           </button>
         </div>
 
@@ -104,6 +159,13 @@ export default function PostJobModal({ open, onClose, onCreated }: Props) {
             </div>
           </div>
 
+          <button type="button" onClick={suggestJobContent}
+            disabled={suggesting || !title.trim() || !department.trim()}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl border border-primary/25 bg-primary/5 font-mono text-[10px] uppercase tracking-wider text-primary hover:bg-primary/10 transition-colors disabled:opacity-50">
+            <span className="material-symbols-outlined text-[16px]">{suggesting ? 'hourglass_empty' : 'auto_awesome'}</span>
+            {suggesting ? 'Generating suggestions…' : 'Generate content with AI'}
+          </button>
+
           <div>
             <label className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1.5">
               Description <span className="text-error">*</span>
@@ -117,6 +179,7 @@ export default function PostJobModal({ open, onClose, onCreated }: Props) {
             <label className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1.5">
               Screening Criteria <span className="text-error">*</span>
             </label>
+            <p className="font-body text-[11px] text-on-surface-variant mb-1.5">Private hiring guidance for AI CV screening. This is not shown to applicants.</p>
             <textarea value={screeningCriteria} onChange={e => setScreeningCriteria(e.target.value)} rows={2}
               placeholder="What the AI should look for when scoring CVs against this role..."
               className="w-full px-4 py-2.5 rounded-xl border border-outline-variant bg-surface-container-low text-[13px] text-on-surface focus:outline-none focus:border-primary-container transition-colors resize-none font-body" />
@@ -176,5 +239,5 @@ export default function PostJobModal({ open, onClose, onCreated }: Props) {
         </form>
       </div>
     </div>
-  )
+  ), document.body)
 }
