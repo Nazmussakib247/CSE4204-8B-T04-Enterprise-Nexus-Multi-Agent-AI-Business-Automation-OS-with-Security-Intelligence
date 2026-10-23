@@ -74,14 +74,24 @@ export default function TicketModal({ open, onClose, onCreated }: Props) {
     <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="ticket-modal-title">
       <div className="modal-backdrop" onClick={onClose} />
 
-      <div className="modal-panel max-w-lg">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/30">
-          <div>
-            <h2 id="ticket-modal-title" className="font-display text-[16px] font-semibold text-on-surface">New Support Ticket</h2>
-            <p className="font-mono text-[10px] text-on-surface-variant mt-0.5 uppercase tracking-wider">AI will analyse sentiment and urgency</p>
+      <div className="modal-panel max-w-lg overflow-hidden">
+        <div className="flex items-center justify-between gap-4 bg-gradient-to-br from-[#0b3440] via-[#006b5c] to-[#00a892] px-6 py-5 text-white">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
+              <span className="material-symbols-outlined text-[21px] icon-filled">support_agent</span>
+            </div>
+            <div>
+              <h2 id="ticket-modal-title" className="font-display text-[17px] font-semibold">New Support Ticket</h2>
+              <p className="mt-0.5 font-mono text-[10px] uppercase tracking-wider text-white/70">AI will analyse sentiment and urgency</p>
+            </div>
           </div>
+          <button type="button" onClick={onClose} aria-label="Close support ticket dialog" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 transition-colors hover:bg-white/20">
+            <span className="material-symbols-outlined text-[19px]">close</span>
+          </button>
+        </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div><label className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1.5">Related order <span className="normal-case tracking-normal">(optional)</span></label>
               <select value={orderId} onChange={e => setOrderId(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-outline-variant bg-white text-[13px]"><option value="">No order selected</option>{orders.map(order => <option key={order.id} value={order.id}>{order.products?.name ?? 'Order'} · {order.id.slice(0, 8)}</option>)}</select>
             </div>
@@ -89,12 +99,6 @@ export default function TicketModal({ open, onClose, onCreated }: Props) {
               <select value={productId} onChange={e => setProductId(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-outline-variant bg-white text-[13px]"><option value="">No product selected</option>{products.map(product => <option key={product.id} value={product.id}>{product.name}</option>)}</select>
             </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-xl hover:bg-surface-container flex items-center justify-center transition-colors">
-            <span className="material-symbols-outlined text-[18px] text-on-surface-variant">close</span>
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           <div>
             <label className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1.5">
               Describe your issue <span className="text-error">*</span>
