@@ -23,17 +23,35 @@
 | Frontend Developer — 1 | [Most Sumiya Sanjida](https://bd.linkedin.com/in/shumaiya-shanjidah-65337b42b) | 11220320874 |
 ---
 
+## Project Links
+
+| Resource | Link |
+|---|---|
+| Live application | [enterprise-nexus-delta.vercel.app](https://enterprise-nexus-delta.vercel.app) |
+| Store | [enterprise-nexus-delta.vercel.app/store](https://enterprise-nexus-delta.vercel.app/store) |
+| Backend health check | [enterprise-nexus-backend.onrender.com/api/health](https://enterprise-nexus-backend.onrender.com/api/health) |
+| Promotional video | [Watch on YouTube](https://youtu.be/VXz9r8ys9jY?feature=shared) |
+
+## Project Posters
+
+<p align="center">
+  <img src="assets/posters/enterprise-nexus-poster-green.jpg" alt="Enterprise NeXus system architecture poster" width="48%" />
+  <img src="assets/posters/enterprise-nexus-poster-color.jpg" alt="Enterprise NeXus project overview poster" width="48%" />
+</p>
+
+---
+
 ## Project Description
 
 Enterprise NeXus is a Multi-Agent AI Business Automation Operating System designed to unify and intelligently automate core business functions for small and medium enterprises, startups, and growing organizations.
 
-The platform deploys five specialized AI agents — an HR Agent, a Finance Agent, a Support Agent, an Analytics Agent, and an Executive Agent — each responsible for a distinct operational domain. These agents operate through a centralized orchestration layer powered by LangChain.js, enabling them to collaborate autonomously, delegate sub-tasks across departments, and deliver synthesized intelligence to a unified, role-based web dashboard. A dedicated Security Intelligence module monitors threats and enforces data protection across the entire system.
+The platform deploys six specialized agents — HR, Finance, Support, Analytics, Security Intelligence, and Executive — coordinated through a centralized orchestration layer. Each agent owns a defined operational domain, while the Executive Agent delegates cross-domain requests and composes the final response for the role-based dashboard.
 
 ---
 
 ## Proposed Features
 
-- Multi-Agent AI Orchestration (HR, Finance, Support, Analytics, Executive)
+- Multi-Agent AI Orchestration (HR, Finance, Support, Analytics, Security Intelligence, Executive)
 - Intelligent CV Screening via the HR Agent
 - Financial Pattern Recognition and Anomaly Detection
 - Context-Aware Customer Support with RAG
@@ -70,7 +88,7 @@ The platform deploys five specialized AI agents — an HR Agent, a Finance Agent
 
 Enterprise NeXus integrates AI as its core product layer — a multi-agent system that reasons over the user's own business data, not a bolt-on feature.
 
-**Selected AI Platform:** Google Gemini (`gemini-1.5-flash`, configurable via `GEMINI_MODEL`)
+**Selected AI Platform:** Google Gemini, configurable through the `GEMINI_MODEL` environment variable
 **AI Framework:** LangChain.js (`@langchain/google-genai`) with a custom `BaseAgent` tool-calling foundation
 
 **AI Features Implemented**
@@ -78,7 +96,8 @@ Enterprise NeXus integrates AI as its core product layer — a multi-agent syste
 - **Finance Agent** — Financial anomaly detection (normal/medium/high/critical) with explanatory notes; automated invoice parsing
 - **Support Agent** — Context-aware ticket triage (intent, urgency, sentiment) with RAG-grounded reply drafting and auto-escalation
 - **Analytics Agent** — Cross-module KPI snapshots and AI-generated performance reports
-- **Executive Agent** — Multi-agent orchestrator that delegates to the four specialists and produces daily cross-domain briefings
+- **Security Intelligence Agent** — Role-based access, audit visibility, risk monitoring, and security event analysis
+- **Executive Agent** — Multi-agent orchestrator that delegates to the five specialist agents and produces daily cross-domain briefings
 - **Semantic Search / RAG** — Gemini `text-embedding-004` embeddings stored in Supabase pgvector, retrieved via the `match_documents` RPC (top-5 cosine similarity)
 
 **AI Workflow**
@@ -103,7 +122,7 @@ flowchart TD
 
 ## Objectives
 
-1. **Automate Department-Level Operations** — Deploy five specialized AI agents to autonomously handle routine business workflows.
+1. **Automate Department-Level Operations** — Deploy six specialized agents to autonomously handle routine business workflows.
 2. **Deliver Intelligent Decision Support** — Leverage Google Gemini to generate data-driven insights, anomaly alerts, KPI narratives, and strategic briefings.
 3. **Centralize Business Intelligence** — Unify HR, financial, support, and operational data into a single platform with a real-time dashboard.
 4. **Ensure Enterprise-Grade Security** — Implement JWT-based authentication, RBAC, bcryptjs hashing, rate limiting, and input sanitisation.
@@ -118,7 +137,7 @@ flowchart TD
 |---|---|---|
 | Week 06 | Backend Development | JWT auth, PostgreSQL migration, REST APIs, n8n workflow setup |
 | Week 07 | Frontend Development | Next.js screens, routing, backend API integration |
-| Week 08 | AI Integration | Gemini API, LangChain, CrewAI agents, pgvector, RAG setup |
+| Week 08 | AI Integration | Gemini API, LangChain.js, multi-agent orchestration, pgvector, RAG setup |
 | Week 09 | Feature Completion | UI polish, Socket.io real-time, cross-agent communication |
 | Week 10 | Testing & Debugging | Functional, API, UI testing and bug fixes |
 | Week 11 | Deployment | Vercel, Render, Docker, production tests |
@@ -132,7 +151,7 @@ flowchart TD
 
 | Team Member | Role | Main Responsibilities |
 |---|---|---|
-| Nazmus Sakib | Team Leader & AI Integration Lead | System architecture, Gemini API, LangChain, CrewAI multi-agent setup, n8n workflow automation, HR Agent, Finance Agent, Security Intelligence module |
+| Nazmus Sakib | Team Leader & AI Integration Lead | System architecture, Gemini API, LangChain.js, custom multi-agent orchestration, n8n workflow automation, HR Agent, Finance Agent, Security Intelligence Agent |
 | Shoeb Shariar Mashuk | Backend Developer | REST APIs, JWT authentication, PostgreSQL, backend deployment |
 | Most Sumiya Sanjida | Frontend Developer | Next.js UI screens, routing, backend API integration, Support Agent, Executive Agent UI |
 | Sabrina Ibrahim | Frontend Developer | Figma design review, React frontend verification, responsive testing, and frontend contribution |
