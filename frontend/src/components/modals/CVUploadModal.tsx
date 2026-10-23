@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { getApiErrorMessage, hrApi, hrUploadApi, jobsApi } from '@/lib/api'
 import toast from 'react-hot-toast'
 
@@ -32,7 +33,6 @@ export default function CVUploadModal({ open, onClose, onCreated }: Props) {
       .finally(() => setLoadingJobs(false))
   }, [open])
 
-  if (!open) return null
   const selectedJob = jobs.find(job => job.id === jobId)
   const reset = () => {
     setCandidateName(''); setJobId(''); setCvText(''); setFiles([]); setMode('file'); setProgress({ completed: 0, total: 0 })
@@ -40,6 +40,20 @@ export default function CVUploadModal({ open, onClose, onCreated }: Props) {
     if (folderRef.current) folderRef.current.value = ''
   }
   const close = () => { if (!loading) { reset(); onClose() } }
+
+  useEffect(() => {
+    if (!open) return
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape' && !loading) close() }
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open, loading])
+
+  if (!open) return null
   const queueFiles = (list: FileList | null) => {
     if (!list) return
     const accepted = Array.from(list).filter(file => allowedExtensions.includes(file.name.split('.').pop()?.toLowerCase() ?? '') && file.size <= 10 * 1024 * 1024)
@@ -75,7 +89,9 @@ export default function CVUploadModal({ open, onClose, onCreated }: Props) {
     if (!failed) { reset(); onClose() }
   }
 
-  return <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="cv-screening-title">
+  if (typeof document === 'undefined') return null
+
+  return createPortal(<div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="cv-screening-title">
     <div className="modal-backdrop" onClick={close} />
     <div className="modal-panel max-w-2xl overflow-y-auto rounded-[24px] border-white/70 shadow-[0_28px_80px_rgba(15,23,42,0.32)]">
       <header className="relative overflow-hidden border-b border-outline-variant/30 bg-gradient-to-br from-slate-950 via-[#073c39] to-[#007c6b] px-7 py-6 text-white">
@@ -95,5 +111,5 @@ export default function CVUploadModal({ open, onClose, onCreated }: Props) {
         <footer className="flex items-center justify-between gap-4 border-t border-outline-variant/30 pt-5"><p className="max-w-[55%] text-[11px] leading-relaxed text-on-surface-variant">Names are detected from CV file names. Each file is securely processed and scored separately.</p><div className="flex shrink-0 gap-2"><button type="button" onClick={close} disabled={loading} className="rounded-xl border border-outline-variant px-4 py-2.5 font-mono text-[10px] uppercase tracking-wider text-on-surface-variant transition hover:bg-surface-container disabled:opacity-50">Cancel</button><button type="submit" disabled={loading || !jobId || (mode === 'file' && !files.length)} className="flex items-center gap-2 rounded-xl bg-gradient-to-br from-primary-container to-primary px-5 py-2.5 font-mono text-[10px] font-bold uppercase tracking-wider text-white shadow-[0_8px_20px_rgba(0,139,123,0.28)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"><span className="material-symbols-outlined text-[16px]">{loading ? 'hourglass_empty' : 'auto_awesome'}</span>{loading ? 'Screening…' : mode === 'file' && files.length > 1 ? `Screen ${files.length} CVs` : 'Screen with AI'}</button></div></footer>
       </form>
     </div>
-  </div>
+  </div>, document.body)
 }

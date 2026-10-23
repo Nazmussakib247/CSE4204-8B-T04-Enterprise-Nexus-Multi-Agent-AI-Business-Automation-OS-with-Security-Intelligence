@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { jobsApi, getApiErrorMessage } from '@/lib/api'
 
@@ -21,8 +22,6 @@ export default function PostJobModal({ open, onClose, onCreated }: Props) {
   const [loading, setLoading] = useState(false)
   const [suggesting, setSuggesting] = useState(false)
 
-  if (!open) return null
-
   const totalWeight = skills.reduce((sum, s) => sum + (Number(s.weight) || 0), 0)
   const weightOk = totalWeight === 100
 
@@ -31,6 +30,20 @@ export default function PostJobModal({ open, onClose, onCreated }: Props) {
     setSkills([{ skill: '', weight: 100 }])
   }
   const handleClose = () => { reset(); onClose() }
+
+  useEffect(() => {
+    if (!open) return
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape' && !loading && !suggesting) handleClose() }
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open, loading, suggesting])
+
+  if (!open) return null
 
   const updateSkill = (i: number, field: 'skill' | 'weight', value: string) => {
     setSkills(prev => prev.map((s, idx) => idx === i
@@ -106,18 +119,25 @@ export default function PostJobModal({ open, onClose, onCreated }: Props) {
     }
   }
 
-  return (
+  if (typeof document === 'undefined') return null
+
+  return createPortal((
     <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="post-job-modal-title">
       <div className="modal-backdrop" onClick={handleClose} />
 
       <div className="modal-panel max-w-lg overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/30">
-          <div>
-            <h2 id="post-job-modal-title" className="font-display text-[16px] font-semibold text-on-surface">Post a Job</h2>
-            <p className="font-mono text-[10px] text-on-surface-variant mt-0.5 uppercase tracking-wider">Goes live on the public careers page instantly</p>
+        <div className="flex items-center justify-between gap-4 bg-gradient-to-br from-[#073c39] via-[#007c6b] to-[#00c2a8] px-6 py-5 text-white">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
+              <span className="material-symbols-outlined text-[21px] icon-filled">work</span>
+            </div>
+            <div>
+              <h2 id="post-job-modal-title" className="font-display text-[17px] font-semibold">Post a Job</h2>
+              <p className="mt-0.5 font-mono text-[10px] uppercase tracking-wider text-white/70">Goes live on the careers page instantly</p>
+            </div>
           </div>
-          <button onClick={handleClose} className="w-8 h-8 rounded-xl hover:bg-surface-container flex items-center justify-center transition-colors">
-            <span className="material-symbols-outlined text-[18px] text-on-surface-variant">close</span>
+          <button type="button" onClick={handleClose} aria-label="Close post job dialog" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 transition-colors hover:bg-white/20">
+            <span className="material-symbols-outlined text-[19px]">close</span>
           </button>
         </div>
 
@@ -219,5 +239,5 @@ export default function PostJobModal({ open, onClose, onCreated }: Props) {
         </form>
       </div>
     </div>
-  )
+  ), document.body)
 }
