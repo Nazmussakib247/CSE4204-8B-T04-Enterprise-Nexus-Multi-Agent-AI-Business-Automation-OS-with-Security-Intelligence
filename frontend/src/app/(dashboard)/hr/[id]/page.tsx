@@ -10,7 +10,8 @@ import Link from 'next/link'
 interface HRReport {
   id: string; candidate_name: string; job_title: string
   ai_score: number; confidence: number; recommendation: string
-  cv_text?: string; extracted_profile?: string; ai_analysis?: string
+  cv_text?: string; extracted_profile?: Record<string, unknown> | string; ai_analysis?: string
+  narrative_summary?: string; score_breakdown?: Record<string, number>
   created_at: string; updated_at?: string
 }
 
@@ -71,6 +72,17 @@ export default function HRDetailPage() {
       </div>
     </div>
   )
+
+  const profile = report.extracted_profile && typeof report.extracted_profile === 'object'
+    ? report.extracted_profile as Record<string, unknown>
+    : null
+  const list = (value: unknown) => Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+  const cvProfile = profile?.cv_profile && typeof profile.cv_profile === 'object'
+    ? profile.cv_profile as Record<string, unknown>
+    : profile
+  const strengths = list(profile?.strengths)
+  const weaknesses = list(profile?.weaknesses)
+  const requirements = Array.isArray(profile?.requirement_match) ? profile.requirement_match as Array<{ requirement?: string; match?: string; evidence?: string }> : []
 
   return (
     <div className="max-w-[900px] space-y-6">
@@ -142,13 +154,13 @@ export default function HRDetailPage() {
       </div>
 
       {/* AI Analysis */}
-      {report.ai_analysis && (
+      {(report.narrative_summary || report.ai_analysis) && (
         <div className="bg-white rounded-2xl border border-outline-variant/50 p-6">
           <div className="flex items-center gap-2 mb-4">
             <span className="material-symbols-outlined text-[18px] icon-filled text-primary-container">psychology</span>
             <h2 className="font-display text-[15px] font-semibold text-on-surface">AI Analysis</h2>
           </div>
-          <p className="font-body text-[14px] text-on-surface leading-relaxed whitespace-pre-wrap">{report.ai_analysis}</p>
+          <p className="font-body text-[14px] text-on-surface leading-relaxed whitespace-pre-wrap">{report.narrative_summary || report.ai_analysis}</p>
         </div>
       )}
 
@@ -159,11 +171,23 @@ export default function HRDetailPage() {
             <span className="material-symbols-outlined text-[18px] icon-filled text-tertiary">contact_page</span>
             <h2 className="font-display text-[15px] font-semibold text-on-surface">Extracted Profile</h2>
           </div>
-          <pre className="font-mono text-[12px] text-on-surface-variant whitespace-pre-wrap break-words leading-relaxed bg-surface-container rounded-xl p-4">
-            {typeof report.extracted_profile === 'string'
-              ? report.extracted_profile
-              : JSON.stringify(report.extracted_profile, null, 2)}
-          </pre>
+          {cvProfile && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {(['skills', 'experience', 'education', 'certifications'] as const).map(key => {
+                const values = list(cvProfile[key])
+                return <div key={key} className="rounded-xl bg-surface-container-low border border-outline-variant/30 p-4">
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant mb-2">{key}</p>
+                  {values.length ? <ul className="space-y-1.5">{values.map((value, index) => <li key={`${key}-${index}`} className="font-body text-[13px] text-on-surface">• {value}</li>)}</ul> : <p className="font-body text-[13px] text-on-surface-variant">Not found in CV</p>}
+                </div>
+              })}
+            </div>
+          )}
+          {(strengths.length > 0 || weaknesses.length > 0) && <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div className="rounded-xl border border-primary-container/30 bg-primary-container/5 p-4"><p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-2">Strengths</p><ul className="space-y-1.5">{strengths.map((item, index) => <li key={index} className="font-body text-[13px] text-on-surface">✓ {item}</li>)}</ul></div>
+            <div className="rounded-xl border border-error/20 bg-error-container/20 p-4"><p className="font-mono text-[10px] uppercase tracking-widest text-error mb-2">Weaknesses / gaps</p><ul className="space-y-1.5">{weaknesses.map((item, index) => <li key={index} className="font-body text-[13px] text-on-surface">• {item}</li>)}</ul></div>
+          </div>}
+          {requirements.length > 0 && <div className="mt-4 rounded-xl border border-outline-variant/30 overflow-hidden"><div className="px-4 py-3 bg-surface-container-low"><p className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant">Role requirement match</p></div><div className="divide-y divide-outline-variant/20">{requirements.map((item, index) => <div key={index} className="grid grid-cols-[1fr_auto] gap-3 px-4 py-3"><div><p className="font-body text-[13px] font-medium text-on-surface">{item.requirement || 'Requirement'}</p><p className="font-body text-[12px] text-on-surface-variant mt-0.5">{item.evidence || 'No supporting evidence found.'}</p></div><span className={`self-start rounded-full px-2 py-1 font-mono text-[10px] uppercase ${item.match === 'strong' ? 'bg-primary-container/10 text-primary' : item.match === 'partial' ? 'bg-yellow-100 text-yellow-700' : 'bg-error-container text-error'}`}>{item.match || 'unknown'}</span></div>)}</div></div>}
+          {!cvProfile && <pre className="font-mono text-[12px] text-on-surface-variant whitespace-pre-wrap break-words leading-relaxed bg-surface-container rounded-xl p-4">{String(report.extracted_profile)}</pre>}
         </div>
       )}
 

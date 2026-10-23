@@ -83,7 +83,14 @@ const createReport = async (req, res, next) => {
         recommendation: aiResult.recommendation,
         narrative_summary: aiResult.narrative_summary,
         score_breakdown: aiResult.score_breakdown,
-        extracted_profile: extracted_profile || (selectedJob ? { job_id: selectedJob.id } : null),
+        extracted_profile: {
+          ...(extracted_profile || {}),
+          ...(selectedJob ? { job_id: selectedJob.id } : {}),
+          ...(aiResult.extracted_profile ? { cv_profile: aiResult.extracted_profile } : {}),
+          ...(aiResult.strengths ? { strengths: aiResult.strengths } : {}),
+          ...(aiResult.weaknesses ? { weaknesses: aiResult.weaknesses } : {}),
+          ...(aiResult.requirement_match ? { requirement_match: aiResult.requirement_match } : {}),
+        },
       })
       .select()
       .single();
@@ -277,6 +284,10 @@ const uploadCV = async (req, res, next) => {
           job_id: selectedJob?.id || null,
           size_bytes: req.file.size,
           text_length: cvText.length,
+          cv_profile: aiResult.extracted_profile || null,
+          strengths: aiResult.strengths || [],
+          weaknesses: aiResult.weaknesses || [],
+          requirement_match: aiResult.requirement_match || [],
         },
       })
       .select()
