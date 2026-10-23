@@ -31,7 +31,7 @@ function CustomerSupportContent() {
     if (!user) { setTickets([]); return }
     try {
       const response = await supportApi.getTickets({ limit: 20 })
-      const nextTickets = response.data.data ?? []
+      const nextTickets = (response.data.data ?? []) as CustomerTicket[]
       setTickets(nextTickets)
       setSelectedTicketId(current => current && nextTickets.some(ticket => ticket.id === current) ? current : nextTickets[0]?.id || null)
     } catch { setTickets([]) }
