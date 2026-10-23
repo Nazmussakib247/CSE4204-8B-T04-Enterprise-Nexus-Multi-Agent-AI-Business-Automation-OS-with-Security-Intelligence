@@ -1,74 +1,151 @@
-# Enterprise NeXus — Deployment Guide
+# Enterprise NeXus Deployment Guide
 
-## Backend → Render
+This document describes the supported local and hosted deployment setup for Enterprise NeXus.
 
-### 1. Push to GitHub
-```bash
-git add .
-git commit -m "feat: Gemini AI integration + deployment config"
-git push origin main
+## Deployment architecture
+
+- **Frontend:** Next.js application hosted on Vercel.
+- **Backend:** Node.js and Express API hosted on Render.
+- **Database:** PostgreSQL, Realtime, Storage, and pgvector hosted on Supabase.
+- **Automation:** n8n workflows are stored in `n8n-workflows/` and can run locally with Docker or on a managed n8n instance.
+- **AI:** Gemini is the primary provider. Groq is used when configured as a fallback provider.
+
+### Hosted URLs
+
+| Service | URL |
+| --- | --- |
+| Public application | https://enterprise-nexus-delta.vercel.app |
+| Store | https://enterprise-nexus-delta.vercel.app/store |
+| Backend API | https://enterprise-nexus-backend.onrender.com |
+| Backend health check | https://enterprise-nexus-backend.onrender.com/api/health |
+
+## Local development with Docker
+
+### Prerequisites
+
+- Docker Desktop with Docker Compose
+- Supabase project credentials
+- Gemini API key
+
+### Configure environment files
+
+```powershell
+Copy-Item backend/.env.example backend/.env
+Copy-Item frontend/.env.example frontend/.env.local
 ```
 
-### 2. Create Render Web Service
-1. Go to **https://render.com** → New → Web Service
-2. Connect your GitHub repo
-3. Set **Root Directory** to `backend`
-4. Render will auto-detect `render.yaml`
+Fill in the values before starting the stack. Keep `.env` and `.env.local` private; they are ignored by Git.
 
-### 3. Set Environment Variables in Render Dashboard
-| Key | Value |
-|-----|-------|
-| `SUPABASE_URL` | Your Supabase project URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | From Supabase → Settings → API |
-| `SUPABASE_ANON_KEY` | From Supabase → Settings → API |
-| `JWT_SECRET` | Any random 32+ char string |
-| `GEMINI_API_KEY` | From https://aistudio.google.com/app/apikey |
-| `FRONTEND_URL` | Your Vercel URL (set after frontend deploy) |
+The local stack exposes:
 
-### 4. Note your backend URL
-After deploy it will be: `https://enterprise-nexus-backend.onrender.com`
+| Service | Address |
+| --- | --- |
+| Frontend | http://localhost:3000 |
+| Backend | http://localhost:5000 |
+| API health | http://localhost:5000/api/health |
+| n8n | http://localhost:5678 |
 
----
+Start and stop the stack with the root-level scripts:
 
-## Frontend → Vercel
+```powershell
+.\start.bat
+.\stop.bat
+```
 
-### 1. Create Vercel Project
-1. Go to **https://vercel.com** → New Project
-2. Import your GitHub repo
-3. Set **Root Directory** to `frontend`
+The n8n data volume is preserved when the stack is stopped. Use `docker compose down -v` only when you intentionally want to remove local n8n data.
 
-### 2. Set Environment Variables in Vercel Dashboard
-| Key | Value |
-|-----|-------|
-| `NEXT_PUBLIC_API_URL` | `https://enterprise-nexus-backend.onrender.com/api` |
+## Supabase database setup
 
-### 3. Deploy
-Vercel auto-deploys on every push to `main`.
+The canonical migration source is:
 
----
+```text
+supabase/migrations/
+```
 
-## After Both Are Deployed
+Run the migrations with the Supabase CLI from the repository root:
 
-1. Copy your Vercel URL (e.g. `https://enterprise-nexus.vercel.app`)
-2. Go to Render → Environment → update `FRONTEND_URL` to that URL
-3. Render will redeploy automatically
+```powershell
+supabase login
+supabase link --project-ref <project-ref>
+supabase db push
+```
 
----
+Do not recreate a separate root `database/` folder or copy these files into another migration directory. The migration sequence must be applied once, in filename order.
 
-## Gemini API Key
+## Backend deployment on Render
 
-1. Visit https://aistudio.google.com/app/apikey
-2. Click **Create API Key**
-3. Add it as `GEMINI_API_KEY` in Render
+The backend configuration is in `backend/render.yaml`.
 
-The free tier supports ~60 requests/minute which is plenty for this app.
+### Render service settings
 
----
+- **Service type:** Web Service
+- **Root directory:** `backend`
+- **Build command:** `npm install`
+- **Start command:** `npm start`
+- **Health check path:** `/api/health`
+- **Auto-deploy:** Disabled for the stable hosted version; deploy manually after reviewing a commit.
 
-## Health Check
+### Required Render environment variables
 
-After deploy, verify:
-- Backend: `GET https://enterprise-nexus-backend.onrender.com/api/health`
-- Frontend: Open your Vercel URL and login
+Set these in Render's Environment settings. Never commit their values.
 
-> **Note:** Render free tier spins down after 15 min of inactivity. First request after sleep takes ~30s. Upgrade to Starter ($7/mo) to avoid cold starts.
+| Variable | Purpose |
+| --- | --- |
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-side Supabase access |
+| `SUPABASE_ANON_KEY` | Supabase public API key |
+| `JWT_SECRET` | Session token signing secret |
+| `JWT_EXPIRES_IN` | Access token lifetime, for example `15m` |
+| `JWT_REFRESH_EXPIRES_IN` | Refresh token lifetime, for example `7d` |
+| `GEMINI_API_KEY` | Primary Gemini provider key |
+| `GEMINI_MODEL` | Optional Gemini model override |
+| `GROQ_API_KEY` | Optional fallback provider key |
+| `GROQ_MODEL` | Optional Groq model override |
+| `N8N_SECRET` | Shared webhook secret |
+| `N8N_WEBHOOK_URL` | n8n webhook base URL, when enabled |
+| `FRONTEND_URL` | Production Vercel origin |
+| `FRONTEND_ORIGINS` | Optional comma-separated approved origins |
+| `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USER`, `EMAIL_PASS` | SMTP delivery settings |
+| `EMAIL_FROM` | Sender address |
+| `ESCALATION_EMAIL` | Support escalation recipient |
+
+After saving environment changes, use Render's **Manual Deploy** action and verify `/api/health`.
+
+## Frontend deployment on Vercel
+
+### Vercel project settings
+
+- **Framework:** Next.js
+- **Root directory:** `frontend`
+- **Build command:** `npm run build`
+- **Install command:** `npm install`
+
+Set the following Vercel environment variables:
+
+| Variable | Value |
+| --- | --- |
+| `NEXT_PUBLIC_API_URL` | `/api` |
+| `BACKEND_API_ORIGIN` | `https://enterprise-nexus-backend.onrender.com` |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL, optional for Realtime |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key, optional for Realtime |
+| `NEXT_PUBLIC_SENTRY_DSN` | Optional Sentry DSN |
+
+Deploy manually after reviewing the production commit. Confirm that the frontend can load the backend health endpoint and sign in successfully.
+
+## Release checklist
+
+1. Review the intended commit and confirm that no secrets or local environment files are included.
+2. Apply pending files from `supabase/migrations/` with `supabase db push`.
+3. Deploy the backend on Render and confirm `/api/health` returns a healthy response.
+4. Deploy the frontend on Vercel.
+5. Confirm `FRONTEND_URL` and CORS origins match the Vercel domain exactly.
+6. Verify sign-in, HR application screening, finance anomaly detection, support replies, and executive pages.
+7. Check Render logs and the browser console for errors after deployment.
+
+## Troubleshooting
+
+- **First request is slow:** Render's free instance may sleep after inactivity. An external health monitor can call `/api/health`, but it cannot remove the free-tier limitations.
+- **CORS error:** Check `FRONTEND_URL` and `FRONTEND_ORIGINS` in Render.
+- **AI unavailable:** Check `GEMINI_API_KEY`; configure `GROQ_API_KEY` if fallback is required.
+- **Database schema error:** Confirm that every migration in `supabase/migrations/` has been applied once.
+- **n8n workflow failure:** Check `N8N_WEBHOOK_URL`, `N8N_SECRET`, and the corresponding workflow activation state.
