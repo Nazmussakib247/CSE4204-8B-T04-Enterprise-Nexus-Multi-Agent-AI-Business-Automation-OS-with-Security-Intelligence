@@ -4,6 +4,7 @@ const { sendEscalationEmail } = require('../utils/email');
 const { writeAuditLog } = require('../utils/audit');
 const { isOfficeUser } = require('../middleware/roles');
 const { generateJson } = require('../ai/client');
+const { closeInactiveSupportTickets } = require('../utils/supportLifecycle');
 
 const SUPPORT_ANALYSIS_SCHEMA = {
   type: 'object',
@@ -45,6 +46,7 @@ const analyzeAndRespond = async ({ ticket, userId, order, message }) => {
 // GET /api/support/tickets
 const getTickets = async (req, res, next) => {
   try {
+    await closeInactiveSupportTickets();
     const { page = 1, limit = 20, status, urgency, sentiment, escalated } = req.query;
     const offset = (page - 1) * limit;
 
@@ -73,6 +75,7 @@ const getTickets = async (req, res, next) => {
 // GET /api/support/tickets/:id
 const getTicket = async (req, res, next) => {
   try {
+    await closeInactiveSupportTickets();
     let query = supabase
       .from('support_tickets')
       .select('*, support_messages(id, sender_id, sender_type, body, created_at)')
@@ -284,6 +287,7 @@ const replyToTicket = async (req, res, next) => {
 // POST /api/support/tickets/:id/messages — customer or office follow-up
 const createMessage = async (req, res, next) => {
   try {
+    await closeInactiveSupportTickets();
     let ticketQuery = supabase.from('support_tickets').select('id, user_id, status').eq('id', req.params.id);
     if (!isOfficeUser(req.user)) ticketQuery = ticketQuery.eq('user_id', req.user.id);
     const { data: ticket, error: ticketError } = await ticketQuery.single();

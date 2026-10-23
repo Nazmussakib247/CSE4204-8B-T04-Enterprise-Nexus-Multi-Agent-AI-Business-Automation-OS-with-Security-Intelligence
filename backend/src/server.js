@@ -37,6 +37,7 @@ const cookieParser = require('cookie-parser');
 const logger = require('./utils/logger');
 const { startOfficeAutoApprovalWorker } = require('./utils/officeAutoApproval');
 const { startExecutiveBriefingWorker } = require('./utils/executiveBriefingWorker');
+const { startSupportAutoCloseWorker } = require('./utils/supportLifecycle');
 const correlationId = require('./middleware/correlationId.middleware');
 const errorHandler = require('./middleware/error.middleware');
 const supabase = require('./config/supabase');
@@ -209,6 +210,7 @@ const server = app.listen(PORT, () => {
 // after 30 seconds. An administrator may still approve one immediately.
 startOfficeAutoApprovalWorker();
 startExecutiveBriefingWorker();
+startSupportAutoCloseWorker();
 
 // ── Graceful shutdown ─────────────────────────────────────────────────────────
 const shutdown = (signal) => {

@@ -123,7 +123,7 @@ export default function SupportDetailPage() {
     </div>
   )
 
-  const isOpen = ticket.status === 'open'
+  const isOpen = ticket.status !== 'resolved'
 
   return (
     <div className="max-w-[900px] space-y-6">
