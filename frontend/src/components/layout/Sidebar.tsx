@@ -2,9 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState } from 'react'
 import { useAuth } from '@/lib/auth'
 import { useSidebar } from '@/contexts/sidebar'
 import clsx from 'clsx'
+import LogoutConfirmModal from '@/components/auth/LogoutConfirmModal'
 
 const navGroups = [
   {
@@ -50,6 +52,7 @@ export default function Sidebar() {
       ? { ...group, items: group.items.filter(item => item.href !== '/security') }
       : group)
   const { open, close } = useSidebar()
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   const isActive = (href: string) =>
     href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href)
@@ -125,7 +128,7 @@ export default function Sidebar() {
               <p className="font-mono text-[10px] text-white/30 uppercase tracking-wider">{(user as { role?: string })?.role ?? 'user'}</p>
             </div>
             <button
-              onClick={() => logout()}
+              onClick={() => setConfirmOpen(true)}
               className="p-1.5 rounded-lg text-white/25 hover:text-error hover:bg-white/[0.04] transition-all"
               title="Sign out"
             >
@@ -158,6 +161,7 @@ export default function Sidebar() {
           </div>
         </div>
       )}
+      <LogoutConfirmModal open={confirmOpen} onCancel={() => setConfirmOpen(false)} onConfirm={() => logout()} />
     </>
   )
 }
