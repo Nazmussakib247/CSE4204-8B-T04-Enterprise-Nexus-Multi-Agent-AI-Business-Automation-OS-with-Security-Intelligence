@@ -25,7 +25,7 @@ export default function LoginPage() {
       const signedInUser = await login(email, password)
       router.push(signedInUser.role === 'candidate' ? '/careers' : signedInUser.role === 'customer' ? '/store' : '/dashboard')
     } catch (err: unknown) {
-      const message = getApiErrorMessage(err, 'Sign-in service is waking up. Please wait a moment and try again.')
+      const message = getApiErrorMessage(err, 'The sign-in service is temporarily unavailable. Please try again in a moment.')
       if (message.toLowerCase().includes('verify the email code')) {
         toast('Verify your email code to continue')
         router.push(`/verify-office-email?email=${encodeURIComponent(email)}`)

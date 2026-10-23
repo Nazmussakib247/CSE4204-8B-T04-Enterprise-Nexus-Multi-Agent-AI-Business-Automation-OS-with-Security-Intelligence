@@ -127,7 +127,9 @@ const getLatestKPI = async (req, res, next) => {
     // This snapshot is deterministic and reads the same live business tables.
     const [hrRes, financeRes, supportRes, sales] = await Promise.all([
       supabase.from('hr_reports').select('recommendation, ai_score'),
-      supabase.from('finance_records').select('is_anomaly, severity'),
+      // Severity is the portable anomaly signal. Older production databases
+      // may not have the optional is_anomaly column.
+      supabase.from('finance_records').select('severity'),
       supabase.from('support_tickets').select('status, escalated, sentiment'),
       getStoreSalesSummary(),
     ]);
@@ -135,7 +137,7 @@ const getLatestKPI = async (req, res, next) => {
     if (financeRes.error) throw financeRes.error;
     if (supportRes.error) throw supportRes.error;
     const hr = hrRes.data || []; const finance = financeRes.data || []; const support = supportRes.data || [];
-    const highRisk = finance.filter((item) => item.is_anomaly || item.severity === 'high').length;
+    const highRisk = finance.filter((item) => ['high', 'critical'].includes(item.severity)).length;
     const openTickets = support.filter((item) => item.status !== 'resolved').length;
     const negativeTickets = support.filter((item) => item.sentiment === 'negative').length;
     const score = Math.max(0, Math.min(100, 100 - highRisk * 12 - openTickets * 4 - negativeTickets * 5));

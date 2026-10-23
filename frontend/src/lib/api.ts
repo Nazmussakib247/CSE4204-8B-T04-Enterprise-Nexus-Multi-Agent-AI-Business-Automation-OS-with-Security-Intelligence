@@ -32,6 +32,17 @@ api.interceptors.response.use(
   (res) => res,
   async (err) => {
     const original = err.config
+    if (!original) return Promise.reject(err)
+    // Render free instances can be waking up. Retry transient transport/5xx
+    // failures briefly so normal users do not see a cold-start error.
+    const status = err.response?.status
+    const transient = !err.response || status === 408 || status === 429 || status >= 500
+    const attempts = original._transientRetries ?? 0
+    if (transient && attempts < 2 && !original._skipTransientRetry) {
+      original._transientRetries = attempts + 1
+      await new Promise(resolve => setTimeout(resolve, 700 * (attempts + 1)))
+      return api(original)
+    }
     const url = original?.url || ''
     const isAuthCheck =
       url.includes('/auth/me') ||

@@ -106,8 +106,21 @@ app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// ── Health check — real Supabase connectivity test ────────────────────────────
-app.get('/api/health', async (req, res) => {
+// ── Liveness check ──────────────────────────────────────────────────────────
+// Render/UptimeRobot should monitor the Node process itself.  A transient
+// Supabase timeout must not make a healthy process look down and trigger a
+// restart/cold-start loop.
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0',
+    correlationId: req.correlationId,
+  });
+});
+
+// Optional readiness probe for diagnostics and internal monitoring.
+app.get('/api/ready', async (req, res) => {
   const start = Date.now();
   let dbStatus = 'ok';
   let dbLatencyMs = null;
