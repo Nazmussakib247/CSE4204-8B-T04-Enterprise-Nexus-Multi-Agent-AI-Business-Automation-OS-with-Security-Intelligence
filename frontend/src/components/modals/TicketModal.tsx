@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { ordersApi, productsApi, supportApi, type StoreProduct } from '@/lib/api'
 import toast from 'react-hot-toast'
 
@@ -23,6 +24,18 @@ export default function TicketModal({ open, onClose, onCreated }: Props) {
     ordersApi.getAll().then(res => setOrders(res.data.data ?? [])).catch(() => {})
     productsApi.list().then(res => setProducts(res.data.data ?? [])).catch(() => {})
   }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape' && !loading) onClose() }
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open, loading, onClose])
 
   if (!open) return null
 
@@ -55,7 +68,9 @@ export default function TicketModal({ open, onClose, onCreated }: Props) {
   const charCount = query.length
   const charLimit = 1000
 
-  return (
+  if (typeof document === 'undefined') return null
+
+  return createPortal((
     <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="ticket-modal-title">
       <div className="modal-backdrop" onClick={onClose} />
 
@@ -133,5 +148,5 @@ export default function TicketModal({ open, onClose, onCreated }: Props) {
         </form>
       </div>
     </div>
-  )
+  ), document.body)
 }
