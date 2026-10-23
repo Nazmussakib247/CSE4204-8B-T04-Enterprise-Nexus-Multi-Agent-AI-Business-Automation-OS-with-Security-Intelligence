@@ -46,26 +46,51 @@ const getReport = async (req, res, next) => {
 // POST /api/hr/reports — text-based CV screening
 const createReport = async (req, res, next) => {
   try {
-    const { candidate_name, job_title, cv_text, extracted_profile } = req.body;
+    const { candidate_name, job_title, job_id, cv_text, extracted_profile } = req.body;
 
     if (!candidate_name || !job_title) {
       return res.status(400).json({ error: 'candidate_name and job_title are required' });
     }
 
-    const aiResult = await screenCV({ candidate_name, job_title, cv_text: cv_text || '' });
+    let selectedJob = null;
+    if (job_id) {
+      const { data, error } = await supabase
+        .from('job_postings')
+        .select('id, title, required_skills, screening_criteria')
+        .eq('id', job_id)
+        .eq('status', 'open')
+        .single();
+      if (error || !data) return res.status(404).json({ error: 'Selected published job was not found or is closed' });
+      selectedJob = data;
+    }
+    const resolvedJobTitle = selectedJob?.title || job_title;
+    const aiResult = await screenCV({
+      candidate_name,
+      job_title: resolvedJobTitle,
+      cv_text: cv_text || '',
+      required_skills: selectedJob?.required_skills || [],
+      screening_criteria: selectedJob?.screening_criteria || '',
+    });
 
     const { data, error } = await supabase
       .from('hr_reports')
       .insert({
         user_id: req.user.id,
         candidate_name,
-        job_title,
+        job_title: resolvedJobTitle,
         ai_score: aiResult.ai_score,
         confidence: aiResult.confidence,
         recommendation: aiResult.recommendation,
         narrative_summary: aiResult.narrative_summary,
         score_breakdown: aiResult.score_breakdown,
-        extracted_profile: extracted_profile || null,
+        extracted_profile: {
+          ...(extracted_profile || {}),
+          ...(selectedJob ? { job_id: selectedJob.id } : {}),
+          ...(aiResult.extracted_profile ? { cv_profile: aiResult.extracted_profile } : {}),
+          ...(aiResult.strengths ? { strengths: aiResult.strengths } : {}),
+          ...(aiResult.weaknesses ? { weaknesses: aiResult.weaknesses } : {}),
+          ...(aiResult.requirement_match ? { requirement_match: aiResult.requirement_match } : {}),
+        },
       })
       .select()
       .single();
@@ -201,10 +226,25 @@ const uploadCV = async (req, res, next) => {
       return res.status(400).json({ error: 'No file uploaded. Use field name "cv".' });
     }
 
-    const { candidate_name, job_title } = req.body;
-    if (!candidate_name || !job_title) {
-      return res.status(400).json({ error: 'candidate_name and job_title are required' });
+    const { candidate_name, job_title, job_id } = req.body;
+    if (!candidate_name || (!job_title && !job_id)) {
+      return res.status(400).json({ error: 'candidate_name and either job_id or job_title are required' });
     }
+
+    // A published job gives the AI the exact weighted skills and screening criteria
+    // configured by HR. job_title remains supported for existing integrations.
+    let selectedJob = null;
+    if (job_id) {
+      const { data, error } = await supabase
+        .from('job_postings')
+        .select('id, title, required_skills, screening_criteria')
+        .eq('id', job_id)
+        .eq('status', 'open')
+        .single();
+      if (error || !data) return res.status(404).json({ error: 'Selected published job was not found or is closed' });
+      selectedJob = data;
+    }
+    const resolvedJobTitle = selectedJob?.title || job_title;
 
     let cvText = '';
     try {
@@ -219,14 +259,20 @@ const uploadCV = async (req, res, next) => {
       });
     }
 
-    const aiResult = await screenCV({ candidate_name, job_title, cv_text: cvText });
+    const aiResult = await screenCV({
+      candidate_name,
+      job_title: resolvedJobTitle,
+      cv_text: cvText,
+      required_skills: selectedJob?.required_skills || [],
+      screening_criteria: selectedJob?.screening_criteria || '',
+    });
 
     const { data, error } = await supabase
       .from('hr_reports')
       .insert({
         user_id: req.user.id,
         candidate_name,
-        job_title,
+        job_title: resolvedJobTitle,
         ai_score: aiResult.ai_score,
         confidence: aiResult.confidence,
         recommendation: aiResult.recommendation,
@@ -235,8 +281,13 @@ const uploadCV = async (req, res, next) => {
         extracted_profile: {
           source: 'file_upload',
           filename: req.file.originalname,
+          job_id: selectedJob?.id || null,
           size_bytes: req.file.size,
           text_length: cvText.length,
+          cv_profile: aiResult.extracted_profile || null,
+          strengths: aiResult.strengths || [],
+          weaknesses: aiResult.weaknesses || [],
+          requirement_match: aiResult.requirement_match || [],
         },
       })
       .select()
@@ -249,7 +300,7 @@ const uploadCV = async (req, res, next) => {
       action: 'hr.cv.upload',
       resourceType: 'hr_report',
       resourceId: data.id,
-      metadata: { filename: req.file.originalname, candidate_name, job_title },
+      metadata: { filename: req.file.originalname, candidate_name, job_title: resolvedJobTitle, job_id: selectedJob?.id || null },
       req,
     });
 
@@ -257,7 +308,7 @@ const uploadCV = async (req, res, next) => {
       report_id: data.id,
       user_id: req.user.id,
       candidate_name,
-      job_title,
+      job_title: resolvedJobTitle,
       ai_score: data.ai_score,
       recommendation: data.recommendation,
       source: 'file_upload',

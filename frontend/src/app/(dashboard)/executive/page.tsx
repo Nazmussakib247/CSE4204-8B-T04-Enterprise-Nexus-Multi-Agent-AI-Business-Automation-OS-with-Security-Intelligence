@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { executiveApi } from '@/lib/api'
 import PageHeader from '@/components/ui/PageHeader'
+import ExecutiveChat from '@/components/ui/ExecutiveChat'
 import toast from 'react-hot-toast'
 
 interface BriefingHR { id: string; candidate_name: string; recommendation: string; ai_score: number }
@@ -13,6 +14,15 @@ interface Briefing {
   finance: { recent: BriefingFinance[] }
   support: { recent: BriefingSupport[] }
   analytics: { latest: { overall_score: number; performance_rating: string } | null }
+}
+
+type IntelligencePeriod = 'daily' | 'week' | 'month'
+interface IntelligenceBriefing {
+  performance_summary: string
+  recommendations: string[]
+  briefing_data: { alerts?: string[]; snapshot?: { sales?: { revenue?: number; orders?: number; change_percent?: number | null }; customers?: { sentiment?: Record<string, number>; open_tickets?: number }; finance?: { anomalies?: unknown[]; high_severity?: unknown[] } } }
+  period_start: string
+  period_end: string
 }
 
 const recBadge = (r: string) =>
@@ -30,10 +40,11 @@ const urgBadge = (u: string) =>
 export default function ExecutivePage() {
   const [briefing, setBriefing] = useState<Briefing | null>(null)
   const [loading, setLoading] = useState(true)
-  const [question, setQuestion] = useState('')
-  const [aiAnswer, setAiAnswer] = useState('')
-  const [askingAI, setAskingAI] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [period, setPeriod] = useState<IntelligencePeriod>('daily')
+  const [intelligence, setIntelligence] = useState<IntelligenceBriefing | null>(null)
+  const [intelligenceLoading, setIntelligenceLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 
   const handleExportPdf = async () => {
@@ -63,19 +74,23 @@ export default function ExecutivePage() {
       .finally(() => setLoading(false))
   }, [])
 
-  const handleAsk = async () => {
-    if (!question.trim()) return
-    setAskingAI(true)
-    setAiAnswer('')
+  useEffect(() => {
+    setIntelligenceLoading(true)
+    executiveApi.getIntelligenceBriefing(period)
+      .then(r => setIntelligence(r.data.data ?? null))
+      .catch(() => setIntelligence(null))
+      .finally(() => setIntelligenceLoading(false))
+  }, [period])
+
+  const refreshIntelligence = async () => {
+    setRefreshing(true)
     try {
-      const res = await executiveApi.askAI(question)
-      setAiAnswer(res.data.answer || 'No response from AI.')
+      const result = await executiveApi.refreshIntelligenceBriefing(period)
+      setIntelligence(result.data.data)
+      toast.success('Executive briefing refreshed')
     } catch {
-      toast.error('AI query failed. Check GEMINI_API_KEY in backend.')
-      setAiAnswer('AI query failed. Make sure GEMINI_API_KEY is configured.')
-    } finally {
-      setAskingAI(false)
-    }
+      toast.error('Could not refresh the briefing')
+    } finally { setRefreshing(false) }
   }
 
   const SectionCard = ({ title, icon, iconColor, children }: {
@@ -109,42 +124,41 @@ export default function ExecutivePage() {
         }
       />
 
-      {/* AI Query Panel */}
-      <div className="rounded-2xl p-6 text-white" style={{ background: '#16191a' }}>
-        <div className="flex items-center gap-2 mb-1">
-          <span className="material-symbols-outlined text-primary-container icon-filled">psychology</span>
-          <h3 className="font-display text-[16px] font-semibold text-white">Ask the Executive Agent</h3>
-        </div>
-        <p className="font-body text-[13px] text-white/40 mb-4">Natural language Q&amp;A over your live business data — powered by Gemini.</p>
-        <div className="flex gap-3">
-          <input
-            type="text"
-            value={question}
-            onChange={e => setQuestion(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleAsk()}
-            placeholder="e.g. What are the top finance anomalies this week?"
-            className="flex-1 bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-white placeholder:text-white/25 font-body text-[14px] focus:outline-none focus:border-primary-container/50 transition-all"
-          />
-          <button
-            onClick={handleAsk}
-            disabled={askingAI || !question.trim()}
-            className="flex items-center gap-2 px-5 py-3 rounded-xl font-mono text-[11px] uppercase tracking-widest font-bold text-white disabled:opacity-50 transition-all"
-            style={{ background: 'linear-gradient(135deg,#00c2a8,#006b5c)', boxShadow: '0 4px 14px rgba(0,194,168,0.3)' }}
-          >
-            <span className="material-symbols-outlined text-[16px]">{askingAI ? 'hourglass_empty' : 'send'}</span>
-            {askingAI ? 'Thinking...' : 'Ask AI'}
+      <ExecutiveChat />
+
+      {/* Persistent AI intelligence briefing */}
+      <section className="bg-[#16191a] rounded-2xl p-6 text-white overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-5">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary-container mb-1">Executive Intelligence</p>
+            <h2 className="font-display text-[22px] font-bold">Business health, risks & next actions</h2>
+            <p className="font-body text-[13px] text-white/50 mt-1">Saved Groq analysis from live sales, finance, customers, hiring and security data.</p>
+          </div>
+          <button onClick={refreshIntelligence} disabled={refreshing} className="self-start px-3 py-2 rounded-lg border border-primary-container/30 text-primary-container font-mono text-[10px] uppercase tracking-widest disabled:opacity-50">
+            {refreshing ? 'Refreshing…' : 'Refresh now'}
           </button>
         </div>
-        {aiAnswer && (
-          <div className="mt-4 bg-white/[0.04] border border-white/[0.06] rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="material-symbols-outlined text-[14px] text-primary-container">auto_awesome</span>
-              <span className="font-mono text-[10px] uppercase tracking-widest text-primary-container">Gemini Response</span>
+        <div className="flex flex-wrap gap-2 mb-5">
+          {([['daily', 'Today'], ['week', 'Last 7 days'], ['month', 'Last 30 days']] as [IntelligencePeriod, string][]).map(([value, label]) => (
+            <button key={value} onClick={() => setPeriod(value)} className={`px-3 py-1.5 rounded-full font-mono text-[10px] uppercase tracking-wider ${period === value ? 'bg-primary-container text-[#052b27]' : 'bg-white/[0.06] text-white/55 hover:text-white'}`}>{label}</button>
+          ))}
+        </div>
+        {intelligenceLoading ? <p className="font-mono text-[11px] text-white/45">Building intelligence briefing…</p> : intelligence ? (
+          <div className="space-y-5">
+            <p className="font-body text-[15px] leading-7 text-white/85 whitespace-pre-wrap">{intelligence.performance_summary}</p>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="rounded-xl bg-white/[0.05] p-3"><p className="text-[10px] font-mono text-white/45 uppercase">Sales</p><p className="text-lg font-bold mt-1">${Number(intelligence.briefing_data?.snapshot?.sales?.revenue || 0).toLocaleString()}</p><p className="text-xs text-white/45">{intelligence.briefing_data?.snapshot?.sales?.orders || 0} booked orders</p></div>
+              <div className="rounded-xl bg-white/[0.05] p-3"><p className="text-[10px] font-mono text-white/45 uppercase">Customer sentiment</p><p className="text-lg font-bold mt-1">{intelligence.briefing_data?.snapshot?.customers?.sentiment?.positive || 0} positive</p><p className="text-xs text-white/45">{intelligence.briefing_data?.snapshot?.customers?.open_tickets || 0} open tickets</p></div>
+              <div className="rounded-xl bg-white/[0.05] p-3"><p className="text-[10px] font-mono text-white/45 uppercase">Anomalies</p><p className="text-lg font-bold mt-1">{intelligence.briefing_data?.snapshot?.finance?.anomalies?.length || 0}</p><p className="text-xs text-white/45">{intelligence.briefing_data?.snapshot?.finance?.high_severity?.length || 0} high severity</p></div>
+              <div className="rounded-xl bg-white/[0.05] p-3"><p className="text-[10px] font-mono text-white/45 uppercase">Range</p><p className="text-sm font-bold mt-1">{intelligence.period_start}</p><p className="text-xs text-white/45">to {intelligence.period_end}</p></div>
             </div>
-            <p className="font-body text-[13px] text-white/80 leading-relaxed whitespace-pre-wrap">{aiAnswer}</p>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div><p className="font-mono text-[10px] text-primary-container uppercase tracking-widest mb-2">Priority recommendations</p><ul className="space-y-2">{intelligence.recommendations?.map((item, i) => <li key={i} className="text-[13px] text-white/75 flex gap-2"><span className="text-primary-container">→</span>{item}</li>)}</ul></div>
+              <div><p className="font-mono text-[10px] text-amber-300 uppercase tracking-widest mb-2">Alerts to review</p><ul className="space-y-2">{intelligence.briefing_data?.alerts?.length ? intelligence.briefing_data.alerts.map((item, i) => <li key={i} className="text-[13px] text-white/75 flex gap-2"><span className="text-amber-300">!</span>{item}</li>) : <li className="text-[13px] text-white/45">No material alerts for this period.</li>}</ul></div>
+            </div>
           </div>
-        )}
-      </div>
+        ) : <p className="font-body text-[13px] text-white/55">No intelligence briefing is available yet.</p>}
+      </section>
 
       {/* Briefing Sections */}
       {loading ? (

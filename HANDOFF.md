@@ -1,7 +1,7 @@
 # Enterprise NeXus — Session Handoff
 
-**Last updated:** 2026-09-14
-**Branch:** `main`
+**Last updated:** 2026-09-10
+**Branch:** `development/mid-review-before-bug-test`
 
 This file exists so any future session (human or AI) can pick up context fast without re-discovering what changed. Update it whenever a meaningful change lands.
 

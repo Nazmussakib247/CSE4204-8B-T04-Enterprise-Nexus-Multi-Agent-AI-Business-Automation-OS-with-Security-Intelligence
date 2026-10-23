@@ -3,6 +3,7 @@ const Joi = require('joi');
 const createReportSchema = Joi.object({
   candidate_name: Joi.string().min(2).max(200).required(),
   job_title: Joi.string().min(2).max(200).required(),
+  job_id: Joi.string().uuid().optional(),
   cv_text: Joi.string().max(50000).allow('', null),
   extracted_profile: Joi.object().allow(null),
 });

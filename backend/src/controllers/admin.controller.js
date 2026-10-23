@@ -179,6 +179,50 @@ const toggleUserStatus = async (req, res, next) => {
   }
 };
 
+// DELETE /api/admin/users/:id
+// Permanently removes the account and its user-owned records according to the
+// database foreign-key policies. This is intentionally separate from
+// deactivation so administrators have a reversible access control option.
+const deleteUser = async (req, res, next) => {
+  try {
+    const { reason } = req.body || {};
+    if (!reason || !String(reason).trim()) return res.status(400).json({ error: 'reason is required for account deletion' });
+
+    const target = await getTargetUser(req.params.id);
+    if (!target) return res.status(404).json({ error: 'User not found' });
+    if (req.params.id === req.user.id) return res.status(400).json({ error: 'Cannot delete your own account' });
+    if (target.is_active && target.roles?.name === 'admin' && await getActiveAdminCount() <= 1) {
+      return res.status(400).json({ error: 'Cannot delete the last active admin' });
+    }
+
+    // Revoke sessions explicitly before deleting so no active cookie can be
+    // used during the deletion request or retained by a client afterwards.
+    const { error: sessionError } = await supabase.from('user_sessions').delete().eq('user_id', req.params.id);
+    if (sessionError) throw sessionError;
+
+    const { error } = await supabase.from('users').delete().eq('id', req.params.id);
+    if (error) {
+      if (error.code === '23503') {
+        return res.status(409).json({ error: 'Account cannot be deleted while linked records exist. Deactivate it instead.' });
+      }
+      throw error;
+    }
+
+    writeAuditLog({
+      userId: req.user.id,
+      action: 'admin.user.delete',
+      resourceType: 'user',
+      resourceId: req.params.id,
+      metadata: { email: target.email, role: target.roles?.name || null, reason: String(reason).trim() },
+      req,
+    });
+
+    res.json({ message: 'Account permanently deleted', data: { id: target.id, email: target.email } });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // GET /api/admin/roles
 const listRoles = async (req, res, next) => {
   try {
@@ -190,4 +234,4 @@ const listRoles = async (req, res, next) => {
   }
 };
 
-module.exports = { listUsers, updateUserRole, toggleUserStatus, approveUser, listRoles };
+module.exports = { listUsers, updateUserRole, toggleUserStatus, deleteUser, approveUser, listRoles };

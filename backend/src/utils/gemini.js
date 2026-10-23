@@ -28,8 +28,32 @@ const CV_SCHEMA = {
       },
       required: ['skills_match', 'experience', 'communication', 'culture_fit'],
     },
+    extracted_profile: {
+      type: 'object',
+      properties: {
+        skills: { type: 'array', items: { type: 'string' } },
+        experience: { type: 'array', items: { type: 'string' } },
+        education: { type: 'array', items: { type: 'string' } },
+        certifications: { type: 'array', items: { type: 'string' } },
+      },
+      required: ['skills', 'experience', 'education', 'certifications'],
+    },
+    strengths: { type: 'array', items: { type: 'string' } },
+    weaknesses: { type: 'array', items: { type: 'string' } },
+    requirement_match: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          requirement: { type: 'string' },
+          match: { type: 'string', enum: ['strong', 'partial', 'missing'] },
+          evidence: { type: 'string' },
+        },
+        required: ['requirement', 'match', 'evidence'],
+      },
+    },
   },
-  required: ['ai_score', 'confidence', 'recommendation', 'narrative_summary', 'score_breakdown'],
+  required: ['ai_score', 'confidence', 'recommendation', 'narrative_summary', 'score_breakdown', 'extracted_profile', 'strengths', 'weaknesses', 'requirement_match'],
 };
 
 const JOB_CV_SCHEMA = {
@@ -133,7 +157,9 @@ ${cv_text || '(No CV text provided — evaluate based on name and job title alon
 ${skills}
 
 Fields: ai_score (0-100), confidence (0-1), recommendation (shortlist|review|reject),
-narrative_summary (2-3 sentences), score_breakdown with skills_match/experience/communication/culture_fit (each 0-100).${isJobSpecific ? '\nAlso return skill_scores as one {skill, score} item for every required skill, using exactly the supplied skill names.' : ''}`,
+narrative_summary (2-3 sentences), score_breakdown with skills_match/experience/communication/culture_fit (each 0-100),
+extracted_profile with only CV-supported skills/experience/education/certifications, strengths and weaknesses grounded in the CV,
+and requirement_match with one item for every role requirement. Use match strong/partial/missing and cite concise CV evidence.${isJobSpecific ? '\nAlso return skill_scores as one {skill, score} item for every required skill, using exactly the supplied skill names.' : ''}`,
     responseSchema: isJobSpecific ? JOB_CV_SCHEMA : CV_SCHEMA,
   });
 }

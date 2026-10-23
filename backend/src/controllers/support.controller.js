@@ -3,10 +3,50 @@ const { notifyN8n } = require('../utils/webhook');
 const { sendEscalationEmail } = require('../utils/email');
 const { writeAuditLog } = require('../utils/audit');
 const { isOfficeUser } = require('../middleware/roles');
+const { generateJson } = require('../ai/client');
+const { closeInactiveSupportTickets } = require('../utils/supportLifecycle');
+
+const SUPPORT_ANALYSIS_SCHEMA = {
+  type: 'object',
+  properties: {
+    reply: { type: 'string' },
+    sentiment: { type: 'string', enum: ['positive', 'neutral', 'negative'] },
+    urgency: { type: 'string', enum: ['low', 'medium', 'high'] },
+    needs_human: { type: 'boolean' },
+    reason: { type: 'string' },
+  },
+  required: ['reply', 'sentiment', 'urgency', 'needs_human', 'reason'],
+};
+
+const analyzeAndRespond = async ({ ticket, userId, order, message }) => {
+  const analysis = await generateJson({
+    systemInstruction: 'You are the Enterprise NeXus Support Agent. Analyse the customer issue using only the supplied message and order context. Write a concise, empathetic reply. Escalate safety, payment, account access, legal, fraud, repeated unresolved, or high-impact issues to a human. Return JSON only.',
+    prompt: JSON.stringify({ customer_message: message || ticket.query, original_request: ticket.query, order: order || null }),
+    responseSchema: SUPPORT_ANALYSIS_SCHEMA,
+  });
+  const needsHuman = Boolean(analysis.needs_human) || analysis.urgency === 'high';
+  const updates = {
+    ai_status: 'completed', ai_response: analysis.reply, sentiment: analysis.sentiment,
+    urgency: analysis.urgency, escalated: needsHuman,
+    human_intervention_required: needsHuman,
+    human_intervention_status: needsHuman ? 'pending' : 'not_required',
+    human_intervention_reason: needsHuman ? (analysis.reason || 'Support Agent requested human review') : null,
+    status: needsHuman ? 'escalated' : 'in_progress',
+  };
+  const { data: updated, error } = await supabase.from('support_tickets').update(updates).eq('id', ticket.id).select().single();
+  if (error) throw error;
+  const body = needsHuman
+    ? `${analysis.reply}\n\nA support specialist has been notified and will reply here because this issue needs human review.`
+    : analysis.reply;
+  const { error: messageError } = await supabase.from('support_messages').insert({ ticket_id: ticket.id, sender_id: userId, sender_type: 'ai', body });
+  if (messageError) throw messageError;
+  return updated;
+};
 
 // GET /api/support/tickets
 const getTickets = async (req, res, next) => {
   try {
+    await closeInactiveSupportTickets();
     const { page = 1, limit = 20, status, urgency, sentiment, escalated } = req.query;
     const offset = (page - 1) * limit;
 
@@ -35,6 +75,7 @@ const getTickets = async (req, res, next) => {
 // GET /api/support/tickets/:id
 const getTicket = async (req, res, next) => {
   try {
+    await closeInactiveSupportTickets();
     let query = supabase
       .from('support_tickets')
       .select('*, support_messages(id, sender_id, sender_type, body, created_at)')
@@ -102,8 +143,13 @@ const createTicket = async (req, res, next) => {
       req,
     });
 
-    // This is deliberately non-blocking: a slow Gemini/Render/n8n call must
-    // never make the customer's send action feel stuck.
+    analyzeAndRespond({ ticket: data, userId: req.user.id, order: linkedOrder, message: query }).catch(async (aiError) => {
+      console.error('[support] AI analysis failed:', aiError.message);
+      await supabase.from('support_tickets').update({ ai_status: 'failed', human_intervention_required: true, human_intervention_status: 'pending', human_intervention_reason: 'AI support analysis failed', escalated: true, status: 'escalated' }).eq('id', data.id);
+      await supabase.from('support_messages').insert({ ticket_id: data.id, sender_id: req.user.id, sender_type: 'ai', body: 'Your request has been received. A human support specialist will review it and reply here.' });
+    });
+
+    // Keep the webhook as a secondary integration for downstream workflows.
     notifyN8n('store-support-retry', { ticket_id: data.id, user_id: req.user.id, query, order_id: linkedOrder?.id || null, product_id: linkedProductId, created_at: data.created_at });
 
     res.status(201).json({
@@ -241,10 +287,12 @@ const replyToTicket = async (req, res, next) => {
 // POST /api/support/tickets/:id/messages — customer or office follow-up
 const createMessage = async (req, res, next) => {
   try {
+    await closeInactiveSupportTickets();
     let ticketQuery = supabase.from('support_tickets').select('id, user_id, status').eq('id', req.params.id);
     if (!isOfficeUser(req.user)) ticketQuery = ticketQuery.eq('user_id', req.user.id);
     const { data: ticket, error: ticketError } = await ticketQuery.single();
     if (ticketError || !ticket) return res.status(404).json({ error: 'Ticket not found' });
+    if (ticket.status === 'resolved') return res.status(409).json({ error: 'This support conversation is closed. Start a new conversation for further help.' });
 
     const sender_type = isOfficeUser(req.user) ? 'staff' : 'customer';
     const { data, error } = await supabase.from('support_messages').insert({
@@ -254,6 +302,12 @@ const createMessage = async (req, res, next) => {
 
     if (sender_type === 'customer') {
       await supabase.from('support_tickets').update({ status: 'open', human_intervention_required: true, human_intervention_status: 'pending', human_intervention_reason: 'Customer sent a follow-up message' }).eq('id', ticket.id);
+      const { data: fullTicket } = await supabase.from('support_tickets').select('*').eq('id', ticket.id).single();
+      analyzeAndRespond({ ticket: fullTicket || ticket, userId: req.user.id, message: req.body.body }).catch(async (aiError) => {
+        console.error('[support] follow-up AI analysis failed:', aiError.message);
+        await supabase.from('support_tickets').update({ ai_status: 'failed', human_intervention_required: true, human_intervention_status: 'pending', human_intervention_reason: 'AI follow-up analysis failed', escalated: true, status: 'escalated' }).eq('id', ticket.id);
+        await supabase.from('support_messages').insert({ ticket_id: ticket.id, sender_id: req.user.id, sender_type: 'ai', body: 'Your follow-up has been received. A human support specialist will reply here.' });
+      });
     } else {
       await supabase.from('support_tickets').update({ status: 'in_progress', human_intervention_status: 'handled' }).eq('id', ticket.id);
     }

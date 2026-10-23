@@ -1,11 +1,22 @@
 import axios from 'axios'
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+// A Vercel deployment must use its same-origin `/api` rewrite.  A stale
+// NEXT_PUBLIC_API_URL that points directly at Render makes the httpOnly
+// session cookie cross-site; many browsers then omit it after a reload and
+// the dashboard guard treats the user as logged out.  Keep local/custom
+// deployments configurable, but make the hosted Vercel application reliable.
+const isVercelBrowser =
+  typeof window !== 'undefined' && window.location.hostname.endsWith('.vercel.app')
+
+export const API_URL = isVercelBrowser
+  ? '/api'
+  : process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
 
 /** Extract the backend's error message from an unknown thrown value. */
 export const getApiErrorMessage = (err: unknown, fallback: string): string => {
   if (axios.isAxiosError(err)) {
-    const data = err.response?.data as { error?: string } | undefined
+    const data = err.response?.data as { error?: string; details?: string[] } | undefined
+    if (data?.details?.length) return data.details.join(' · ')
     if (data?.error) return data.error
   }
   return fallback
@@ -21,6 +32,17 @@ api.interceptors.response.use(
   (res) => res,
   async (err) => {
     const original = err.config
+    if (!original) return Promise.reject(err)
+    // Render free instances can be waking up. Retry transient transport/5xx
+    // failures briefly so normal users do not see a cold-start error.
+    const status = err.response?.status
+    const transient = !err.response || status === 408 || status === 429 || status >= 500
+    const attempts = original._transientRetries ?? 0
+    if (transient && attempts < 2 && !original._skipTransientRetry) {
+      original._transientRetries = attempts + 1
+      await new Promise(resolve => setTimeout(resolve, 700 * (attempts + 1)))
+      return api(original)
+    }
     const url = original?.url || ''
     const isAuthCheck =
       url.includes('/auth/me') ||
@@ -54,8 +76,10 @@ export const authApi = {
     api.post('/auth/login', { email, password }),
   register: (name: string, email: string, password: string, role: 'admin' | 'manager' | 'employee') =>
     api.post('/auth/register', { name, email, password, role }),
-  registerExternal: (name: string, email: string, password: string, role: 'customer' | 'candidate') =>
+  registerExternal: (name: string, email: string, password: string, role: 'customer') =>
     api.post('/auth/register-external', { name, email, password, role }),
+  verifyOfficeEmail: (email: string, code: string, purpose = 'office_registration') => api.post('/auth/verify-office-email', { email, code, purpose }),
+  resendOfficeVerification: (email: string, purpose = 'office_registration') => api.post('/auth/resend-office-verification', { email, purpose }),
   refresh: () => api.post('/auth/refresh'),
   logout: () => api.post('/auth/logout'),
   me: () => api.get('/auth/me'),
@@ -63,14 +87,15 @@ export const authApi = {
     api.patch('/auth/me', data),
   forgotPassword: (email: string) =>
     api.post('/auth/forgot-password', { email }),
-  resetPassword: (token: string, password: string) =>
-    api.post('/auth/reset-password', { token, password }),
+  resetPassword: (email: string, code: string, password: string) =>
+    api.post('/auth/reset-password', { email, code, password }),
 }
 
 export const jobsApi = {
   getOpen: () => api.get('/jobs'),
   get: (id: string) => api.get(`/jobs/${id}`),
   getAllForStaff: () => api.get('/jobs/admin/all'),
+  suggest: (title: string, department: string) => api.post('/jobs/suggest', { title, department }),
   create: (data: Record<string, unknown>) => api.post('/jobs', data),
   update: (id: string, data: Record<string, unknown>) => api.patch(`/jobs/${id}`, data),
   remove: (id: string) => api.delete(`/jobs/${id}`),
@@ -99,7 +124,10 @@ export const productsApi = {
 
 export const reviewsApi = {
   getForProduct: (productId: string) => api.get(`/reviews/products/${productId}`),
-  create: (data: { product_id: string; rating: number; comment: string }) => api.post('/reviews', data),
+  getEligibility: (productId: string) => api.get(`/reviews/products/${productId}/eligibility`),
+  create: (data: { product_id: string; order_id: string; rating: number; comment: string }) => api.post('/reviews', data),
+  update: (id: string, data: { rating: number; comment: string }) => api.patch(`/reviews/${id}`, data),
+  replyAsCustomer: (id: string, body: string) => api.post(`/reviews/${id}/replies`, { body }),
   getFlagged: () => api.get('/reviews/flagged'),
   reply: (id: string, response: string) => api.patch(`/reviews/${id}/reply`, { response }),
 }
@@ -165,6 +193,8 @@ export const executiveApi = {
   getLatestReport: () => api.get('/executive/reports/latest'),
   createReport: (data: Record<string, unknown>) => api.post('/executive/reports', data),
   getDailyBriefing: () => api.get('/executive/briefing'),
+  getIntelligenceBriefing: (period: 'daily' | 'week' | 'month') => api.get('/executive/intelligence', { params: { period } }),
+  refreshIntelligenceBriefing: (period: 'daily' | 'week' | 'month') => api.post('/executive/intelligence/refresh', { period }),
   downloadBriefingPdf: () =>
     api.get('/executive/briefing/pdf', { responseType: 'blob' }),
   askAI: (question: string) => api.post('/executive/ask', { question }),
@@ -238,8 +268,16 @@ export const adminApi = {
     api.patch(`/admin/users/${id}/role`, { role, reason }),
   toggleUserStatus: (id: string, is_active: boolean, reason: string) =>
     api.patch(`/admin/users/${id}/status`, { is_active, reason }),
+  deleteUser: (id: string, reason: string) =>
+    api.delete(`/admin/users/${id}`, { data: { reason } }),
   approveUser: (id: string, reason: string) =>
     api.patch(`/admin/users/${id}/approve`, { reason }),
+}
+
+export interface AiProviderSetting { provider: 'gemini' | 'grok'; enabled: boolean; priority: 1 | 2; model: string; configured: boolean }
+export const aiProvidersApi = {
+  get: () => api.get<{ data: AiProviderSetting[] }>('/ai-providers'),
+  save: (providers: Array<Partial<AiProviderSetting> & { provider: 'gemini' | 'grok'; api_key?: string }>) => api.put<{ data: AiProviderSetting[] }>('/ai-providers', { providers }),
 }
 
 export interface AgentStep {

@@ -11,10 +11,14 @@ if (process.env.SENTRY_DSN) {
 }
 
 // ── Env validation — fail fast ────────────────────────────────────────────────
-const REQUIRED_ENV = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'JWT_SECRET', 'N8N_SECRET', 'GEMINI_API_KEY'];
+const REQUIRED_ENV = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'JWT_SECRET', 'N8N_SECRET'];
 const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
 if (missing.length) {
   console.error(`[FATAL] Missing env vars: ${missing.join(', ')}`);
+  process.exit(1);
+}
+if (!process.env.GEMINI_API_KEY && !process.env.GROQ_API_KEY) {
+  console.error('[FATAL] Set GEMINI_API_KEY or GROQ_API_KEY.');
   process.exit(1);
 }
 if (process.env.JWT_SECRET.length < 32) {
@@ -32,6 +36,8 @@ const cookieParser = require('cookie-parser');
 
 const logger = require('./utils/logger');
 const { startOfficeAutoApprovalWorker } = require('./utils/officeAutoApproval');
+const { startExecutiveBriefingWorker } = require('./utils/executiveBriefingWorker');
+const { startSupportAutoCloseWorker } = require('./utils/supportLifecycle');
 const correlationId = require('./middleware/correlationId.middleware');
 const errorHandler = require('./middleware/error.middleware');
 const supabase = require('./config/supabase');
@@ -50,15 +56,33 @@ const notificationsRoutes = require('./routes/notifications.routes');
 const searchRoutes = require('./routes/search.routes');
 const adminRoutes = require('./routes/admin.routes');
 const agentsRoutes = require('./routes/agents.routes');
+const productsRoutes = require('./routes/products.routes');
+const ordersRoutes = require('./routes/orders.routes');
+const jobsRoutes = require('./routes/jobs.routes');
+const reviewsRoutes = require('./routes/reviews.routes');
+const aiProvidersRoutes = require('./routes/aiProviders.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Preserve each visitor's address through Vercel's same-origin API rewrite.
+// Otherwise login rate limits can treat many unrelated visitors as one IP.
+app.set('trust proxy', 1);
+
 // ── Security & compression ────────────────────────────────────────────────────
 app.use(helmet());
 app.use(compression());
+const allowedOrigins = (process.env.FRONTEND_ORIGINS || process.env.FRONTEND_URL || 'http://localhost:3000')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin(origin, callback) {
+    // Server-to-server proxy/health requests have no browser Origin header.
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Origin is not allowed by CORS'));
+  },
   credentials: true,
 }));
 
@@ -69,12 +93,12 @@ app.use(correlationId);
 app.use(morgan('combined', { stream: logger.stream }));
 
 // ── Rate limiting ─────────────────────────────────────────────────────────────
-// Active in every environment (higher ceiling outside production so local
-// dev isn't throttled); only Jest runs skip it to keep test suites parallel.
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: process.env.NODE_ENV === 'production' ? 100 : 1000,
-  skip: () => process.env.NODE_ENV === 'test',
+  max: 100,
+  // Platform and uptime monitors must be able to probe service health even
+  // when normal API traffic has exhausted the application rate limit.
+  skip: (req) => req.path === '/health' || req.path === '/ready',
   message: { error: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -86,19 +110,27 @@ app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// ── Health check — real Supabase connectivity test ────────────────────────────
-app.get('/api/health', async (req, res) => {
+// ── Liveness check ──────────────────────────────────────────────────────────
+// Render/UptimeRobot should monitor the Node process itself.  A transient
+// Supabase timeout must not make a healthy process look down and trigger a
+// restart/cold-start loop.
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0',
+    correlationId: req.correlationId,
+  });
+});
+
+// Optional readiness probe for diagnostics and internal monitoring.
+app.get('/api/ready', async (req, res) => {
   const start = Date.now();
   let dbStatus = 'ok';
   let dbLatencyMs = null;
 
   try {
-    // Cap the DB ping at 3 s so a hung connection can't stall the probe
-    const ping = supabase.from('users').select('id').limit(1);
-    const timeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('health db ping timeout')), 3000)
-    );
-    const { error } = await Promise.race([ping, timeout]);
+    const { error } = await supabase.from('users').select('id').limit(1);
     dbLatencyMs = Date.now() - start;
     if (error) dbStatus = 'degraded';
   } catch {
@@ -134,6 +166,11 @@ v1.use('/notifications', notificationsRoutes);
 v1.use('/search', searchRoutes);
 v1.use('/admin', adminRoutes);
 v1.use('/agents', agentsRoutes); // v1 only — no /api alias
+v1.use('/products', productsRoutes);
+v1.use('/orders', ordersRoutes);
+v1.use('/jobs', jobsRoutes);
+v1.use('/reviews', reviewsRoutes);
+v1.use('/ai-providers', aiProvidersRoutes);
 
 app.use('/api/v1', v1);
 
@@ -150,6 +187,11 @@ app.use('/api/security', securityRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/products', productsRoutes);
+app.use('/api/orders', ordersRoutes);
+app.use('/api/jobs', jobsRoutes);
+app.use('/api/reviews', reviewsRoutes);
+app.use('/api/ai-providers', aiProvidersRoutes);
 
 // ── 404 ───────────────────────────────────────────────────────────────────────
 app.use((req, res) => {
@@ -160,26 +202,22 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 // ── Server startup ────────────────────────────────────────────────────────────
-// Under Jest (NODE_ENV=test) the app is exported without binding a port, so
-// parallel test suites can each require the app without EADDRINUSE clashes.
-let server = null;
-if (process.env.NODE_ENV !== 'test') {
-  server = app.listen(PORT, () => {
-    logger.info(`Enterprise NeXus backend running on port ${PORT}`, {
-      env: process.env.NODE_ENV || 'development',
-      port: PORT,
-    });
+const server = app.listen(PORT, () => {
+  logger.info(`Enterprise NeXus backend running on port ${PORT}`, {
+    env: process.env.NODE_ENV || 'development',
+    port: PORT,
   });
+});
 
-  // New office registrations remain visible to an administrator first, but
-  // become active automatically after the requested 30-second wait.
-  startOfficeAutoApprovalWorker();
-}
+// Pending admin/manager/employee registrations become active automatically
+// after 30 seconds. An administrator may still approve one immediately.
+startOfficeAutoApprovalWorker();
+startExecutiveBriefingWorker();
+startSupportAutoCloseWorker();
 
 // ── Graceful shutdown ─────────────────────────────────────────────────────────
 const shutdown = (signal) => {
   logger.info(`${signal} received — shutting down gracefully`);
-  if (!server) process.exit(0);
   server.close((err) => {
     if (err) {
       logger.error('Error during shutdown', { err: err.message });

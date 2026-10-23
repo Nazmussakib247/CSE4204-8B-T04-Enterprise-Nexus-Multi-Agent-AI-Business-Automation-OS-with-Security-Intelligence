@@ -1,6 +1,7 @@
 const supabase = require('../config/supabase');
 const { generateAnalyticsReport } = require('../utils/gemini');
 const { writeAuditLog } = require('../utils/audit');
+const { getStoreSalesSummary } = require('../utils/storeSales');
 
 // GET /api/analytics/reports
 const getReports = async (req, res, next) => {
@@ -117,10 +118,42 @@ const getLatestKPI = async (req, res, next) => {
       .select('kpi_snapshot, overall_score, performance_rating, created_at')
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
-    if (error || !data) return res.status(404).json({ error: 'No KPI data found' });
-    res.json({ data });
+    if (error) throw error;
+    if (data) return res.json({ data, source: 'saved_report' });
+
+    // Keep the Analytics page useful before the first AI report is generated.
+    // This snapshot is deterministic and reads the same live business tables.
+    const [hrRes, financeRes, supportRes, sales] = await Promise.all([
+      supabase.from('hr_reports').select('recommendation, ai_score'),
+      // Severity is the portable anomaly signal. Older production databases
+      // may not have the optional is_anomaly column.
+      supabase.from('finance_records').select('severity'),
+      supabase.from('support_tickets').select('status, escalated, sentiment'),
+      getStoreSalesSummary(),
+    ]);
+    if (hrRes.error) throw hrRes.error;
+    if (financeRes.error) throw financeRes.error;
+    if (supportRes.error) throw supportRes.error;
+    const hr = hrRes.data || []; const finance = financeRes.data || []; const support = supportRes.data || [];
+    const highRisk = finance.filter((item) => ['high', 'critical'].includes(item.severity)).length;
+    const openTickets = support.filter((item) => item.status !== 'resolved').length;
+    const negativeTickets = support.filter((item) => item.sentiment === 'negative').length;
+    const score = Math.max(0, Math.min(100, 100 - highRisk * 12 - openTickets * 4 - negativeTickets * 5));
+    const rating = score >= 85 ? 'excellent' : score >= 70 ? 'good' : score >= 50 ? 'average' : 'poor';
+    res.json({
+      source: 'live_snapshot',
+      data: {
+        id: 'live', created_at: new Date().toISOString(), overall_score: score, performance_rating: rating,
+        ai_insights: 'Live KPI snapshot. Generate an AI Report for a saved Groq analysis and recommendations.',
+        kpi_snapshot: {
+          store_revenue: sales.total_revenue, booked_orders: sales.order_count,
+          candidates_screened: hr.length, finance_anomalies: highRisk,
+          open_tickets: openTickets, negative_sentiment_tickets: negativeTickets,
+        },
+      },
+    });
   } catch (err) {
     next(err);
   }

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
-const { register, registerExternal, login, refresh, logout, me, updateMe, forgotPassword, resetPassword } = require('../controllers/auth.controller');
+const { register, registerExternal, verifyOfficeEmail, resendOfficeVerification, login, refresh, logout, me, updateMe, forgotPassword, resetPassword } = require('../controllers/auth.controller');
 const { protect } = require('../middleware/auth.middleware');
 const validate = require('../middleware/validate.middleware');
 const { registerSchema, registerExternalSchema, loginSchema, updateMeSchema } = require('../validators/auth.validators');
@@ -25,6 +25,8 @@ const resetLimiter = rateLimit({
 
 router.post('/register', validate(registerSchema), register);
 router.post('/register-external', validate(registerExternalSchema), registerExternal);
+router.post('/verify-office-email', resetLimiter, verifyOfficeEmail);
+router.post('/resend-office-verification', resetLimiter, resendOfficeVerification);
 router.post('/login', loginLimiter, validate(loginSchema), login);
 router.post('/refresh', refresh);
 router.post('/logout', protect, logout);

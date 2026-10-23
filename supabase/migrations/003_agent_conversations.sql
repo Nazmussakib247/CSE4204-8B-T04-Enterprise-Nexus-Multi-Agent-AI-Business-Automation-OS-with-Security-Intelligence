@@ -16,6 +16,7 @@ CREATE INDEX IF NOT EXISTS idx_agent_conversations_user_id    ON agent_conversat
 CREATE INDEX IF NOT EXISTS idx_agent_conversations_updated_at ON agent_conversations(updated_at DESC);
 
 ALTER TABLE agent_conversations ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own agent conversations" ON agent_conversations;
 CREATE POLICY "Users manage own agent conversations" ON agent_conversations
   FOR ALL USING (user_id = auth.uid());
 
@@ -31,6 +32,7 @@ CREATE TABLE IF NOT EXISTS agent_messages (
 CREATE INDEX IF NOT EXISTS idx_agent_messages_conversation ON agent_messages(conversation_id, created_at);
 
 ALTER TABLE agent_messages ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage messages in own conversations" ON agent_messages;
 CREATE POLICY "Users manage messages in own conversations" ON agent_messages
   FOR ALL USING (
     EXISTS (
