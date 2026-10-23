@@ -2,7 +2,6 @@ const supabase = require('../config/supabase');
 const { analyseSentiment } = require('../utils/gemini');
 const { generateJson } = require('../ai/client');
 const { writeAuditLog } = require('../utils/audit');
-const { notifyN8n } = require('../utils/webhook');
 
 const REVIEW_REPLY_SCHEMA = { type: 'object', properties: { reply: { type: 'string' }, needs_human: { type: 'boolean' }, reason: { type: 'string' } }, required: ['reply', 'needs_human', 'reason'] };
 const PUBLIC_REVIEW_SELECT = 'id, product_id, customer_id, order_id, rating, comment, support_reply, support_replied_at, created_at, users!product_reviews_customer_id_fkey(name), product_review_messages(id, sender_id, sender_type, body, created_at)';
@@ -35,6 +34,44 @@ async function analyseReview(comment) {
   catch (error) { console.warn('[reviews] AI analysis deferred:', error.message); return { analysis: null, ai_status: 'pending' }; }
 }
 
+const defaultReviewReply = ({ rating, flagged, productName }) => {
+  if (flagged) return `Thanks for sharing your feedback about ${productName}. We’re sorry it did not meet your expectations. Our support team has been notified and will review this personally.`;
+  if (rating >= 4) return `Thank you for reviewing ${productName}. We’re glad you had a positive experience and appreciate you taking the time to share it.`;
+  return `Thank you for your honest feedback about ${productName}. We’ve shared it with our support team and will use it to improve your experience.`;
+};
+
+const publishAutomatedReply = async ({ reviewId, productName, rating, comment, flagged }) => {
+  const fallback = defaultReviewReply({ rating, flagged, productName });
+  const { data: message, error: messageError } = await supabase
+    .from('product_review_messages')
+    .insert({ review_id: reviewId, sender_type: 'ai', body: fallback })
+    .select('id, sender_type, body, created_at')
+    .single();
+  if (messageError) throw messageError;
+  await supabase.from('product_reviews').update({ support_reply: fallback, support_replied_at: new Date().toISOString() }).eq('id', reviewId);
+
+  // The durable fallback is visible immediately. Improve it in the background
+  // when Groq is available without making review submission depend on AI uptime.
+  void (async () => {
+    try {
+      const ai = await generateJson({
+        preferProvider: 'groq',
+        systemInstruction: 'You are a concise, empathetic e-commerce support agent. Reply to a product review in 1-2 sentences. Never invent product facts. For a negative or urgent review, acknowledge the issue and say a support specialist will review it. Return JSON only.',
+        prompt: JSON.stringify({ product: productName, rating, review: comment, needs_human: flagged }),
+        responseSchema: { type: 'object', properties: { reply: { type: 'string' } }, required: ['reply'] },
+      });
+      const reply = String(ai.reply || '').trim();
+      if (reply.length < 3) return;
+      await supabase.from('product_review_messages').update({ body: reply }).eq('id', message.id);
+      await supabase.from('product_reviews').update({ support_reply: reply, support_replied_at: new Date().toISOString() }).eq('id', reviewId);
+    } catch (error) {
+      console.warn('[reviews] automated support reply refinement deferred:', error.message);
+    }
+  })();
+
+  return { ...message, body: fallback };
+};
+
 const createReview = async (req, res, next) => {
   try {
     if (req.user.role !== 'customer') return res.status(403).json({ error: 'A customer account is required to leave a review' });
@@ -50,9 +87,18 @@ const createReview = async (req, res, next) => {
     const flagged = ai?.sentiment === 'negative' || ai?.urgency === 'high';
     const { data, error } = await supabase.from('product_reviews').insert({ product_id, customer_id: req.user.id, order_id, rating, comment, sentiment: ai?.sentiment || null, urgency: ai?.urgency || null, ai_status, flagged_as_complaint: flagged, human_intervention_required: flagged, human_intervention_reason: flagged ? 'Negative sentiment or high urgency detected by AI' : null, human_intervention_status: flagged ? 'pending' : 'not_required' }).select(PUBLIC_REVIEW_SELECT).single();
     if (error) throw error;
+    try {
+      const automatedReply = await publishAutomatedReply({ reviewId: data.id, productName: product.name, rating, comment, flagged });
+      data.support_reply = automatedReply.body;
+      data.support_replied_at = new Date().toISOString();
+      data.product_review_messages = [...(data.product_review_messages || []), automatedReply];
+    } catch (replyError) {
+      // Never roll back a valid customer review because the optional reply
+      // thread is unavailable during a deployment or migration.
+      console.warn('[reviews] automated support reply unavailable:', replyError.message);
+    }
     writeAuditLog({ userId: req.user.id, action: 'product.review.create', resourceType: 'product_review', resourceId: data.id, metadata: { product_id, rating, flagged }, req });
-    notifyN8n('store-review', { review_id: data.id, product_id, product_name: product.name, customer_id: req.user.id, rating, comment, ai_status });
-    res.status(201).json({ message: flagged ? 'Review submitted and sent for support review' : 'Review submitted', data });
+    res.status(201).json({ message: flagged ? 'Review submitted and sent for support review' : 'Review submitted with an automated support reply', data });
   } catch (err) { next(err); }
 };
 
