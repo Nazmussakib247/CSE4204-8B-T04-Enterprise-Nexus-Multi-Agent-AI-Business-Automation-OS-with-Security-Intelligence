@@ -8,30 +8,52 @@ const { getStoreSalesSummary } = require('../utils/storeSales');
 
 // Insert one finance record with AI anomaly analysis (shared by manual + upload flows)
 const insertRecordWithAnomaly = async (userId, { category, amount, expense_date, description }) => {
-  const aiResult = await detectAnomaly({ category, amount, description, expense_date });
+  const cleanCategory = String(category || '').trim();
+  const cleanAmount = Number(amount);
+  const cleanDescription = description ? String(description).trim() : null;
+  const normaliseDescription = (value) => String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+
+  // An identical invoice is a duplicate transaction even when Gemini considers
+  // the amount itself routine. Check the user's ledger deterministically first.
+  const { data: matches, error: duplicateError } = await supabase
+    .from('finance_records')
+    .select('id, description')
+    .eq('user_id', userId)
+    .eq('category', cleanCategory)
+    .eq('amount', cleanAmount)
+    .eq('expense_date', expense_date)
+    .limit(25);
+  if (duplicateError) throw duplicateError;
+  const duplicate = (matches || []).some((record) => normaliseDescription(record.description) === normaliseDescription(cleanDescription));
+
+  const aiResult = duplicate
+    ? { severity: 'high', ai_analysis: 'Duplicate transaction detected: this invoice matches an existing record for the same category, amount, date, and description.', anomaly_flags: ['duplicate_transaction'] }
+    : await detectAnomaly({ category: cleanCategory, amount: cleanAmount, description: cleanDescription, expense_date });
+  const severity = ['low', 'medium', 'high'].includes(aiResult.severity) ? aiResult.severity : 'medium';
   const { data, error } = await supabase
     .from('finance_records')
     .insert({
       user_id: userId,
-      category,
-      amount,
+      category: cleanCategory,
+      amount: cleanAmount,
       expense_date,
-      description: description || null,
-      severity: aiResult.severity,
+      description: cleanDescription,
+      is_anomaly: duplicate || ['high'].includes(severity),
+      severity,
       ai_analysis: aiResult.ai_analysis,
     })
     .select()
     .single();
   if (error) throw error;
 
-  if (['high', 'critical'].includes(aiResult.severity)) {
+  if (severity === 'high') {
     notifyN8n('finance-anomaly', {
       record_id: data.id, user_id: userId, category: data.category,
       amount: data.amount, expense_date: data.expense_date,
-      severity: aiResult.severity, ai_analysis: aiResult.ai_analysis,
+      severity, ai_analysis: aiResult.ai_analysis,
     });
   }
-  return { data, aiResult };
+  return { data, aiResult: { ...aiResult, severity, duplicate } };
 };
 
 // Find a value in a row object by trying several possible column names (case-insensitive)
@@ -108,44 +130,16 @@ const createRecord = async (req, res, next) => {
       return res.status(400).json({ error: 'category, amount, and expense_date are required' });
     }
 
-    const aiResult = await detectAnomaly({ category, amount, description, expense_date });
-
-    const { data, error } = await supabase
-      .from('finance_records')
-      .insert({
-        user_id: req.user.id,
-        category,
-        amount,
-        expense_date,
-        description: description || null,
-        severity: aiResult.severity,
-        ai_analysis: aiResult.ai_analysis,
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
+    const { data, aiResult } = await insertRecordWithAnomaly(req.user.id, { category, amount, expense_date, description });
 
     writeAuditLog({
       userId: req.user.id,
       action: 'finance.record.create',
       resourceType: 'finance_record',
       resourceId: data.id,
-      metadata: { category, amount, severity: aiResult.severity },
+      metadata: { category, amount, severity: aiResult.severity, duplicate: aiResult.duplicate },
       req,
     });
-
-    if (['high', 'critical'].includes(aiResult.severity)) {
-      notifyN8n('finance-anomaly', {
-        record_id: data.id,
-        user_id: req.user.id,
-        category: data.category,
-        amount: data.amount,
-        expense_date: data.expense_date,
-        severity: aiResult.severity,
-        ai_analysis: aiResult.ai_analysis,
-      });
-    }
 
     res.status(201).json({ message: 'Finance record created with AI analysis', data, ai_analysis: aiResult });
   } catch (err) {
