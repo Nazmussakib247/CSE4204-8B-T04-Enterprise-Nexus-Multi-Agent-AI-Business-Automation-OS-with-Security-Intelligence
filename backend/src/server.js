@@ -96,6 +96,9 @@ app.use(morgan('combined', { stream: logger.stream }));
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
+  // Platform and uptime monitors must be able to probe service health even
+  // when normal API traffic has exhausted the application rate limit.
+  skip: (req) => req.path === '/health' || req.path === '/ready',
   message: { error: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
