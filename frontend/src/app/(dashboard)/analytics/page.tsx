@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { analyticsApi, hrApi, supportApi, securityApi } from '@/lib/api'
+import { analyticsApi, hrApi, supportApi } from '@/lib/api'
 import PageHeader from '@/components/ui/PageHeader'
 import EmptyState from '@/components/ui/EmptyState'
 import toast from 'react-hot-toast'
@@ -23,7 +23,6 @@ interface SupportReport {
   by_urgency: { low: number; medium: number; high: number }
   by_sentiment: { positive: number; neutral: number; negative: number }
 }
-interface SecurityStats { eventsToday: number; failedToday: number; activeThreats: number; systemHealth: string }
 
 const ratingBg = (r: string) =>
   r === 'excellent' ? 'bg-primary/10 text-primary' :
@@ -42,7 +41,6 @@ export default function AnalyticsPage() {
   const [latestKPI, setLatestKPI] = useState<AnalyticsReport | null>(null)
   const [hrStats, setHRStats] = useState<HRStats | null>(null)
   const [supportReport, setSupportReport] = useState<SupportReport | null>(null)
-  const [securityStats, setSecurityStats] = useState<SecurityStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -52,16 +50,15 @@ export default function AnalyticsPage() {
       .then(r => {
         const data = r.data.data ?? []
         setReports(data)
+        if (data.length > 0) setLatestKPI(data[0])
       })
       .catch(() => setReports([]))
       .finally(() => setLoading(false))
-    analyticsApi.getLatestKPI().then(r => setLatestKPI(r.data.data ?? null)).catch(() => setLatestKPI(null))
   }, [])
 
   const fetchSideData = useCallback(() => {
     hrApi.getStats().then(r => setHRStats(r.data.stats ?? null)).catch(() => {})
     supportApi.getSentimentReport().then(r => setSupportReport(r.data.report ?? null)).catch(() => {})
-    securityApi.getStats().then(r => setSecurityStats(r.data ?? null)).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -168,7 +165,7 @@ export default function AnalyticsPage() {
       )}
 
       {/* Charts row */}
-      {(reports.length > 0 || hrStats || supportReport || securityStats) && (
+      {(reports.length > 0 || hrStats || supportReport) && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {reports.length > 1 && <KPIHistoryChart reports={reports} />}
           {hrStats && hrStats.total > 0 && (
@@ -186,20 +183,6 @@ export default function AnalyticsPage() {
               escalated={supportReport.escalated}
               by_urgency={supportReport.by_urgency}
             />
-          )}
-          {securityStats && (
-            <div className="bg-white rounded-2xl border border-outline-variant/50 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2"><span className="material-symbols-outlined text-[20px] text-primary icon-filled">security</span><h3 className="font-display text-[16px] font-semibold text-on-surface">Security Overview</h3></div>
-                <span className="font-mono text-[9px] uppercase tracking-widest text-primary bg-primary-container/10 px-2 py-1 rounded-full">Live 24h</span>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div><p className="font-mono text-[9px] uppercase text-on-surface-variant">Events</p><p className="font-display text-[25px] font-bold mt-1">{securityStats.eventsToday}</p></div>
-                <div><p className="font-mono text-[9px] uppercase text-on-surface-variant">Failed</p><p className={`font-display text-[25px] font-bold mt-1 ${securityStats.failedToday ? 'text-error' : 'text-primary'}`}>{securityStats.failedToday}</p></div>
-                <div><p className="font-mono text-[9px] uppercase text-on-surface-variant">Threats</p><p className={`font-display text-[25px] font-bold mt-1 ${securityStats.activeThreats ? 'text-error' : 'text-primary'}`}>{securityStats.activeThreats}</p></div>
-              </div>
-              <div className="mt-5 pt-4 border-t border-outline-variant/30 flex items-center justify-between"><span className="font-body text-[12px] text-on-surface-variant">System health</span><span className="font-mono text-[12px] font-bold text-primary">{securityStats.systemHealth}</span></div>
-            </div>
           )}
         </div>
       )}

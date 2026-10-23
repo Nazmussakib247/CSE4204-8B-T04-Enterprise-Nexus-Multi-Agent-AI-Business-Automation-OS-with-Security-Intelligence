@@ -16,7 +16,7 @@ router.get('/tickets/:id', getTicket);
 router.post('/tickets', validate(createTicketSchema), createTicket);
 router.patch('/tickets/:id', validate(updateTicketSchema), updateTicket);
 router.patch('/tickets/:id/escalate', escalateTicket);
-router.patch('/tickets/:id/resolve', authorize(...OFFICE_ROLES), resolveTicket);
+router.patch('/tickets/:id/resolve', resolveTicket);
 router.patch('/tickets/:id/reply', authorize(...OFFICE_ROLES), validate(replyTicketSchema), replyToTicket);
 router.post('/tickets/:id/messages', validate(createMessageSchema), createMessage);
 

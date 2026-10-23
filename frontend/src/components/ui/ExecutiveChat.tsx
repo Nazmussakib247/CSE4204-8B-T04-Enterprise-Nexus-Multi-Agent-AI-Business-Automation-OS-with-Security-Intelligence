@@ -13,7 +13,7 @@ interface ChatMessage {
 }
 
 const AGENT_LABELS: Record<string, string> = {
-  hr: 'HR', finance: 'Finance', support: 'Support', analytics: 'Analytics', security: 'Security',
+  hr: 'HR', finance: 'Finance', support: 'Support', analytics: 'Analytics',
 }
 
 function DelegationChip({ d }: { d: Delegation }) {
@@ -139,7 +139,7 @@ export default function ExecutiveChat() {
           <h3 className="font-display text-[16px] font-semibold text-white">Ask the Executive Agent</h3>
         </div>
         <p className="font-body text-[13px] text-white/40">
-          Groq-powered multi-agent orchestrator — delegates to live HR, Finance, Support, Analytics and Security data.
+          Multi-agent orchestrator — delegates to HR, Finance, Support and Analytics, with conversation memory.
         </p>
       </div>
 

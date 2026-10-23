@@ -26,7 +26,6 @@ const approveEligibleOfficeAccounts = async () => {
     .in('role_id', roleIds)
     .eq('approval_status', 'pending')
     .eq('is_active', false)
-    .not('email_verified_at', 'is', null)
     .lte('created_at', cutoff);
   if (pendingError) throw pendingError;
 

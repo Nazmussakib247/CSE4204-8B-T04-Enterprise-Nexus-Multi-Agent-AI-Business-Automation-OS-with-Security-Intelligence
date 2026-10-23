@@ -4,8 +4,12 @@
  * Auth: x-nexus-secret header (not JWT)
  */
 const supabase = require('../config/supabase');
+const { syncApplicationToHrReport } = require('../utils/hrReportSync');
 
 const N8N_SECRET = process.env.N8N_SECRET || 'nexus-n8n-secret';
+const cleanSupportResponse = (value) => String(value || '')
+  .replace(/\[\$price\]|\$\[price\]|\[price\]|\$\{price\}|\{price\}/gi, 'the current listed price')
+  .trim();
 
 // Middleware: verify shared secret
 const verifySecret = (req, res, next) => {
@@ -163,7 +167,8 @@ const saveJobApplicationScreening = async (req, res, next) => {
     if (typeof narrative_summary === 'string') updates.narrative_summary = narrative_summary;
     const { data, error } = await supabase.from('job_applications').update(updates).eq('id', application_id).select().single();
     if (error || !data) return res.status(404).json({ error: 'Job application not found' });
-    res.json({ message: 'Job application screening saved', data });
+    const hrReport = await syncApplicationToHrReport(data);
+    res.json({ message: 'Job application screening saved', data, hr_report: hrReport });
   } catch (err) { next(err); }
 };
 
@@ -210,7 +215,8 @@ const saveStoreSupportAnalysis = async (req, res, next) => {
     if (!['positive', 'neutral', 'negative'].includes(sentiment) || !['low', 'medium', 'high'].includes(urgency)) {
       return res.status(400).json({ error: 'sentiment and urgency have invalid values' });
     }
-    if (typeof intent !== 'string' || !intent.trim() || typeof ai_response !== 'string' || ai_response.trim().length < 3 || ai_response.length > 2000) {
+    const safeResponse = cleanSupportResponse(ai_response);
+    if (typeof intent !== 'string' || !intent.trim() || safeResponse.length < 3 || safeResponse.length > 2000) {
       return res.status(400).json({ error: 'intent and ai_response are required' });
     }
     const requiresHuman = urgency === 'high';
@@ -221,7 +227,7 @@ const saveStoreSupportAnalysis = async (req, res, next) => {
         urgency,
         intent: intent.trim(),
         confidence: Number.isFinite(Number(confidence)) ? Number(confidence) : null,
-        ai_response: ai_response.trim(),
+        ai_response: safeResponse,
         ai_status: 'completed',
         escalated: requiresHuman,
         human_intervention_required: requiresHuman,
@@ -237,7 +243,7 @@ const saveStoreSupportAnalysis = async (req, res, next) => {
     const { error: messageError } = await supabase.from('support_messages').insert({
       ticket_id: data.id,
       sender_type: 'ai',
-      body: ai_response.trim(),
+      body: safeResponse,
     });
     if (messageError) throw messageError;
     res.json({ message: 'Store support analysis saved', data });

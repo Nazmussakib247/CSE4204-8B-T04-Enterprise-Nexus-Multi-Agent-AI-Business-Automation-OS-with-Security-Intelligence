@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { authApi } from './api'
 
@@ -24,57 +24,37 @@ const AuthContext = createContext<AuthContextType | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const authRequestId = useRef(0)
 
   useEffect(() => {
-    const requestId = ++authRequestId.current
-    let active = true
-    const isCurrentRequest = () => active && authRequestId.current === requestId
-
-    const restoreSession = async () => {
-      try {
-        const { data } = await authApi.me()
-        if (isCurrentRequest()) setUser(data.user)
-      } catch {
+    authApi.me()
+      .then(({ data }) => setUser(data.user))
+      .catch(async () => {
         // Access tokens are short lived. A page reload must recover an
         // otherwise valid storefront/office session using its refresh token.
         try {
           await authApi.refresh()
           const { data } = await authApi.me()
-          if (isCurrentRequest()) setUser(data.user)
+          setUser(data.user)
         } catch {
-          if (isCurrentRequest()) setUser(null)
+          setUser(null)
         }
-      } finally {
-        if (isCurrentRequest()) setLoading(false)
-      }
-    }
-
-    void restoreSession()
-    return () => { active = false }
+      })
+      .finally(() => setLoading(false))
   }, [])
 
   const login = async (email: string, password: string) => {
-    const requestId = ++authRequestId.current
-    setLoading(true)
-    try {
-      const { data } = await authApi.login(email, password)
-      if (authRequestId.current === requestId) setUser(data.user)
-      return data.user
-    } finally {
-      if (authRequestId.current === requestId) setLoading(false)
-    }
+    const { data } = await authApi.login(email, password)
+    setUser(data.user)
+    return data.user
   }
 
   const logout = async (redirectTo = '/login') => {
-    const requestId = ++authRequestId.current
     try {
       await authApi.logout()
     } catch {
       // proceed to login even if request fails
     }
     setUser(null)
-    if (authRequestId.current === requestId) setLoading(false)
     window.location.href = redirectTo
   }
 

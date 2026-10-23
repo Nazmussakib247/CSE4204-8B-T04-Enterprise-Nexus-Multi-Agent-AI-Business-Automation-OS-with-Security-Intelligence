@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import { useAuth } from '@/lib/auth'
-import { authApi, aiProvidersApi } from '@/lib/api'
-import type { AiProviderSetting } from '@/lib/api'
+import { authApi } from '@/lib/api'
 import PageHeader from '@/components/ui/PageHeader'
 import toast from 'react-hot-toast'
 
@@ -15,44 +14,6 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [activeSection, setActiveSection] = useState<'profile' | 'integrations' | 'notifications' | 'danger'>('profile')
   const [n8nUrl, setN8nUrl] = useState(typeof window !== 'undefined' ? localStorage.getItem('n8n_webhook_url') || '' : '')
-  const isAdmin = (user as { role?: string })?.role === 'admin'
-  const [providers, setProviders] = useState<AiProviderSetting[]>([
-    { provider: 'gemini', enabled: true, priority: 1, model: 'gemini-3.7-flash', configured: false },
-    { provider: 'grok', enabled: false, priority: 2, model: 'grok-4-fast-reasoning', configured: false },
-  ])
-  const [providerApiReady, setProviderApiReady] = useState(true)
-  const [providerKeys, setProviderKeys] = useState<Record<string, string>>({})
-  const [savingProviders, setSavingProviders] = useState(false)
-
-  useEffect(() => {
-    if (!isAdmin) return
-    aiProvidersApi.get().then(r => { setProviders(r.data.data); setProviderApiReady(true) }).catch(() => {
-      setProviderApiReady(false)
-      toast.error('AI provider backend is not deployed yet')
-    })
-  }, [isAdmin])
-
-  const updateProvider = (provider: 'gemini' | 'grok', patch: Partial<AiProviderSetting>) =>
-    setProviders(current => current.map(p => p.provider === provider ? { ...p, ...patch } : p))
-
-  const toggleProvider = (provider: 'gemini' | 'grok') => {
-    const current = providers.find(p => p.provider === provider)
-    if (!current) return
-    if (current.enabled && providers.filter(p => p.enabled).length === 1) {
-      toast.error('At least one AI provider must remain enabled')
-      return
-    }
-    updateProvider(provider, { enabled: !current.enabled })
-  }
-
-  const saveProviders = async () => {
-    if (providers.filter(p => p.enabled).length === 0) { toast.error('Enable at least one provider'); return }
-    setSavingProviders(true)
-    try {
-      const response = await aiProvidersApi.save(providers.map(p => ({ ...p, api_key: providerKeys[p.provider] || undefined })))
-      setProviders(response.data.data); setProviderKeys({}); toast.success('AI provider priority and keys saved')
-    } catch (err) { toast.error('Provider settings could not be saved') } finally { setSavingProviders(false) }
-  }
 
   const handleSave = async () => {
     if (password && password !== confirmPassword) {
@@ -238,20 +199,6 @@ export default function SettingsPage() {
                   </div>
                 ))}
               </div>
-              {isAdmin && (
-                <div className="pt-5 border-t border-outline-variant/30 space-y-4">
-                  <div><h4 className="font-display text-[15px] font-semibold text-on-surface">AI Provider Failover</h4><p className="font-body text-[12px] text-on-surface-variant mt-1">Priority 1 is called first. If it times out or fails, the next enabled provider is used automatically. Keys are encrypted server-side and never displayed again.</p></div>
-                  {!providerApiReady && <p className="rounded-lg bg-error-container/20 px-3 py-2 font-body text-[12px] text-error">Backend update is pending. Deploy the latest Render backend, then reload before saving provider keys.</p>}
-                  {providers.map(p => (
-                    <div key={p.provider} className="rounded-xl border border-outline-variant/50 p-4 space-y-3">
-                      <div className="flex items-center justify-between gap-4"><div><p className="font-body text-[14px] font-semibold text-on-surface capitalize">{p.provider} AI</p><p className="font-mono text-[10px] uppercase tracking-wider text-on-surface-variant">{p.configured ? 'Key configured' : 'No key configured yet'}</p></div><button onClick={() => toggleProvider(p.provider)} className={`relative w-11 h-6 rounded-full ${p.enabled ? 'bg-primary-container' : 'bg-outline-variant'}`} aria-label={`Toggle ${p.provider}`}><span className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white transition-transform ${p.enabled ? 'translate-x-5' : ''}`} /></button></div>
-                      <div className="grid md:grid-cols-2 gap-3"><input type="password" value={providerKeys[p.provider] || ''} onChange={e => setProviderKeys(k => ({ ...k, [p.provider]: e.target.value }))} placeholder={p.configured ? 'Leave blank to keep current key' : `Paste ${p.provider} API key`} className="px-3 py-2.5 rounded-lg border border-outline-variant/50 text-[13px]"/><input value={p.model} onChange={e => updateProvider(p.provider, { model: e.target.value })} placeholder="Model name" className="px-3 py-2.5 rounded-lg border border-outline-variant/50 text-[13px]"/></div>
-                      <div className="flex gap-2 items-center"><span className="font-mono text-[10px] uppercase text-on-surface-variant">Priority</span>{([1,2] as const).map(n => <button key={n} onClick={() => { const other = providers.find(x => x.provider !== p.provider); updateProvider(p.provider, { priority: n }); if (other) updateProvider(other.provider, { priority: n === 1 ? 2 : 1 }) }} className={`w-8 h-7 rounded border font-mono text-[11px] ${p.priority === n ? 'bg-primary text-white border-primary' : 'border-outline-variant/50'}`}>{n}</button>)}</div>
-                    </div>
-                  ))}
-                  <button onClick={saveProviders} disabled={savingProviders} className="px-4 py-2.5 rounded-xl font-mono text-[11px] uppercase tracking-widest font-bold text-white disabled:opacity-60" style={{ background: 'linear-gradient(135deg,#00c2a8,#006b5c)' }}>{savingProviders ? 'Saving...' : 'Save AI Providers'}</button>
-                </div>
-              )}
               {/* n8n webhook config */}
               <div className="pt-2 border-t border-outline-variant/30">
                 <label className="block font-mono text-[10px] uppercase tracking-widest text-on-surface-variant mb-2">n8n Webhook Base URL</label>

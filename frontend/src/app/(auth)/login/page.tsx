@@ -6,8 +6,6 @@ import Link from 'next/link'
 import { useAuth } from '@/lib/auth'
 import { getApiErrorMessage } from '@/lib/api'
 import toast from 'react-hot-toast'
-import AlreadySignedInGate from '@/components/auth/AlreadySignedInGate'
-import DemoCredentials from '@/components/auth/DemoCredentials'
 
 export default function LoginPage() {
   const { login } = useAuth()
@@ -22,21 +20,16 @@ export default function LoginPage() {
     if (!email || !password) { toast.error('Email and password required'); return }
     setLoading(true)
     try {
-      const signedInUser = await login(email, password)
-      router.push(signedInUser.role === 'candidate' ? '/careers' : signedInUser.role === 'customer' ? '/store' : '/dashboard')
-    } catch (err: unknown) {
-      const message = getApiErrorMessage(err, 'The sign-in service is temporarily unavailable. Please try again in a moment.')
-      if (message.toLowerCase().includes('verify the email code')) {
-        toast('Verify your email code to continue')
-        router.push(`/verify-office-email?email=${encodeURIComponent(email)}`)
-      } else toast.error(message)
+      await login(email, password)
+      router.push('/dashboard')
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Sign-in failed. Please try again.'))
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <AlreadySignedInGate dashboardPath="/dashboard">
     <div className="min-h-screen w-full flex">
       {/* ── Left Panel ─────────────────────────────────── */}
       <div className="hidden lg:flex w-[480px] flex-shrink-0 flex-col bg-[#1a1d1e] relative overflow-hidden">
@@ -53,7 +46,7 @@ export default function LoginPage() {
 
         <div className="relative z-10 flex flex-col h-full p-10">
           {/* Logo */}
-          <div className="flex items-center gap-3 mb-auto">
+          <div className="flex items-center gap-3 mb-4">
             <div className="w-9 h-9 rounded-xl bg-primary-container/20 border border-primary-container/30 flex items-center justify-center">
               <span className="material-symbols-outlined text-xl text-primary-container icon-filled">hub</span>
             </div>
@@ -61,10 +54,10 @@ export default function LoginPage() {
           </div>
 
           {/* Hero */}
-          <div className="py-16">
-            <div className="inline-flex items-center gap-2 bg-primary-container/10 border border-primary-container/20 rounded-full px-3 py-1.5 mb-6">
+          <div className="py-4">
+            <div className="inline-flex items-center gap-2 bg-primary-container/10 border border-primary-container/20 rounded-full px-3 py-1.5 mb-5">
               <span className="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse" />
-              <span className="font-mono text-[11px] text-primary-container uppercase tracking-widest">5 Agents Active</span>
+              <span className="font-mono text-[11px] text-primary-container uppercase tracking-widest">6 Agents Active</span>
             </div>
             <h1 className="font-display text-[40px] font-bold text-white leading-[1.15] tracking-tight mb-4">
               Your AI-Powered<br />
@@ -76,7 +69,7 @@ export default function LoginPage() {
           </div>
 
           {/* Agent chips */}
-          <div className="grid grid-cols-2 gap-2 mb-10">
+          <div className="grid grid-cols-2 gap-2 mb-4">
             {[
               { icon: 'groups', label: 'HR Agent', color: 'text-primary-container' },
               { icon: 'payments', label: 'Finance AI', color: 'text-tertiary-fixed-dim' },
@@ -164,8 +157,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <DemoCredentials title="Exhibition admin demo" email="sahid@gmail.com" password="Sahid !2" />
-
           <div className="mt-6 text-center">
             <p className="font-body text-[14px] text-on-surface-variant">
               Don&apos;t have an account?{' '}
@@ -185,6 +176,5 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-    </AlreadySignedInGate>
   )
 }

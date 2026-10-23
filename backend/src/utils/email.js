@@ -19,35 +19,6 @@ const createTransporter = () => {
 
 let transporter = null;
 
-// HTTPS email delivery avoids SMTP port timeouts on managed hosting platforms.
-// When RESEND_API_KEY is configured it is preferred for every transactional mail.
-const sendMail = async (options) => {
-  if (process.env.BREVO_API_KEY) {
-    const senderMatch = String(options.from).match(/^(.*)<([^>]+)>$/);
-    const sender = senderMatch
-      ? { name: senderMatch[1].trim().replace(/^"|"$/g, ''), email: senderMatch[2].trim() }
-      : { name: 'Enterprise NeXus', email: String(options.from).trim() };
-    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-      method: 'POST',
-      headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sender, to: (Array.isArray(options.to) ? options.to : [options.to]).map((email) => ({ email })), subject: options.subject, htmlContent: options.html, textContent: options.text }),
-    });
-    if (!response.ok) throw new Error(`Brevo HTTP ${response.status}: ${(await response.text()).slice(0, 300)}`);
-    return { response: 'Delivered through Brevo', ...(await response.json()) };
-  }
-  if (process.env.RESEND_API_KEY) {
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: options.from, to: Array.isArray(options.to) ? options.to : [options.to], subject: options.subject, html: options.html, text: options.text }),
-    });
-    if (!response.ok) throw new Error(`Resend HTTP ${response.status}: ${(await response.text()).slice(0, 300)}`);
-    return { response: 'Delivered through Resend', ...(await response.json()) };
-  }
-  const t = await getTransporter();
-  return t.sendMail(options);
-};
-
 const getTransporter = async () => {
   if (transporter) return transporter;
   if (process.env.EMAIL_HOST) {
@@ -69,11 +40,11 @@ const getTransporter = async () => {
 const FROM = process.env.EMAIL_FROM || '"Enterprise NeXus" <noreply@enterprise-nexus.io>';
 const APP_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
-const sendPasswordReset = async ({ to, name, resetToken, resetCode }) => {
+const sendPasswordReset = async ({ to, name, resetToken }) => {
+  const t = await getTransporter();
   const resetUrl = `${APP_URL}/reset-password?token=${resetToken}`;
-  const codeContent = resetCode ? `<p>Your verification code is:</p><p style="font-size:28px;font-weight:bold;letter-spacing:8px;color:#00a98f">${resetCode}</p><p>This code expires in <strong>1 hour</strong>.</p>` : '';
 
-  const info = await sendMail({
+  const info = await t.sendMail({
     from: FROM,
     to,
     subject: 'Reset your Enterprise NeXus password',
@@ -81,7 +52,7 @@ const sendPasswordReset = async ({ to, name, resetToken, resetCode }) => {
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto">
         <h2 style="color:#00c2a8">Password Reset Request</h2>
         <p>Hi ${name || 'there'},</p>
-        <p>We received a request to reset your password.</p>${codeContent}
+        <p>We received a request to reset your password. Click the button below to set a new one. This link expires in <strong>1 hour</strong>.</p>
         <a href="${resetUrl}"
            style="display:inline-block;margin:20px 0;padding:12px 28px;background:#00c2a8;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold">
           Reset Password
@@ -89,7 +60,7 @@ const sendPasswordReset = async ({ to, name, resetToken, resetCode }) => {
         <p style="color:#666;font-size:13px">If you didn't request this, you can safely ignore this email.</p>
         <p style="color:#aaa;font-size:12px">Link: ${resetUrl}</p>
       </div>`,
-    text: resetCode ? `Your Enterprise NeXus password reset code is: ${resetCode}\n\nIt expires in 1 hour.` : `Reset your password: ${resetUrl}\n\nThis link expires in 1 hour.`,
+    text: `Reset your password: ${resetUrl}\n\nThis link expires in 1 hour.`,
   });
 
   if (nodemailer.getTestMessageUrl(info)) {
@@ -98,27 +69,11 @@ const sendPasswordReset = async ({ to, name, resetToken, resetCode }) => {
   return info;
 };
 
-const sendOfficeVerificationCode = async ({ to, name, code }) => {
-  try {
-    const info = await sendMail({
-      from: FROM, to, subject: 'Verify your Enterprise NeXus office account',
-      html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto"><h2 style="color:#00c2a8">Verify your email</h2><p>Hi ${name || 'there'},</p><p>Enter this code to verify your office account:</p><p style="font-size:30px;font-weight:bold;letter-spacing:8px;color:#008f7b">${code}</p><p>This code expires in 15 minutes. Do not share it with anyone.</p></div>`,
-      text: `Your Enterprise NeXus office verification code is: ${code}. It expires in 15 minutes.`,
-    });
-    logger.info('[Email] Office verification code delivered', { to: String(to).replace(/(^.).*(@.*$)/, '$1***$2'), response: info.response });
-    return info;
-  } catch (error) {
-    logger.error('[Email] Office verification delivery failed', { code: error.code, command: error.command, responseCode: error.responseCode, error: error.message });
-    const deliveryError = new Error('Could not send the verification email. Please contact your administrator.');
-    deliveryError.statusCode = 503;
-    throw deliveryError;
-  }
-};
-
 const sendEscalationEmail = async ({ to, ticketId, subject, priority, description, assigneeName }) => {
+  const t = await getTransporter();
   const ticketUrl = `${APP_URL}/support`;
 
-  const info = await sendMail({
+  const info = await t.sendMail({
     from: FROM,
     to,
     subject: `[ESCALATED] Ticket #${ticketId} — ${subject}`,
@@ -148,26 +103,4 @@ const sendEscalationEmail = async ({ to, ticketId, subject, priority, descriptio
   return info;
 };
 
-const sendApplicationNotificationEmail = async ({ to, candidateName, jobTitle, recommendation, message }) => {
-  if (!to) throw new Error('Applicant email is missing');
-  const decision = ['shortlist', 'review', 'reject'].includes(String(recommendation).toLowerCase()) ? String(recommendation).toLowerCase() : 'review';
-  const bodies = {
-    shortlist: `Good news — your application for the ${jobTitle} role has been shortlisted. Our HR team will contact you with the next step shortly.`,
-    review: `Your application for the ${jobTitle} role is still under review. We are carefully comparing applications and will contact you when there is an update.`,
-    reject: `Thank you for applying for the ${jobTitle} role. After reviewing your application, we will not be moving forward at this time. We appreciate your interest in Enterprise NeXus.`,
-  };
-  const body = message || bodies[decision];
-  const safeName = String(candidateName || 'there').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
-  const safeBody = String(body).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
-  const info = await sendMail({
-    from: FROM,
-    to: String(to).trim(),
-    subject: `${decision === 'shortlist' ? 'Next step' : 'Update'} on your application — ${jobTitle}`,
-    html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto"><h2 style="color:#00c2a8">Application update</h2><p>Hi ${safeName},</p><p>${safeBody}</p><p style="color:#666;font-size:13px">Enterprise NeXus HR Team</p></div>`,
-    text: `Hi ${candidateName || 'there'},\n\n${body}\n\nEnterprise NeXus HR Team`,
-  });
-  if (nodemailer.getTestMessageUrl(info)) logger.info(`[Email] Application notification preview: ${nodemailer.getTestMessageUrl(info)}`);
-  return info;
-};
-
-module.exports = { sendPasswordReset, sendOfficeVerificationCode, sendEscalationEmail, sendApplicationNotificationEmail };
+module.exports = { sendPasswordReset, sendEscalationEmail };

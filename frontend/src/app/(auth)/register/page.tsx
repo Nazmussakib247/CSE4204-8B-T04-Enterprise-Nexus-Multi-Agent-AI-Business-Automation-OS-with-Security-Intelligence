@@ -16,6 +16,7 @@ export default function RegisterPage() {
   const [role, setRole] = useState<'admin' | 'manager' | 'employee' | ''>('')
   const [loading, setLoading] = useState(false)
   const [showPass, setShowPass] = useState(false)
+  const [requestSent, setRequestSent] = useState(false)
 
   const passwordChecks = {
     length: password.length >= 8,
@@ -23,7 +24,6 @@ export default function RegisterPage() {
     number: /[0-9]/.test(password),
     special: /[^A-Za-z0-9]/.test(password),
   }
-
   const passwordValid = Object.values(passwordChecks).every(Boolean)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,7 +34,7 @@ export default function RegisterPage() {
     setLoading(true)
     try {
       await authApi.register(name, email, password, role)
-      router.push(`/verify-office-email?email=${encodeURIComponent(email)}`)
+      setRequestSent(true)
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, 'Registration failed'))
     } finally {
@@ -200,6 +200,24 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+    {requestSent && (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#101314]/70 backdrop-blur-sm px-5 animate-fade-in">
+        <div className="w-full max-w-[420px] rounded-2xl bg-white p-8 text-center shadow-2xl animate-scale-in">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+            <span className="material-symbols-outlined text-[30px] text-primary icon-filled animate-pulse">hourglass_top</span>
+          </div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">Request submitted</p>
+          <h2 className="mt-2 font-display text-[23px] font-bold text-on-surface">Your access is being prepared</h2>
+          <p className="mt-3 font-body text-[14px] leading-relaxed text-on-surface-variant">An administrator can approve your requested role immediately. Otherwise, access is approved automatically within 30 seconds.</p>
+          <button
+            onClick={() => router.push('/login')}
+            className="mt-7 w-full rounded-xl bg-primary py-3 font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-on-primary transition-colors hover:bg-primary/90"
+          >
+            Okay
+          </button>
+        </div>
+      </div>
+    )}
     </AlreadySignedInGate>
   )
 }

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middleware/auth.middleware');
-const { listUsers, updateUserRole, toggleUserStatus, deleteUser, approveUser, listRoles } = require('../controllers/admin.controller');
+const { listUsers, updateUserRole, toggleUserStatus, approveUser, listRoles } = require('../controllers/admin.controller');
 
 router.use(protect);
 router.use(authorize('admin'));
@@ -11,6 +11,5 @@ router.get('/roles', listRoles);
 router.patch('/users/:id/role', updateUserRole);
 router.patch('/users/:id/approve', approveUser);
 router.patch('/users/:id/status', toggleUserStatus);
-router.delete('/users/:id', deleteUser);
 
 module.exports = router;

@@ -79,7 +79,7 @@ N8N_SECRET=change-me-to-a-random-secret
 
 `06-store-review-support-agent.json` runs for every product review. It persists sentiment/urgency and publishes a safe Support Agent reply to the exact review. Negative or high-urgency results are also placed in the dashboard human-intervention queue.
 
-`07-store-support-ai-retry.json` runs only if the backend could not reach Gemini while creating a support ticket. The ticket is already saved with `ai_status = failed`; n8n restores the same sentiment, urgency, intent, AI response, and escalation state through a protected callback.
+`07-store-support-ai-retry.json` runs after each saved support ticket. The ticket is saved immediately with `ai_status = pending`; n8n adds its sentiment, urgency, intent, AI response, and escalation state through a protected callback without making the customer wait.
 
 Both inbound n8n webhooks verify `x-nexus-secret`, and both callbacks require the same secret. Keep all three values identical: backend `N8N_SECRET`, n8n `$env.N8N_SECRET`, and the Render environment variable.
 

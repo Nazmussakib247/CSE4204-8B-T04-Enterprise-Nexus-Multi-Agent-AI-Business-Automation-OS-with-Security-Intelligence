@@ -6,14 +6,7 @@ import { Toaster } from 'react-hot-toast'
 export const metadata: Metadata = {
   title: 'Enterprise NeXus — Multi-Agent AI OS',
   description: 'Unified AI-powered business automation platform',
-  icons: {
-    icon: [
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/icon-192.png', type: 'image/png', sizes: '192x192' },
-      { url: '/icon-512.png', type: 'image/png', sizes: '512x512' },
-    ],
-    apple: '/icon-192.png',
-  },
+  icons: { icon: '/favicon.ico' },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

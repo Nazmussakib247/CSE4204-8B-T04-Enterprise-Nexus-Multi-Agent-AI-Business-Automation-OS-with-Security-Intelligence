@@ -9,6 +9,7 @@ const getTasks = async (req, res, next) => {
     let query = supabase
       .from('tasks')
       .select('*', { count: 'exact' })
+      .eq('user_id', req.user.id)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -30,6 +31,7 @@ const getTask = async (req, res, next) => {
       .from('tasks')
       .select('*')
       .eq('id', req.params.id)
+      .eq('user_id', req.user.id)
       .single();
 
     if (error || !data) return res.status(404).json({ error: 'Task not found' });
@@ -82,6 +84,7 @@ const updateTaskStatus = async (req, res, next) => {
       .from('tasks')
       .update(updates)
       .eq('id', req.params.id)
+      .eq('user_id', req.user.id)
       .select()
       .single();
 

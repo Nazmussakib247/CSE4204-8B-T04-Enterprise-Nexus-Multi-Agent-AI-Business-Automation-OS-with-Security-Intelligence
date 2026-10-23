@@ -3,13 +3,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
-import LogoutConfirmModal from './LogoutConfirmModal'
 
 export default function ProfileMenu() {
   const { user, logout } = useAuth()
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [confirmOpen, setConfirmOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -24,7 +22,7 @@ export default function ProfileMenu() {
   const initial = user.name.trim().charAt(0).toUpperCase()
 
   const go = (path: string) => { setOpen(false); router.push(path) }
-  const handleSignOut = () => { setOpen(false); setConfirmOpen(true) }
+  const handleSignOut = () => { setOpen(false); logout('/store') }
 
   return (
     <div className="relative" ref={ref}>
@@ -61,7 +59,6 @@ export default function ProfileMenu() {
           </div>
         </div>
       )}
-      <LogoutConfirmModal open={confirmOpen} onCancel={() => setConfirmOpen(false)} onConfirm={() => logout('/store')} />
     </div>
   )
 }
