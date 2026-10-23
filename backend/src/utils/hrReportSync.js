@@ -29,7 +29,6 @@ const syncApplicationToHrReport = async (application) => {
     narrative_summary: application.narrative_summary || null,
     score_breakdown: Array.isArray(application.skill_scores) ? application.skill_scores : null,
     extracted_profile: marker,
-    updated_at: new Date().toISOString(),
   };
 
   const query = existing
