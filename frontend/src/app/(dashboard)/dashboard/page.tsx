@@ -52,6 +52,7 @@ export default function DashboardPage() {
   const [financeData, setFinanceData] = useState<Array<{ id: string; category: string; amount: number; severity: string }>>([])
   const [supportData, setSupportData] = useState<Array<{ id: string; urgency: string; status: string; sentiment: string }>>([])
   const [loading, setLoading] = useState(true)
+  const [dataError, setDataError] = useState(false)
   const [taskModalOpen, setTaskModalOpen] = useState(false)
 
   const hour = new Date().getHours()
@@ -60,15 +61,16 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const done = () => setLoading(false)
+    const failed = () => setDataError(true)
     hrApi.getStats().then(r => {
       const s = r.data.stats
       setStats(prev => ({ ...prev, hr: s?.total ?? 0, hrTrend: s?.trend_pct ?? 0 }))
-    }).catch(() => {})
-    financeApi.getSummary().then(r => setStats(s => ({ ...s, finance: r.data.record_count ?? 0, anomalies: r.data.anomaly_count ?? 0 }))).catch(() => {})
-    supportApi.getSentimentReport().then(r => setStats(s => ({ ...s, support: r.data.report?.total ?? 0 }))).catch(() => {})
-    hrApi.getReports({ limit: 4 }).then(r => setHrData(r.data.data ?? [])).catch(() => {})
-    financeApi.getRecords({ limit: 4 }).then(r => setFinanceData(r.data.data ?? [])).catch(() => {})
-    supportApi.getTickets({ limit: 4 }).then(r => setSupportData(r.data.data ?? [])).catch(() => {}).finally(done)
+    }).catch(failed)
+    financeApi.getSummary().then(r => setStats(s => ({ ...s, finance: r.data.record_count ?? 0, anomalies: r.data.anomaly_count ?? 0 }))).catch(failed)
+    supportApi.getSentimentReport().then(r => setStats(s => ({ ...s, support: r.data.report?.total ?? 0 }))).catch(failed)
+    hrApi.getReports({ limit: 4 }).then(r => setHrData(r.data.data ?? [])).catch(failed)
+    financeApi.getRecords({ limit: 4 }).then(r => setFinanceData(r.data.data ?? [])).catch(failed)
+    supportApi.getTickets({ limit: 4 }).then(r => setSupportData(r.data.data ?? [])).catch(failed).finally(done)
   }, [])
 
   const recColor = (r: string) =>
@@ -103,12 +105,18 @@ export default function DashboardPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard label="CV Screenings" value={loading ? '—' : stats.hr} icon="groups" color="text-primary-container" bg="bg-primary-container/10"
+        <StatCard label="CV Screenings" value={loading || dataError ? '—' : stats.hr} icon="groups" color="text-primary-container" bg="bg-primary-container/10"
           trend={hrTrendLabel} trendUp={stats.hrTrend >= 0} />
-        <StatCard label="Finance Records" value={loading ? '—' : stats.finance} icon="payments" color="text-tertiary" bg="bg-tertiary-fixed/40" />
-        <StatCard label="Support Tickets" value={loading ? '—' : stats.support} icon="confirmation_number" color="text-primary" bg="bg-primary/10" />
-        <StatCard label="Anomalies" value={loading ? '—' : stats.anomalies} icon="warning" color="text-error" bg="bg-error-container" />
+        <StatCard label="Finance Records" value={loading || dataError ? '—' : stats.finance} icon="payments" color="text-tertiary" bg="bg-tertiary-fixed/40" />
+        <StatCard label="Support Tickets" value={loading || dataError ? '—' : stats.support} icon="confirmation_number" color="text-primary" bg="bg-primary/10" />
+        <StatCard label="Anomalies" value={loading || dataError ? '—' : stats.anomalies} icon="warning" color="text-error" bg="bg-error-container" />
       </div>
+      {dataError && !loading && (
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-[13px] text-yellow-900">
+          <span>Some live data is temporarily unavailable. The dashboard will recover automatically when the service is ready.</span>
+          <button onClick={() => window.location.reload()} className="font-semibold underline">Retry</button>
+        </div>
+      )}
 
       {/* Agent Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
