@@ -8,6 +8,24 @@ Enterprise NeXus is a business automation platform for startups, small businesse
 
 The platform helps a lean team screen candidates, monitor finance, answer customers, generate KPI reports, prepare executive briefings, and review security signals from one workspace.
 
+## Project overview
+
+- **Project type:** Multi-agent AI business automation operating system
+- **Primary audience:** Startups, small businesses, growing teams, and exhibition reviewers
+- **Academic context:** CSE4204, Section 8B, Team T04
+- **Institution:** Northern University of Business and Technology, Khulna
+- **Department:** Department of Computer Science and Engineering
+- **Supervisor:** Md. Riaz Mahmud, Assistant Professor, Department of CSE
+
+## Team members
+
+| Responsibility | Member | Student ID |
+|---|---|---|
+| Team Leader and AI Integration Lead | [Nazmus Sakib](https://www.linkedin.com/in/nazmussakib247/) | 11220320888 |
+| Backend Developer | [Shoeb Shariar Mashuk](https://www.linkedin.com/in/shoeb-shariar-masuk-b9a762326) | 11220320878 |
+| Frontend Developer | [Most Sumiya Sanjida](https://bd.linkedin.com/in/shumaiya-shanjidah-65337b42b) | 11220320874 |
+| UI and Frontend Developer | [Sabrina Ibrahim](https://www.linkedin.com/in/sabrina-ibrahim-khushbu-98a00338b/) | 11220320895 |
+
 ---
 
 ## Live system
@@ -20,12 +38,28 @@ The platform helps a lean team screen candidates, monitor finance, answer custom
 | Backend health endpoint | [enterprise-nexus-backend.onrender.com/api/health](https://enterprise-nexus-backend.onrender.com/api/health) |
 | Source repository | [GitHub](https://github.com/Nazmussakib247/CSE4204-8B-T04-Enterprise-Nexus-Multi-Agent-AI-Business-Automation-OS-with-Security-Intelligence) |
 
-The public application is hosted on Vercel. The API is hosted on Render. PostgreSQL, realtime data, and vector search are hosted on Supabase.
+- **Frontend:** Hosted on Vercel
+- **Backend API:** Hosted on Render
+- **Database, realtime data, and vector search:** Hosted on Supabase
+- **Workflow automation:** Hosted and operated through n8n
 
 ### Promotional video
 
-A public YouTube URL is not currently stored in this repository. Add the final published URL here when the exhibition video is uploaded.
+[Watch the Enterprise NeXus promotional video on YouTube](https://youtu.be/VXz9r8ys9jY?feature=shared).
 
+---
+
+## Project posters
+
+The green poster is the primary exhibition poster and summarises the architecture, agents, capabilities, technology stack, and team. A second visual poster is included for presentation and promotional use.
+
+### Primary poster
+
+![Enterprise NeXus green exhibition poster](assets/posters/enterprise-nexus-poster-green.jpg)
+
+### Alternate poster
+
+![Enterprise NeXus alternate poster](assets/posters/enterprise-nexus-poster-color.jpg)
 ---
 
 ## Why this project exists
@@ -386,22 +420,6 @@ Inbound webhooks and backend callbacks use the shared N8N_SECRET. Read [n8n-work
 | API collection | [Postman collection](postman/CSE4204-8B-T04_APICollection.json) |
 | Architecture images | [documentation/diagram](documentation/diagram) |
 | UI screenshots | [screenshots/00-ui-screenshots](screenshots/00-ui-screenshots) |
-
----
-
-## Team
-
-**Course:** CSE4204, Section 8B, Team T04
-**Department:** Department of Computer Science and Engineering
-**Institution:** Northern University of Business and Technology, Khulna
-**Supervisor:** Md. Riaz Mahmud, Assistant Professor, Department of CSE
-
-| Responsibility | Member | Student ID |
-|---|---|---|
-| Team Leader and AI Integration Lead | [Nazmus Sakib](https://www.linkedin.com/in/nazmussakib247/) | 11220320888 |
-| Backend Developer | [Shoeb Shariar Mashuk](https://www.linkedin.com/in/shoeb-shariar-masuk-b9a762326) | 11220320878 |
-| Frontend Developer | [Most Sumiya Sanjida](https://bd.linkedin.com/in/shumaiya-shanjidah-65337b42b) | 11220320874 |
-| UI and Frontend Developer | [Sabrina Ibrahim](https://www.linkedin.com/in/sabrina-ibrahim-khushbu-98a00338b/) | 11220320895 |
 
 ---
 
