@@ -90,7 +90,7 @@ function CustomerSupportContent() {
         <label className="block font-mono text-[11px] uppercase tracking-wide text-on-surface-variant mb-1.5">Related order (optional)</label>
         <select value={orderId} onChange={e => setOrderId(e.target.value)} className="w-full bg-white border border-outline-variant rounded-xl px-4 py-2.5 font-body text-[14px] text-on-surface focus:outline-none focus:border-primary-container">
           <option value="">No specific order</option>
-          {orders.map(o => <option key={o.id} value={o.id}>{o.products?.name || 'Product'} — #{o.id.slice(0, 8)}</option>)}
+          {orders.map(o => <option key={o.id} value={o.id} title={o.id}>{o.products?.name || 'Product'} — #{o.id.slice(0, 12).toUpperCase()}</option>)}
         </select>
       </div>}
       <div className="mb-5">

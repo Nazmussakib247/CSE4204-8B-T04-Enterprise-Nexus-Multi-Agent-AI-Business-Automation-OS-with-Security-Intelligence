@@ -48,7 +48,7 @@ export default function BuyButton({ productId }: { productId: string }) {
           <span className="font-body text-[14px] font-medium text-on-surface">Order placed</span>
         </div>
         <p className="font-mono text-[11px] text-on-surface-variant">
-          Order #{placedOrder.id.slice(0, 8)} · Mock checkout — no real payment was charged
+          Order #{placedOrder.id.slice(0, 12).toUpperCase()} · Mock checkout — no real payment was charged
         </p>
         <Link href="/store/orders" className="inline-block mt-2 font-body text-[13px] text-primary hover:underline">
           Track this order →

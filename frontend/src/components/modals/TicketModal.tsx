@@ -93,7 +93,7 @@ export default function TicketModal({ open, onClose, onCreated }: Props) {
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div><label className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1.5">Related order <span className="normal-case tracking-normal">(optional)</span></label>
-              <select value={orderId} onChange={e => setOrderId(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-outline-variant bg-white text-[13px]"><option value="">No order selected</option>{orders.map(order => <option key={order.id} value={order.id}>{order.products?.name ?? 'Order'} · {order.id.slice(0, 8)}</option>)}</select>
+              <select value={orderId} onChange={e => setOrderId(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-outline-variant bg-white text-[13px]"><option value="">No order selected</option>{orders.map(order => <option key={order.id} value={order.id} title={order.id}>{order.products?.name ?? 'Order'} · #{order.id.slice(0, 12).toUpperCase()}</option>)}</select>
             </div>
             <div><label className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1.5">Related product <span className="normal-case tracking-normal">(optional)</span></label>
               <select value={productId} onChange={e => setProductId(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-outline-variant bg-white text-[13px]"><option value="">No product selected</option>{products.map(product => <option key={product.id} value={product.id}>{product.name}</option>)}</select>

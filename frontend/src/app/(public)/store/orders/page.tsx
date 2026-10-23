@@ -72,7 +72,7 @@ export default function CustomerOrdersPage() {
               <div className="flex-1 min-w-0">
                 <p className="font-body text-[14px] font-medium text-on-surface truncate">{o.products?.name || 'Product'}</p>
                 <p className="font-mono text-[11px] text-on-surface-variant mt-0.5">
-                  Order #{o.id.slice(0, 8)} · Qty {o.quantity} · ${o.total} · {new Date(o.created_at).toLocaleDateString()}
+                  Order #{o.id.slice(0, 12).toUpperCase()} · Qty {o.quantity} · ${o.total} · {new Date(o.created_at).toLocaleDateString()}
                 </p>
               </div>
               <span className={`font-mono text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full shrink-0 ${STATUS_STYLE[o.status]}`}>
