@@ -12,7 +12,7 @@ interface SupportMessage { id: string; sender_type: 'customer' | 'staff' | 'ai';
 interface CustomerTicket { id: string; query: string; status: string; human_response?: string | null; human_intervention_required?: boolean; human_intervention_reason?: string | null; created_at: string; support_messages?: SupportMessage[] }
 
 const statusLabel: Record<string, string> = {
-  open: 'Support is working on it', in_progress: 'Support is working on it', escalated: 'Human support notified', resolved: 'Resolved',
+  open: 'Support is working on it', in_progress: 'Support is working on it', escalated: 'Human support notified', resolved: 'Closed',
 }
 
 function CustomerSupportContent() {
@@ -23,6 +23,7 @@ function CustomerSupportContent() {
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [tickets, setTickets] = useState<CustomerTicket[]>([])
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null)
   const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [sendingTicketId, setSendingTicketId] = useState<string | null>(null)
 
@@ -30,9 +31,13 @@ function CustomerSupportContent() {
     if (!user) { setTickets([]); return }
     try {
       const response = await supportApi.getTickets({ limit: 20 })
-      setTickets(response.data.data ?? [])
+      const nextTickets = response.data.data ?? []
+      setTickets(nextTickets)
+      setSelectedTicketId(current => current && nextTickets.some(ticket => ticket.id === current) ? current : nextTickets[0]?.id || null)
     } catch { setTickets([]) }
   }, [user])
+
+  const selectedTicket = tickets.find(ticket => ticket.id === selectedTicketId) || null
 
   useEffect(() => {
     if (!user) { setTickets([]); return }
@@ -49,6 +54,7 @@ function CustomerSupportContent() {
     try {
       const { data } = await supportApi.createTicket({ query: message.trim(), order_id: orderId || undefined })
       setTickets(current => [data.data as CustomerTicket, ...current])
+      setSelectedTicketId((data.data as CustomerTicket).id)
       setMessage('')
       setOrderId('')
       toast.success('Request sent — our support team will reply here.')
@@ -96,8 +102,14 @@ function CustomerSupportContent() {
     <section className="mt-8">
       <h2 className="font-display text-[18px] font-semibold text-on-surface mb-1">Your conversations</h2>
       <p className="font-body text-[13px] text-on-surface-variant mb-3">Continue in the thread below. New replies will appear here automatically.</p>
-      {!tickets.length ? <p className="font-body text-[13px] text-on-surface-variant">No support requests yet.</p> : <div className="space-y-4">
-        {tickets.map(ticket => {
+      {!tickets.length ? <p className="font-body text-[13px] text-on-surface-variant">No support conversations yet.</p> : <div className="grid gap-4 md:grid-cols-[190px_minmax(0,1fr)]">
+        <nav aria-label="Support conversations" className="space-y-2">
+          {tickets.map(ticket => <button type="button" key={ticket.id} onClick={() => setSelectedTicketId(ticket.id)} className={`w-full text-left rounded-xl border p-3 transition-colors ${selectedTicketId === ticket.id ? 'border-primary bg-primary/5' : 'border-outline-variant/50 bg-white hover:border-primary/40'}`}>
+            <p className="font-body text-[13px] font-medium text-on-surface truncate">{ticket.query}</p>
+            <p className="font-mono text-[9px] uppercase tracking-wider text-on-surface-variant mt-1">{ticket.status === 'resolved' ? 'Closed' : statusLabel[ticket.status] || 'Received'}</p>
+          </button>)}
+        </nav>
+        {selectedTicket ? (() => { const ticket = selectedTicket
           const storedMessages = ticket.support_messages ?? []
           const conversation = storedMessages.length ? storedMessages : [
             { id: `${ticket.id}-initial`, sender_type: 'customer' as const, body: ticket.query, created_at: ticket.created_at },
@@ -109,12 +121,12 @@ function CustomerSupportContent() {
             <div className="border-t border-outline-variant/30 pt-4"><p className="font-mono text-[10px] uppercase tracking-wider text-on-surface-variant mb-2">Conversation</p><div className="space-y-3">{conversation.map(item => <div key={item.id} className={`rounded-xl border p-3 ${item.sender_type === 'customer' ? 'bg-surface border-outline-variant/40' : item.sender_type === 'staff' ? 'bg-primary/5 border-primary-container/30' : 'bg-tertiary-container/25 border-tertiary/20'}`}>
               <p className="font-mono text-[10px] uppercase tracking-wider text-primary mb-1">{item.sender_type === 'customer' ? 'You' : item.sender_type === 'staff' ? 'Support team' : 'Support assistant'}</p><p className="font-body text-[13px] text-on-surface whitespace-pre-wrap">{item.body}</p>
             </div>)}</div></div>
-            {ticket.status !== 'resolved' && <div className="mt-4 flex gap-2">
+            {ticket.status !== 'resolved' ? <div className="mt-4 flex gap-2">
               <input aria-label="Reply to support" value={drafts[ticket.id] ?? ''} onChange={e => setDrafts(current => ({ ...current, [ticket.id]: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); sendFollowUp(ticket.id) } }} maxLength={2000} placeholder="Write a reply…" className="min-w-0 flex-1 border border-outline-variant rounded-xl px-3 py-2.5 font-body text-[13px] text-on-surface focus:outline-none focus:border-primary-container" />
               <button type="button" disabled={sendingTicketId === ticket.id} onClick={() => sendFollowUp(ticket.id)} className="shrink-0 rounded-xl bg-primary px-4 font-body text-[13px] font-medium text-on-primary disabled:opacity-60">{sendingTicketId === ticket.id ? 'Sending…' : 'Send reply'}</button>
-            </div>}
+            </div> : <div className="mt-4 rounded-xl border border-outline-variant/40 bg-surface-container-low px-3 py-2.5"><p className="font-mono text-[10px] uppercase tracking-wider text-on-surface-variant">Conversation closed</p><p className="mt-1 font-body text-[12px] text-on-surface-variant">This resolved conversation is read-only. Start a new conversation above if you need more help.</p></div>}
           </article>
-        })}
+        })() : null}
       </div>}
     </section>
   </div>

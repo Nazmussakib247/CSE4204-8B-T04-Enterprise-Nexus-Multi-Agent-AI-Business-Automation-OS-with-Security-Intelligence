@@ -288,6 +288,7 @@ const createMessage = async (req, res, next) => {
     if (!isOfficeUser(req.user)) ticketQuery = ticketQuery.eq('user_id', req.user.id);
     const { data: ticket, error: ticketError } = await ticketQuery.single();
     if (ticketError || !ticket) return res.status(404).json({ error: 'Ticket not found' });
+    if (ticket.status === 'resolved') return res.status(409).json({ error: 'This support conversation is closed. Start a new conversation for further help.' });
 
     const sender_type = isOfficeUser(req.user) ? 'staff' : 'customer';
     const { data, error } = await supabase.from('support_messages').insert({
