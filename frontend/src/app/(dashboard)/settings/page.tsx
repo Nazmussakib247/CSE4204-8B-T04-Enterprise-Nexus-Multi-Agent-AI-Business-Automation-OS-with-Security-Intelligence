@@ -14,7 +14,6 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [saving, setSaving] = useState(false)
   const [activeSection, setActiveSection] = useState<'profile' | 'integrations' | 'notifications' | 'danger'>('profile')
-  const [n8nUrl, setN8nUrl] = useState(typeof window !== 'undefined' ? localStorage.getItem('n8n_webhook_url') || '' : '')
   const isAdmin = (user as { role?: string })?.role === 'admin'
   const [providers, setProviders] = useState<AiProviderSetting[]>([
     { provider: 'gemini', enabled: true, priority: 1, model: 'gemini-3.7-flash', configured: false },
@@ -72,17 +71,10 @@ export default function SettingsPage() {
     }
   }
 
-  const handleSaveN8n = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('n8n_webhook_url', n8nUrl)
-    }
-    toast.success('n8n webhook URL saved')
-  }
-
   const integrations = [
     { name: 'Gemini AI', icon: 'psychology', status: 'connected', desc: 'AI reasoning — CV screening, anomaly detection, sentiment analysis', color: 'text-blue-600', bg: 'bg-blue-50' },
     { name: 'Supabase', icon: 'storage', status: 'connected', desc: 'Primary PostgreSQL database with Row Level Security', color: 'text-primary', bg: 'bg-primary/10' },
-    { name: 'n8n Workflows', icon: 'account_tree', status: n8nUrl ? 'connected' : 'pending', desc: 'Automation trigger engine for agent pipelines', color: n8nUrl ? 'text-primary' : 'text-on-surface-variant', bg: n8nUrl ? 'bg-primary/10' : 'bg-surface-container' },
+    { name: 'n8n Workflows', icon: 'account_tree', status: 'connected', desc: 'Automation trigger engine for agent pipelines', color: 'text-primary', bg: 'bg-primary/10' },
     { name: 'Nodemailer (SMTP)', icon: 'email', status: 'connected', desc: 'Password reset and escalation email delivery', color: 'text-primary', bg: 'bg-primary/10' },
   ]
 
@@ -252,23 +244,6 @@ export default function SettingsPage() {
                   <button onClick={saveProviders} disabled={savingProviders} className="px-4 py-2.5 rounded-xl font-mono text-[11px] uppercase tracking-widest font-bold text-white disabled:opacity-60" style={{ background: 'linear-gradient(135deg,#00c2a8,#006b5c)' }}>{savingProviders ? 'Saving...' : 'Save AI Providers'}</button>
                 </div>
               )}
-              {/* n8n webhook config */}
-              <div className="pt-2 border-t border-outline-variant/30">
-                <label className="block font-mono text-[10px] uppercase tracking-widest text-on-surface-variant mb-2">n8n Webhook Base URL</label>
-                <div className="flex gap-2">
-                  <input
-                    value={n8nUrl}
-                    onChange={e => setN8nUrl(e.target.value)}
-                    placeholder="https://your-n8n-instance.com/webhook"
-                    className="flex-1 px-4 py-3 bg-white rounded-xl font-body text-[13px] text-on-surface border border-outline-variant/50 focus:outline-none focus:border-primary-container transition-all"
-                  />
-                  <button onClick={handleSaveN8n} className="px-4 py-3 rounded-xl font-mono text-[11px] uppercase tracking-widest font-bold text-white"
-                    style={{ background: 'linear-gradient(135deg,#00c2a8,#006b5c)' }}>
-                    Save
-                  </button>
-                </div>
-                <p className="font-mono text-[10px] text-on-surface-variant mt-2">Stored locally. Backend uses N8N_WEBHOOK_URL from .env</p>
-              </div>
             </div>
           )}
 
