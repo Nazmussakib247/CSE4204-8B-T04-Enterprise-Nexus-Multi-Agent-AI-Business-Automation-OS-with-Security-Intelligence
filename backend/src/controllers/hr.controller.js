@@ -3,10 +3,18 @@ const { screenCV } = require('../utils/gemini');
 const { notifyN8n } = require('../utils/webhook');
 const { extractText } = require('../utils/fileExtract');
 const { writeAuditLog } = require('../utils/audit');
+const { syncAllJobApplicationsToHrReports } = require('../utils/hrReportSync');
 
 // GET /api/hr/reports
 const getReports = async (req, res, next) => {
   try {
+    // Keep career applications visible in the HR reports view. The sync is
+    // idempotent and also backfills applications screened before this bridge.
+    try {
+      await syncAllJobApplicationsToHrReports();
+    } catch (syncError) {
+      console.warn('[HR] Could not sync career applications:', syncError.message);
+    }
     const { page = 1, limit = 20, recommendation } = req.query;
     const offset = (page - 1) * limit;
 

@@ -4,6 +4,7 @@
  * Auth: x-nexus-secret header (not JWT)
  */
 const supabase = require('../config/supabase');
+const { syncApplicationToHrReport } = require('../utils/hrReportSync');
 
 const N8N_SECRET = process.env.N8N_SECRET || 'nexus-n8n-secret';
 
@@ -163,7 +164,8 @@ const saveJobApplicationScreening = async (req, res, next) => {
     if (typeof narrative_summary === 'string') updates.narrative_summary = narrative_summary;
     const { data, error } = await supabase.from('job_applications').update(updates).eq('id', application_id).select().single();
     if (error || !data) return res.status(404).json({ error: 'Job application not found' });
-    res.json({ message: 'Job application screening saved', data });
+    const hrReport = await syncApplicationToHrReport(data);
+    res.json({ message: 'Job application screening saved', data, hr_report: hrReport });
   } catch (err) { next(err); }
 };
 
