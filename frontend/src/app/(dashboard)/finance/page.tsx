@@ -14,7 +14,7 @@ import toast from 'react-hot-toast'
 
 interface FinanceRecord {
   id: string; category: string; amount: number; expense_date: string
-  description: string; severity: string; ai_analysis: string; created_at: string
+  description: string; severity: string; is_anomaly?: boolean; ai_analysis: string; created_at: string
 }
 interface FinanceSummary {
   total_spend: number; by_category: Record<string, number>

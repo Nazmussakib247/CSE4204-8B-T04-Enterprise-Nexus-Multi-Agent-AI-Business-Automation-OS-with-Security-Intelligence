@@ -7,6 +7,7 @@ import toast from 'react-hot-toast'
 
 interface FinanceRecord {
   id: string; category: string; amount: number; expense_date: string; description: string
+  severity?: string; is_anomaly?: boolean; ai_analysis?: string
 }
 
 interface Props {
@@ -25,6 +26,8 @@ export default function TransactionModal({ open, onClose, onCreated, editRecord 
   const [amount, setAmount] = useState('')
   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0])
   const [description, setDescription] = useState('')
+  const [reviewDecision, setReviewDecision] = useState<'confirmed' | 'cleared'>('confirmed')
+  const [reviewNote, setReviewNote] = useState('')
   const [loading, setLoading] = useState(false)
 
   // Pre-fill when editing
@@ -34,11 +37,15 @@ export default function TransactionModal({ open, onClose, onCreated, editRecord 
       setAmount(String(editRecord.amount || ''))
       setExpenseDate(editRecord.expense_date || new Date().toISOString().split('T')[0])
       setDescription(editRecord.description || '')
+      setReviewDecision(editRecord.is_anomaly === false || editRecord.severity !== 'high' ? 'cleared' : 'confirmed')
+      setReviewNote('')
     } else {
       setCategory('')
       setAmount('')
       setExpenseDate(new Date().toISOString().split('T')[0])
       setDescription('')
+      setReviewDecision('confirmed')
+      setReviewNote('')
     }
   }, [editRecord, open])
 
@@ -65,11 +72,18 @@ export default function TransactionModal({ open, onClose, onCreated, editRecord 
     setLoading(true)
     try {
       if (isEdit && editRecord) {
+        const isHighAnomaly = editRecord.severity === 'high' || editRecord.is_anomaly === true
+        const reviewUpdate = isHighAnomaly ? {
+          severity: reviewDecision === 'cleared' ? 'low' : 'high',
+          is_anomaly: reviewDecision === 'confirmed',
+          ...(reviewNote.trim() ? { ai_analysis: `${editRecord.ai_analysis || ''}\n\nHuman review: ${reviewNote.trim()}`.trim() } : {}),
+        } : {}
         await financeApi.updateRecord(editRecord.id, {
           category,
           amount: Number(amount),
           expense_date: expenseDate,
           description,
+          ...reviewUpdate,
         })
         toast.success('Transaction updated')
       } else {
@@ -125,6 +139,23 @@ export default function TransactionModal({ open, onClose, onCreated, editRecord 
               {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
+
+          {isEdit && (editRecord?.severity === 'high' || editRecord?.is_anomaly === true) && (
+            <div className="rounded-xl border border-error/20 bg-error-container/30 p-4 space-y-3">
+              <div className="flex items-start gap-2">
+                <span className="material-symbols-outlined text-error text-[18px] icon-filled">fact_check</span>
+                <div>
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-error">Human review required</p>
+                  <p className="text-[12px] text-on-surface-variant mt-1">Confirm the anomaly or clear it as a false positive.</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => setReviewDecision('confirmed')} className={`rounded-lg border px-3 py-2 text-[11px] font-medium ${reviewDecision === 'confirmed' ? 'border-error bg-error/10 text-error' : 'border-outline-variant text-on-surface-variant'}`}>Keep anomaly</button>
+                <button type="button" onClick={() => setReviewDecision('cleared')} className={`rounded-lg border px-3 py-2 text-[11px] font-medium ${reviewDecision === 'cleared' ? 'border-primary bg-primary/10 text-primary' : 'border-outline-variant text-on-surface-variant'}`}>Clear as reviewed</button>
+              </div>
+              <input value={reviewNote} onChange={e => setReviewNote(e.target.value)} placeholder="Optional review note" className="w-full px-3 py-2 rounded-lg border border-outline-variant bg-white text-[12px] text-on-surface focus:outline-none focus:border-primary-container" />
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div>

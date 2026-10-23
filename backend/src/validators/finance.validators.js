@@ -12,6 +12,9 @@ const updateRecordSchema = Joi.object({
   amount: Joi.number().positive(),
   expense_date: Joi.string().isoDate(),
   description: Joi.string().max(1000).allow('', null),
+  severity: Joi.string().valid('low', 'medium', 'high'),
+  is_anomaly: Joi.boolean(),
+  ai_analysis: Joi.string().max(4000).allow('', null),
 }).min(1);
 
 module.exports = { createRecordSchema, updateRecordSchema };

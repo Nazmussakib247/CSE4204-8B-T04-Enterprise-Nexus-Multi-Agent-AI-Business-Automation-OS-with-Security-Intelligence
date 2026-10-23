@@ -92,7 +92,10 @@ const getRecords = async (req, res, next) => {
       .range(offset, offset + Number(limit) - 1);
 
     if (category) query = query.eq('category', category);
-    if (severity) query = query.eq('severity', severity);
+    if (severity) {
+      const severities = String(severity).split(',').map((value) => value.trim()).filter(Boolean);
+      query = severities.length > 1 ? query.in('severity', severities) : query.eq('severity', severities[0]);
+    }
     if (from) query = query.gte('expense_date', from);
     if (to) query = query.lte('expense_date', to);
 
@@ -124,7 +127,7 @@ const getRecord = async (req, res, next) => {
 // POST /api/finance/records — Gemini anomaly detection
 const createRecord = async (req, res, next) => {
   try {
-    const { category, amount, expense_date, description } = req.body;
+    const { category, amount, expense_date, description, severity, is_anomaly, ai_analysis } = req.body;
 
     if (!category || !amount || !expense_date) {
       return res.status(400).json({ error: 'category, amount, and expense_date are required' });
@@ -156,6 +159,9 @@ const updateRecord = async (req, res, next) => {
     if (amount !== undefined) updates.amount = amount;
     if (expense_date !== undefined) updates.expense_date = expense_date;
     if (description !== undefined) updates.description = description;
+    if (severity !== undefined) updates.severity = severity;
+    if (is_anomaly !== undefined) updates.is_anomaly = is_anomaly;
+    if (ai_analysis !== undefined) updates.ai_analysis = ai_analysis;
     updates.updated_at = new Date().toISOString();
 
     const { data, error } = await supabase
