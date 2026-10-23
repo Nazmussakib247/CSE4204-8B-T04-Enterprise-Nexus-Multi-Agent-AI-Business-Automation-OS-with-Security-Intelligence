@@ -1,185 +1,115 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { hrApi, hrUploadApi, getApiErrorMessage } from '@/lib/api'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { getApiErrorMessage, hrApi, hrUploadApi, jobsApi } from '@/lib/api'
 import toast from 'react-hot-toast'
 
-interface Props {
-  open: boolean
-  onClose: () => void
-  onCreated: () => void
-}
-
+interface Props { open: boolean; onClose: () => void; onCreated: () => void }
+interface Job { id: string; title: string; department?: string | null; status?: string }
 type InputMode = 'file' | 'text'
+const allowedExtensions = ['pdf', 'docx', 'doc', 'txt']
+const nameFromFile = (fileName: string) => fileName.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').replace(/\b(cv|resume|curriculum vitae|final|updated|copy|v\d+)\b/gi, '').replace(/\s{2,}/g, ' ').trim().replace(/\b\w/g, c => c.toUpperCase()) || 'Candidate'
 
 export default function CVUploadModal({ open, onClose, onCreated }: Props) {
   const [candidateName, setCandidateName] = useState('')
-  const [jobTitle, setJobTitle] = useState('')
+  const [jobId, setJobId] = useState('')
   const [cvText, setCvText] = useState('')
   const [mode, setMode] = useState<InputMode>('file')
-  const [file, setFile] = useState<File | null>(null)
+  const [files, setFiles] = useState<File[]>([])
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [loadingJobs, setLoadingJobs] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [progress, setProgress] = useState({ completed: 0, total: 0 })
   const fileRef = useRef<HTMLInputElement>(null)
+  const folderRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    setLoadingJobs(true)
+    jobsApi.getAllForStaff()
+      .then(r => setJobs((r.data.data ?? []).filter((job: Job) => job.status === 'open')))
+      .catch(() => toast.error('Could not load published jobs'))
+      .finally(() => setLoadingJobs(false))
+  }, [open])
+
+  const selectedJob = jobs.find(job => job.id === jobId)
+  const reset = () => {
+    setCandidateName(''); setJobId(''); setCvText(''); setFiles([]); setMode('file'); setProgress({ completed: 0, total: 0 })
+    if (fileRef.current) fileRef.current.value = ''
+    if (folderRef.current) folderRef.current.value = ''
+  }
+  const close = () => { if (!loading) { reset(); onClose() } }
+
+  useEffect(() => {
+    if (!open) return
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape' && !loading) close() }
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open, loading])
 
   if (!open) return null
-
-  const reset = () => {
-    setCandidateName(''); setJobTitle(''); setCvText('')
-    setFile(null); setMode('file')
+  const queueFiles = (list: FileList | null) => {
+    if (!list) return
+    const accepted = Array.from(list).filter(file => allowedExtensions.includes(file.name.split('.').pop()?.toLowerCase() ?? '') && file.size <= 10 * 1024 * 1024)
+    if (!accepted.length) return toast.error('Choose PDF, DOCX, DOC, or TXT CVs under 10 MB')
+    if (accepted.length < list.length) toast.error('Unsupported or oversized files were skipped')
+    setFiles(accepted)
   }
 
-  const handleClose = () => { reset(); onClose() }
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0]
-    if (!f) return
-    const allowed = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain']
-    if (!allowed.includes(f.type)) {
-      toast.error('Only PDF, DOCX, or TXT files are supported')
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!selectedJob) return toast.error('Select an open job before screening')
+    if (mode === 'text') {
+      if (!candidateName.trim() || !cvText.trim()) return toast.error('Candidate name and CV text are required')
+      setLoading(true)
+      try { await hrApi.createReport({ candidate_name: candidateName.trim(), job_id: selectedJob.id, job_title: selectedJob.title, cv_text: cvText.trim() }); toast.success('Candidate screened with AI'); reset(); onCreated(); onClose() }
+      catch (error) { toast.error(getApiErrorMessage(error, 'Failed to screen candidate')) }
+      finally { setLoading(false) }
       return
     }
-    if (f.size > 10 * 1024 * 1024) {
-      toast.error('File must be under 10 MB')
-      return
+    if (!files.length) return toast.error('Choose at least one CV file')
+    setLoading(true); setProgress({ completed: 0, total: files.length })
+    let succeeded = 0; let failed = 0
+    for (let index = 0; index < files.length; index += 1) {
+      const file = files[index]
+      try {
+        const data = new FormData(); data.append('cv', file); data.append('candidate_name', nameFromFile(file.name)); data.append('job_title', selectedJob.title); data.append('job_id', selectedJob.id)
+        await hrUploadApi.uploadCV(data); succeeded += 1
+      } catch { failed += 1 } finally { setProgress({ completed: index + 1, total: files.length }) }
     }
-    setFile(f)
+    setLoading(false)
+    if (succeeded) { onCreated(); toast.success(`${succeeded} candidate${succeeded === 1 ? '' : 's'} screened`) }
+    if (failed) toast.error(`${failed} CV${failed === 1 ? '' : 's'} could not be screened`)
+    if (!failed) { reset(); onClose() }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!candidateName.trim() || !jobTitle.trim()) {
-      toast.error('Candidate name and job title are required')
-      return
-    }
+  if (typeof document === 'undefined') return null
 
-    setLoading(true)
-    try {
-      if (mode === 'file' && file) {
-        const fd = new FormData()
-        fd.append('cv', file)
-        fd.append('candidate_name', candidateName)
-        fd.append('job_title', jobTitle)
-        await hrUploadApi.uploadCV(fd)
-        toast.success('CV uploaded and screened by Gemini AI!')
-      } else {
-        await hrApi.createReport({ candidate_name: candidateName, job_title: jobTitle, cv_text: cvText })
-        toast.success('CV screened by Gemini AI!')
-      }
-      reset()
-      onCreated()
-      onClose()
-    } catch (err) {
-      toast.error(getApiErrorMessage(err, 'Failed to screen CV'))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={handleClose} />
-
-      <div className="relative bg-white rounded-2xl border border-outline-variant/50 w-full max-w-lg shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/30">
-          <div>
-            <h2 className="font-display text-[16px] font-semibold text-on-surface">Screen New Candidate</h2>
-            <p className="font-mono text-[10px] text-on-surface-variant mt-0.5 uppercase tracking-wider">Gemini AI will score the CV automatically</p>
-          </div>
-          <button onClick={handleClose} className="w-8 h-8 rounded-xl hover:bg-surface-container flex items-center justify-center transition-colors">
-            <span className="material-symbols-outlined text-[18px] text-on-surface-variant">close</span>
-          </button>
-        </div>
-
-        {/* Body */}
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1.5">
-                Candidate Name <span className="text-error">*</span>
-              </label>
-              <input value={candidateName} onChange={e => setCandidateName(e.target.value)}
-                placeholder="John Doe"
-                className="w-full px-4 py-2.5 rounded-xl border border-outline-variant bg-surface-container-low text-[14px] text-on-surface focus:outline-none focus:border-primary-container transition-colors" />
-            </div>
-            <div>
-              <label className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1.5">
-                Job Title <span className="text-error">*</span>
-              </label>
-              <input value={jobTitle} onChange={e => setJobTitle(e.target.value)}
-                placeholder="Senior Engineer"
-                className="w-full px-4 py-2.5 rounded-xl border border-outline-variant bg-surface-container-low text-[14px] text-on-surface focus:outline-none focus:border-primary-container transition-colors" />
-            </div>
-          </div>
-
-          {/* Mode toggle */}
-          <div className="flex gap-2">
-            {(['file', 'text'] as const).map(m => (
-              <button key={m} type="button" onClick={() => setMode(m)}
-                className={`flex-1 py-2 rounded-xl font-mono text-[10px] uppercase tracking-widest font-bold border transition-all ${
-                  mode === m ? 'bg-primary text-white border-primary' : 'border-outline-variant text-on-surface-variant hover:bg-surface-container'
-                }`}>
-                {m === 'file' ? 'Upload File' : 'Paste Text'}
-              </button>
-            ))}
-          </div>
-
-          {mode === 'file' ? (
-            <div
-              onClick={() => fileRef.current?.click()}
-              className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
-                file ? 'border-primary bg-primary/5' : 'border-outline-variant hover:border-primary/50 hover:bg-surface-container'
-              }`}
-            >
-              <input ref={fileRef} type="file" accept=".pdf,.docx,.doc,.txt" className="hidden" onChange={handleFileChange} />
-              <span className="material-symbols-outlined text-3xl text-on-surface-variant mb-2 block">
-                {file ? 'check_circle' : 'upload_file'}
-              </span>
-              {file ? (
-                <div>
-                  <p className="font-mono text-[11px] font-bold text-primary">{file.name}</p>
-                  <p className="font-mono text-[10px] text-on-surface-variant mt-1">{(file.size / 1024).toFixed(0)} KB</p>
-                </div>
-              ) : (
-                <div>
-                  <p className="font-mono text-[11px] text-on-surface-variant">Click to select PDF or DOCX</p>
-                  <p className="font-mono text-[10px] text-on-surface-variant/60 mt-1">Max 10 MB</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div>
-              <label className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1.5">
-                CV / Profile Text
-              </label>
-              <textarea value={cvText} onChange={e => setCvText(e.target.value)} rows={7}
-                placeholder="Paste the candidate's CV, LinkedIn bio, or resume text here..."
-                className="w-full px-4 py-2.5 rounded-xl border border-outline-variant bg-surface-container-low text-[13px] text-on-surface focus:outline-none focus:border-primary-container transition-colors resize-none font-body" />
-            </div>
-          )}
-
-          {/* AI banner */}
-          <div className="flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-xl px-4 py-3">
-            <span className="material-symbols-outlined text-[18px] text-primary icon-filled">psychology</span>
-            <p className="font-mono text-[10px] text-primary uppercase tracking-wider">
-              Gemini AI generates score, confidence &amp; recommendation automatically
-            </p>
-          </div>
-
-          <div className="flex items-center justify-end gap-3 pt-1">
-            <button type="button" onClick={handleClose}
-              className="font-mono text-[10px] uppercase tracking-wider px-4 py-2 rounded-xl border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-all">
-              Cancel
-            </button>
-            <button type="submit" disabled={loading || (mode === 'file' && !file)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-mono text-[11px] uppercase tracking-widest font-bold text-white disabled:opacity-60"
-              style={{ background: 'linear-gradient(135deg,#00c2a8,#006b5c)', boxShadow: '0 4px 14px rgba(0,194,168,0.3)' }}>
-              <span className="material-symbols-outlined text-[16px]">{loading ? 'hourglass_empty' : 'psychology'}</span>
-              {loading ? 'Processing...' : 'Screen with AI'}
-            </button>
-          </div>
-        </form>
-      </div>
+  return createPortal(<div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="cv-screening-title">
+    <div className="modal-backdrop" onClick={close} />
+    <div className="modal-panel max-w-2xl overflow-y-auto rounded-[24px] border-white/70 shadow-[0_28px_80px_rgba(15,23,42,0.32)]">
+      <header className="relative overflow-hidden border-b border-outline-variant/30 bg-gradient-to-br from-slate-950 via-[#073c39] to-[#007c6b] px-7 py-6 text-white">
+        <div className="absolute -right-12 -top-16 h-48 w-48 rounded-full bg-primary-container/20 blur-2xl" />
+        <div className="relative flex items-start justify-between gap-5"><div className="flex gap-4"><div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/20"><span className="material-symbols-outlined icon-filled">person_search</span></div><div><p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary-fixed">Talent intelligence</p><h2 id="cv-screening-title" className="mt-1 font-display text-xl font-bold">AI candidate screening</h2><p className="mt-1 text-[13px] text-white/75">Match one or many CVs against a published role.</p></div></div><button type="button" onClick={close} disabled={loading} aria-label="Close dialog" className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/20 disabled:opacity-50"><span className="material-symbols-outlined">close</span></button></div>
+      </header>
+      <form onSubmit={submit} className="space-y-5 px-7 py-6">
+        <section className="rounded-2xl border border-primary-container/20 bg-primary/5 p-4"><div className="mb-2 flex items-center gap-2"><span className="material-symbols-outlined text-[18px] text-primary">work</span><label htmlFor="screening-job" className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-primary">Published job <span className="text-error">*</span></label></div><select id="screening-job" value={jobId} onChange={e => setJobId(e.target.value)} disabled={loadingJobs || loading} className="w-full rounded-xl border border-outline-variant bg-white px-4 py-3 text-[14px] font-medium text-on-surface outline-none transition focus:border-primary-container disabled:opacity-60"><option value="">{loadingJobs ? 'Loading published jobs…' : jobs.length ? 'Select a job to screen against' : 'No open jobs available'}</option>{jobs.map(job => <option key={job.id} value={job.id}>{job.title}{job.department ? ` — ${job.department}` : ''}</option>)}</select>{selectedJob && <p className="mt-2 flex items-center gap-1.5 text-xs text-on-surface-variant"><span className="material-symbols-outlined text-[15px] text-primary">verified</span>AI will use this job’s required skills and screening criteria.</p>}</section>
+        <div className="grid grid-cols-2 rounded-xl bg-surface-container-low p-1">{([['file', 'Upload CVs', 'upload_file'], ['text', 'Paste profile', 'article']] as const).map(([value, label, icon]) => <button key={value} type="button" onClick={() => setMode(value)} disabled={loading} className={`flex items-center justify-center gap-2 rounded-lg py-2.5 font-mono text-[10px] font-bold uppercase tracking-wider transition ${mode === value ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}><span className="material-symbols-outlined text-[16px]">{icon}</span>{label}</button>)}</div>
+        {mode === 'file' ? <>
+          <input ref={fileRef} type="file" accept=".pdf,.docx,.doc,.txt" multiple className="hidden" onChange={e => queueFiles(e.target.files)} />
+          <input ref={folderRef} type="file" accept=".pdf,.docx,.doc,.txt" multiple {...({ webkitdirectory: '', directory: '' } as Record<string, string>)} className="hidden" onChange={e => queueFiles(e.target.files)} />
+          <div className="grid gap-3 sm:grid-cols-2"><button type="button" onClick={() => fileRef.current?.click()} disabled={loading} className="rounded-2xl border-2 border-dashed border-primary-container/45 bg-primary/5 p-5 text-left transition hover:border-primary hover:bg-primary/10 disabled:opacity-60"><span className="material-symbols-outlined mb-3 block text-3xl text-primary">upload_file</span><p className="font-display text-sm font-bold text-on-surface">Choose CV files</p><p className="mt-1 text-xs text-on-surface-variant">Select multiple PDF, DOCX or TXT files.</p></button><button type="button" onClick={() => folderRef.current?.click()} disabled={loading} className="rounded-2xl border-2 border-dashed border-outline-variant bg-surface-container-low p-5 text-left transition hover:border-primary-container hover:bg-primary/5 disabled:opacity-60"><span className="material-symbols-outlined mb-3 block text-3xl text-on-surface-variant">drive_folder_upload</span><p className="font-display text-sm font-bold text-on-surface">Choose a folder</p><p className="mt-1 text-xs text-on-surface-variant">Every supported CV inside is queued for screening.</p></button></div>
+          <section className="rounded-xl border border-outline-variant/60 bg-white"><div className="flex items-center justify-between border-b border-outline-variant/40 px-4 py-3"><p className="font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Screening queue</p><span className="rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[10px] font-bold text-primary">{files.length} CV{files.length === 1 ? '' : 's'}</span></div>{files.length ? <div className="max-h-36 divide-y divide-outline-variant/25 overflow-y-auto">{files.map((file, index) => <div key={`${file.name}-${index}`} className="flex items-center gap-3 px-4 py-2.5"><span className="material-symbols-outlined text-[18px] text-primary">description</span><div className="min-w-0 flex-1"><p className="truncate text-[12px] font-medium text-on-surface">{nameFromFile(file.name)}</p><p className="truncate font-mono text-[10px] text-on-surface-variant">{file.name} · {(file.size / 1024 / 1024).toFixed(1)} MB</p></div><button type="button" onClick={() => setFiles(current => current.filter((_, i) => i !== index))} disabled={loading} aria-label={`Remove ${file.name}`} className="text-on-surface-variant hover:text-error"><span className="material-symbols-outlined text-[18px]">close</span></button></div>)}</div> : <div className="px-4 py-6 text-center"><span className="material-symbols-outlined text-2xl text-outline">folder_open</span><p className="mt-1 text-xs text-on-surface-variant">No CVs in the queue yet.</p></div>}</section>
+        </> : <section className="space-y-3"><div><label htmlFor="candidate-name" className="mb-1.5 block font-mono text-[10px] uppercase tracking-widest text-on-surface-variant">Candidate name <span className="text-error">*</span></label><input id="candidate-name" value={candidateName} onChange={e => setCandidateName(e.target.value)} placeholder="e.g. Alex Morgan" className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary-container" /></div><div><label htmlFor="cv-text" className="mb-1.5 block font-mono text-[10px] uppercase tracking-widest text-on-surface-variant">CV / profile text <span className="text-error">*</span></label><textarea id="cv-text" value={cvText} onChange={e => setCvText(e.target.value)} rows={7} placeholder="Paste the candidate’s CV, LinkedIn profile, or resume text…" className="w-full resize-none rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3 text-[13px] text-on-surface outline-none transition focus:border-primary-container" /></div></section>}
+        {loading && progress.total > 0 && <div className="rounded-xl bg-primary/5 px-4 py-3"><div className="mb-2 flex justify-between font-mono text-[10px] uppercase tracking-wider text-primary"><span>AI screening in progress</span><span>{progress.completed}/{progress.total}</span></div><div className="h-1.5 overflow-hidden rounded-full bg-primary/15"><div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(progress.completed / progress.total) * 100}%` }} /></div></div>}
+        <footer className="flex items-center justify-between gap-4 border-t border-outline-variant/30 pt-5"><p className="max-w-[55%] text-[11px] leading-relaxed text-on-surface-variant">Names are detected from CV file names. Each file is securely processed and scored separately.</p><div className="flex shrink-0 gap-2"><button type="button" onClick={close} disabled={loading} className="rounded-xl border border-outline-variant px-4 py-2.5 font-mono text-[10px] uppercase tracking-wider text-on-surface-variant transition hover:bg-surface-container disabled:opacity-50">Cancel</button><button type="submit" disabled={loading || !jobId || (mode === 'file' && !files.length)} className="flex items-center gap-2 rounded-xl bg-gradient-to-br from-primary-container to-primary px-5 py-2.5 font-mono text-[10px] font-bold uppercase tracking-wider text-white shadow-[0_8px_20px_rgba(0,139,123,0.28)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"><span className="material-symbols-outlined text-[16px]">{loading ? 'hourglass_empty' : 'auto_awesome'}</span>{loading ? 'Screening…' : mode === 'file' && files.length > 1 ? `Screen ${files.length} CVs` : 'Screen with AI'}</button></div></footer>
+      </form>
     </div>
-  )
+  </div>, document.body)
 }
