@@ -1,5 +1,7 @@
 'use client'
 
+import { createPortal } from 'react-dom'
+
 interface Props {
   open: boolean
   title: string
@@ -11,22 +13,28 @@ interface Props {
 }
 
 export default function ConfirmModal({ open, title, message, confirmLabel = 'Delete', danger = true, onConfirm, onCancel }: Props) {
-  if (!open) return null
+  // Dashboard content uses an entry animation with `transform`. A fixed
+  // element rendered inside that subtree is then positioned against the
+  // animated content instead of the viewport, which can push the dialog
+  // below the visible screen. Render confirmation dialogs at document level
+  // so they always use the viewport as their containing block.
+  if (!open || typeof document === 'undefined') return null
 
-  return (
-    <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
-      <div className="modal-backdrop" onClick={onCancel} />
-      <div className="modal-panel max-w-sm p-6 space-y-4">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${danger ? 'bg-error-container' : 'bg-surface-container'}`}>
-          <span className={`material-symbols-outlined text-[20px] icon-filled ${danger ? 'text-error' : 'text-on-surface-variant'}`}>
-            {danger ? 'delete_forever' : 'help'}
-          </span>
-        </div>
-        <div>
-          <h2 id="confirm-modal-title" className="font-display text-[16px] font-semibold text-on-surface">{title}</h2>
-          <p className="font-body text-[13px] text-on-surface-variant mt-1">{message}</p>
-        </div>
-        <div className="flex gap-3 pt-1">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] isolate overflow-y-auto">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onCancel} />
+      <div className="relative flex min-h-[100svh] items-center justify-center p-4 sm:p-6">
+        <div role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm max-h-[calc(100svh-2rem)] overflow-y-auto p-6 space-y-4">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${danger ? 'bg-error-container' : 'bg-surface-container'}`}>
+            <span className={`material-symbols-outlined text-[20px] icon-filled ${danger ? 'text-error' : 'text-on-surface-variant'}`}>
+              {danger ? 'delete_forever' : 'help'}
+            </span>
+          </div>
+          <div>
+            <h2 id="confirm-modal-title" className="font-display text-[16px] font-semibold text-on-surface">{title}</h2>
+            <p className="font-body text-[13px] text-on-surface-variant mt-1">{message}</p>
+          </div>
+          <div className="flex gap-3 pt-1">
           <button
             onClick={onCancel}
             className="flex-1 px-4 py-2.5 rounded-xl font-mono text-[11px] uppercase tracking-widest border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors"
@@ -41,8 +49,10 @@ export default function ConfirmModal({ open, title, message, confirmLabel = 'Del
           >
             {confirmLabel}
           </button>
+          </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
