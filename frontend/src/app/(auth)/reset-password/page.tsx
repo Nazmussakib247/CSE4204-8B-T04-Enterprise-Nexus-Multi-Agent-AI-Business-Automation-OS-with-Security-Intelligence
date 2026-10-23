@@ -9,9 +9,7 @@ import { authApi, getApiErrorMessage } from '@/lib/api'
 function ResetPasswordForm() {
   const params = useSearchParams()
   const router = useRouter()
-  const emailFromLink = params.get('email') || ''
-  const [email, setEmail] = useState(emailFromLink)
-  const [code, setCode] = useState('')
+  const token = params.get('token') || ''
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
@@ -27,21 +25,31 @@ function ResetPasswordForm() {
       toast.error('Passwords do not match')
       return
     }
-    if (!email || !/^\d{6}$/.test(code)) {
-      toast.error('Enter your email and six-digit reset code')
+    if (!token) {
+      toast.error('Invalid reset link')
       return
     }
     setLoading(true)
     try {
-      await authApi.resetPassword(email, code, password)
+      await authApi.resetPassword(token, password)
       setDone(true)
       toast.success('Password reset! Redirecting to login...')
       setTimeout(() => router.push('/login'), 2000)
     } catch (err) {
-      toast.error(getApiErrorMessage(err, 'Reset failed. Code may have expired.'))
+      toast.error(getApiErrorMessage(err, 'Reset failed. Link may have expired.'))
     } finally {
       setLoading(false)
     }
+  }
+
+  if (!token) {
+    return (
+      <div className="card text-center">
+        <span className="material-symbols-outlined text-4xl text-error mb-4 block">error</span>
+        <p className="text-on-surface-variant">Invalid or missing reset token.</p>
+        <Link href="/forgot-password" className="btn-primary mt-4 inline-block">Request new link</Link>
+      </div>
+    )
   }
 
   return (
@@ -56,8 +64,6 @@ function ResetPasswordForm() {
 
       {!done && (
         <form onSubmit={handleSubmit} className="space-y-sm">
-          <div><label className="font-mono text-label-caps uppercase tracking-wider text-on-surface-variant block mb-1.5">Email</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input-field" /></div>
-          <div><label className="font-mono text-label-caps uppercase tracking-wider text-on-surface-variant block mb-1.5">Reset Code</label><input inputMode="numeric" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" className="input-field font-mono tracking-[0.3em]" /></div>
           <div>
             <label className="font-mono text-label-caps uppercase tracking-wider text-on-surface-variant block mb-1.5">
               New Password

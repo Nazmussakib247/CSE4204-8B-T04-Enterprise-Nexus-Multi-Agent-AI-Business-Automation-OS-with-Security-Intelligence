@@ -7,6 +7,9 @@ const supabase = require('../config/supabase');
 const { syncApplicationToHrReport } = require('../utils/hrReportSync');
 
 const N8N_SECRET = process.env.N8N_SECRET || 'nexus-n8n-secret';
+const cleanSupportResponse = (value) => String(value || '')
+  .replace(/\[\$price\]|\$\[price\]|\[price\]|\$\{price\}|\{price\}/gi, 'the current listed price')
+  .trim();
 
 // Middleware: verify shared secret
 const verifySecret = (req, res, next) => {
@@ -208,15 +211,12 @@ const saveStoreReviewAnalysis = async (req, res, next) => {
 const saveStoreSupportAnalysis = async (req, res, next) => {
   try {
     const { ticket_id, sentiment, urgency, intent, confidence, ai_response } = req.body;
-    const cleanSupportResponse = (value) => String(value || '')
-      .replace(/\[\$price\]|\$\[price\]|\[price\]|\$\{price\}|\{price\}/gi, 'the current listed price')
-      .trim();
-    const safeResponse = cleanSupportResponse(ai_response);
     if (!ticket_id) return res.status(400).json({ error: 'ticket_id is required' });
     if (!['positive', 'neutral', 'negative'].includes(sentiment) || !['low', 'medium', 'high'].includes(urgency)) {
       return res.status(400).json({ error: 'sentiment and urgency have invalid values' });
     }
-    if (typeof intent !== 'string' || !intent.trim() || typeof ai_response !== 'string' || safeResponse.length < 3 || safeResponse.length > 2000) {
+    const safeResponse = cleanSupportResponse(ai_response);
+    if (typeof intent !== 'string' || !intent.trim() || safeResponse.length < 3 || safeResponse.length > 2000) {
       return res.status(400).json({ error: 'intent and ai_response are required' });
     }
     const requiresHuman = urgency === 'high';

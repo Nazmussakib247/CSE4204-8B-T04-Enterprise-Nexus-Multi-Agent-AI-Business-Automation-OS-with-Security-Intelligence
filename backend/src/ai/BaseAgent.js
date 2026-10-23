@@ -84,13 +84,10 @@ class BaseAgent {
         iterations += 1;
         messages.push(response);
 
-        // Independent tool calls in one model turn (for example Finance and
-        // Analytics delegations) must not wait on each other. Preserve the
-        // model's requested order when putting their results back in context.
-        const toolMessages = await Promise.all(
-          response.tool_calls.map((call) => this._executeToolCall(call, { userId, req }))
-        );
-        messages.push(...toolMessages);
+        for (const call of response.tool_calls) {
+          const toolMessage = await this._executeToolCall(call, { userId, req });
+          messages.push(toolMessage);
+        }
 
         response = await model.invoke(messages);
       }

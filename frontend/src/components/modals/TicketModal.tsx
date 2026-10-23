@@ -1,8 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { createPortal } from 'react-dom'
-import { ordersApi, productsApi, supportApi, type StoreProduct } from '@/lib/api'
+import { useState } from 'react'
+import { supportApi } from '@/lib/api'
 import toast from 'react-hot-toast'
 
 interface Props {
@@ -13,29 +12,7 @@ interface Props {
 
 export default function TicketModal({ open, onClose, onCreated }: Props) {
   const [query, setQuery] = useState('')
-  const [orderId, setOrderId] = useState('')
-  const [productId, setProductId] = useState('')
-  const [orders, setOrders] = useState<{ id: string; products?: { name: string } }[]>([])
-  const [products, setProducts] = useState<StoreProduct[]>([])
   const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    if (!open) return
-    ordersApi.getAll().then(res => setOrders(res.data.data ?? [])).catch(() => {})
-    productsApi.list().then(res => setProducts(res.data.data ?? [])).catch(() => {})
-  }, [open])
-
-  useEffect(() => {
-    if (!open) return
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape' && !loading) onClose() }
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    document.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.body.style.overflow = previousOverflow
-      document.removeEventListener('keydown', onKeyDown)
-    }
-  }, [open, loading, onClose])
 
   if (!open) return null
 
@@ -47,7 +24,7 @@ export default function TicketModal({ open, onClose, onCreated }: Props) {
     }
     setLoading(true)
     try {
-      const res = await supportApi.createTicket({ query, order_id: orderId || null, product_id: productId || null })
+      const res = await supportApi.createTicket({ query })
       const ai = res.data?.ai_analysis
       if (ai?.sentiment) {
         toast.success(`Ticket created — Gemini detected: ${ai.sentiment} sentiment, ${ai.urgency} urgency`)
@@ -55,7 +32,6 @@ export default function TicketModal({ open, onClose, onCreated }: Props) {
         toast.success('Ticket created with AI analysis')
       }
       setQuery('')
-      setOrderId(''); setProductId('')
       onCreated()
       onClose()
     } catch {
@@ -68,37 +44,22 @@ export default function TicketModal({ open, onClose, onCreated }: Props) {
   const charCount = query.length
   const charLimit = 1000
 
-  if (typeof document === 'undefined') return null
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
-  return createPortal((
-    <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="ticket-modal-title">
-      <div className="modal-backdrop" onClick={onClose} />
-
-      <div className="modal-panel max-w-lg overflow-hidden">
-        <div className="flex items-center justify-between gap-4 bg-gradient-to-br from-[#0b3440] via-[#006b5c] to-[#00a892] px-6 py-5 text-white">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
-              <span className="material-symbols-outlined text-[21px] icon-filled">support_agent</span>
-            </div>
-            <div>
-              <h2 id="ticket-modal-title" className="font-display text-[17px] font-semibold">New Support Ticket</h2>
-              <p className="mt-0.5 font-mono text-[10px] uppercase tracking-wider text-white/70">AI will analyse sentiment and urgency</p>
-            </div>
+      <div className="relative bg-white rounded-2xl border border-outline-variant/50 w-full max-w-lg shadow-2xl">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/30">
+          <div>
+            <h2 className="font-display text-[16px] font-semibold text-on-surface">New Support Ticket</h2>
+            <p className="font-mono text-[10px] text-on-surface-variant mt-0.5 uppercase tracking-wider">AI will analyse sentiment and urgency</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close support ticket dialog" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 transition-colors hover:bg-white/20">
-            <span className="material-symbols-outlined text-[19px]">close</span>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl hover:bg-surface-container flex items-center justify-center transition-colors">
+            <span className="material-symbols-outlined text-[18px] text-on-surface-variant">close</span>
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div><label className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1.5">Related order <span className="normal-case tracking-normal">(optional)</span></label>
-              <select value={orderId} onChange={e => setOrderId(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-outline-variant bg-white text-[13px]"><option value="">No order selected</option>{orders.map(order => <option key={order.id} value={order.id} title={order.id}>{order.products?.name ?? 'Order'} · #{order.id.slice(0, 12).toUpperCase()}</option>)}</select>
-            </div>
-            <div><label className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1.5">Related product <span className="normal-case tracking-normal">(optional)</span></label>
-              <select value={productId} onChange={e => setProductId(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-outline-variant bg-white text-[13px]"><option value="">No product selected</option>{products.map(product => <option key={product.id} value={product.id}>{product.name}</option>)}</select>
-            </div>
-          </div>
           <div>
             <label className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1.5">
               Describe your issue <span className="text-error">*</span>
@@ -152,5 +113,5 @@ export default function TicketModal({ open, onClose, onCreated }: Props) {
         </form>
       </div>
     </div>
-  ), document.body)
+  )
 }

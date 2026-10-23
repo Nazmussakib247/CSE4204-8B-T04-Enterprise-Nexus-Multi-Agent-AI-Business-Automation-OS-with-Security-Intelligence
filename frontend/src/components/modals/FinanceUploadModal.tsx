@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
-import { createPortal } from 'react-dom'
+import { useState, useRef } from 'react'
 import { financeApi, getApiErrorMessage } from '@/lib/api'
 import toast from 'react-hot-toast'
 
@@ -23,22 +22,10 @@ export default function FinanceUploadModal({ open, onClose, onCreated }: Props) 
   const [result, setResult] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
+  if (!open) return null
+
   const reset = () => { setFile(null); setResult(null) }
   const handleClose = () => { reset(); setMode('invoice'); onClose() }
-
-  useEffect(() => {
-    if (!open) return
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape' && !loading) handleClose() }
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    document.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.body.style.overflow = previousOverflow
-      document.removeEventListener('keydown', onKeyDown)
-    }
-  }, [open, loading])
-
-  if (!open) return null
 
   const switchMode = (m: Mode) => { setMode(m); setFile(null); setResult(null) }
 
@@ -80,26 +67,19 @@ export default function FinanceUploadModal({ open, onClose, onCreated }: Props) 
     }
   }
 
-  if (typeof document === 'undefined') return null
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={handleClose} />
 
-  return createPortal((
-    <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="finance-upload-modal-title">
-      <div className="modal-backdrop" onClick={handleClose} />
-
-      <div className="modal-panel max-w-lg">
+      <div className="relative bg-white rounded-2xl border border-outline-variant/50 w-full max-w-lg shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between gap-4 bg-gradient-to-br from-[#35205f] via-[#5b2f88] to-[#a855b6] px-6 py-5 text-white">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
-              <span className="material-symbols-outlined text-[21px] icon-filled">upload_file</span>
-            </div>
-            <div>
-              <h2 id="finance-upload-modal-title" className="font-display text-[17px] font-semibold">Import Expenses</h2>
-              <p className="mt-0.5 font-mono text-[10px] uppercase tracking-wider text-white/70">AI extracts and analyses each expense</p>
-            </div>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/30">
+          <div>
+            <h2 className="font-display text-[16px] font-semibold text-on-surface">Import Expenses</h2>
+            <p className="font-mono text-[10px] text-on-surface-variant mt-0.5 uppercase tracking-wider">Gemini AI extracts and analyses each expense</p>
           </div>
-          <button type="button" onClick={handleClose} aria-label="Close expense import dialog" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 transition-colors hover:bg-white/20">
-            <span className="material-symbols-outlined text-[19px]">close</span>
+          <button onClick={handleClose} className="w-8 h-8 rounded-xl hover:bg-surface-container flex items-center justify-center transition-colors">
+            <span className="material-symbols-outlined text-[18px] text-on-surface-variant">close</span>
           </button>
         </div>
 
@@ -173,5 +153,5 @@ export default function FinanceUploadModal({ open, onClose, onCreated }: Props) 
         </form>
       </div>
     </div>
-  ), document.body)
+  )
 }

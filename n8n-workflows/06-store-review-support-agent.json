@@ -12,7 +12,7 @@
       "id": "store-review-prompt", "name": "Prepare review analysis", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [500, 300]
     },
     {
-      "parameters": { "method": "POST", "url": "={{ 'https://generativelanguage.googleapis.com/v1beta/models/' + ($env.GEMINI_MODEL || 'gemini-1.5-flash') + ':generateContent?key=' + $env.GEMINI_API_KEY }}", "sendBody": true, "contentType": "json", "jsonBody": "={{ JSON.stringify($json.geminiBody) }}", "options": {} },
+      "parameters": { "method": "POST", "url": "={{ 'https://generativelanguage.googleapis.com/v1beta/models/' + ($env.GEMINI_MODEL || 'gemini-3.7-flash') + ':generateContent?key=' + $env.GEMINI_API_KEY }}", "sendBody": true, "contentType": "json", "jsonBody": "={{ JSON.stringify($json.geminiBody) }}", "options": {} },
       "id": "store-review-gemini", "name": "Gemini review analysis", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [760, 300]
     },
     {

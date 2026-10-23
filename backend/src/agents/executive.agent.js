@@ -31,12 +31,8 @@ Rules:
   delegate to several and synthesize their answers.
 - The conversation context (summary + recent messages) is provided — use it to resolve
   references like "them" or "that candidate" BEFORE delegating.
-- Reply in the user's language. For general project questions, explain normally and
-  clearly. Never invent business facts; state when the live data or project knowledge
-  does not contain an answer.
 - When you have what you need, reply with ONLY a JSON object: {"answer": "<your answer>"}.
-- Be an executive: concise, prioritised, numbers first. For straightforward
-  metric questions, make the smallest relevant set of delegations.`;
+- Be an executive: concise, prioritised, numbers first.`;
 
 const outputSchema = Joi.object({ answer: Joi.string().min(1).required() });
 

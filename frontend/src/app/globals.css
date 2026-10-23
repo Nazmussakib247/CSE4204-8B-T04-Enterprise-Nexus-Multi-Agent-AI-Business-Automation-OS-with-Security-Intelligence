@@ -102,46 +102,6 @@
       transition-all duration-200 cursor-pointer;
   }
 
-  /* Shared dialog treatment: centered on desktop, scroll-safe on small screens. */
-  .modal-overlay {
-    position: fixed;
-    inset: 0;
-    /* Keep dialogs above the dashboard header and any sticky navigation. */
-    z-index: 200;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding: 1rem;
-  }
-
-  .modal-backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.38);
-    backdrop-filter: blur(3px);
-    animation: fade-in 0.18s ease-out both;
-  }
-
-  .modal-panel {
-    position: relative;
-    width: 100%;
-    max-height: calc(100dvh - 2rem);
-    margin-block: auto;
-    overflow-y: auto;
-    border: 1px solid rgba(108, 122, 118, 0.22);
-    border-radius: 1.25rem;
-    background: #fff;
-    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.25), 0 4px 14px rgba(15, 23, 42, 0.08);
-    animation: modal-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  }
-
-  @media (min-width: 640px) {
-    .modal-overlay { align-items: center; padding: 1.5rem; }
-    .modal-panel { max-height: calc(100dvh - 3rem); }
-  }
-
   /* Stat card */
   .stat-card {
     @apply card flex flex-col gap-xs hover:shadow-card-hover transition-shadow duration-200 cursor-default;
@@ -184,19 +144,10 @@
   to   { transform: translateX(0); }
 }
 
-@keyframes modal-in {
-  from { opacity: 0; transform: translateY(10px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
 .animate-fade-in {
   animation: fade-in 0.2s ease-out both;
 }
 
 .animate-slide-in-left {
   animation: slide-in-left 0.22s cubic-bezier(0.4, 0, 0.2, 1) both;
-}
-
-.animate-modal-in {
-  animation: modal-in 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
