@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth'
 import { getApiErrorMessage } from '@/lib/api'
 import toast from 'react-hot-toast'
 import AlreadySignedInGate from '@/components/auth/AlreadySignedInGate'
+import DemoCredentials from '@/components/auth/DemoCredentials'
 
 export default function LoginPage() {
   const { login } = useAuth()
@@ -162,6 +163,8 @@ export default function LoginPage() {
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
+
+          <DemoCredentials title="Exhibition admin demo" email="sahid@gmail.com" password="Sahid !2" />
 
           <div className="mt-6 text-center">
             <p className="font-body text-[14px] text-on-surface-variant">

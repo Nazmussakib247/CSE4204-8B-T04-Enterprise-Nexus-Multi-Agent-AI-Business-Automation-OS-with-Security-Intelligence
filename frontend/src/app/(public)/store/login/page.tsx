@@ -7,6 +7,7 @@ import toast from 'react-hot-toast'
 import { getApiErrorMessage } from '@/lib/api'
 import AlreadySignedInGate from '@/components/auth/AlreadySignedInGate'
 import { useAuth } from '@/lib/auth'
+import DemoCredentials from '@/components/auth/DemoCredentials'
 
 export default function StoreLoginPage() {
   const router = useRouter()
@@ -78,6 +79,8 @@ export default function StoreLoginPage() {
         </button>
         <Link href="/forgot-password" className="block text-center font-body text-[13px] text-primary mt-3">Forgot password?</Link>
       </form>
+
+      <DemoCredentials title="Exhibition customer demo" email="nazmusidr@gmail.com" password="111Q2!22" />
 
       <p className="text-center font-body text-[13px] text-on-surface-variant mt-5">
         New here? <Link href="/store/register" className="text-primary font-medium">Create an account</Link>
