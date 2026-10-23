@@ -58,7 +58,7 @@ export default function AgentTaskModal({ open, onClose }: Props) {
   return (
     <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="agent-task-modal-title">
       <div className="modal-backdrop" onClick={onClose} />
-      <div className="modal-panel max-w-2xl overflow-hidden">
+      <div className="modal-panel max-w-2xl max-h-[calc(100dvh-3rem)] flex flex-col overflow-hidden">
         <div className="flex items-center justify-between px-6 py-5 border-b border-outline-variant/30 bg-gradient-to-r from-[#062f35] to-[#007c6e] text-white">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary-container">Orchestration</p>
@@ -70,7 +70,7 @@ export default function AgentTaskModal({ open, onClose }: Props) {
           </button>
         </div>
 
-        <div className="max-h-[min(70vh,640px)] overflow-y-auto p-5 space-y-4">
+        <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-4">
           <div className="flex items-center justify-between"><div><p className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant">Agents</p><p className="font-body text-[12px] text-on-surface-variant mt-1">{selected.length ? `${selected.length} selected · ${mode}` : 'Select one or more agents'}</p></div><button type="button" onClick={() => setSelected(selected.length === AGENTS.length ? [] : AGENTS.map(a => a.type))} className="font-mono text-[10px] uppercase tracking-widest text-primary hover:underline">{selected.length === AGENTS.length ? 'Clear all' : 'Select all'}</button></div>
           {AGENTS.map(a => (
             <button
@@ -99,7 +99,7 @@ export default function AgentTaskModal({ open, onClose }: Props) {
           <label className="block font-mono text-[10px] uppercase tracking-widest text-on-surface-variant">Instructions <span className="normal-case tracking-normal">(optional)</span><textarea value={instructions} onChange={event => setInstructions(event.target.value)} rows={3} maxLength={1000} placeholder="e.g. Review sales, finance risks and support sentiment for today…" className="mt-2 w-full resize-none rounded-xl border border-outline-variant bg-white px-3 py-2.5 font-body text-[13px]" /></label>
         </div>
 
-        <div className="px-6 py-4 border-t border-outline-variant/30 flex gap-3">
+        <div className="shrink-0 sticky bottom-0 px-6 py-4 border-t border-outline-variant/30 bg-white flex gap-3">
           <button onClick={onClose}
             className="flex-1 py-2.5 rounded-xl font-mono text-[11px] uppercase tracking-widest border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors">
             Cancel
