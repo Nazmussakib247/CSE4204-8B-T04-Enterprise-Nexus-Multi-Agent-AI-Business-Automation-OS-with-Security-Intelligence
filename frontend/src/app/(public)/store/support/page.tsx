@@ -36,6 +36,7 @@ function CustomerSupportContent() {
   const [tickets, setTickets] = useState<CustomerTicket[]>([])
   const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [sendingTicketId, setSendingTicketId] = useState<string | null>(null)
+  const [expandedTicketId, setExpandedTicketId] = useState<string | null>(null)
 
   const loadTickets = useCallback(async () => {
     if (!user) { setTickets([]); return }
@@ -119,16 +120,24 @@ function CustomerSupportContent() {
             { id: `${ticket.id}-initial`, sender_type: 'customer' as const, body: ticket.query, created_at: ticket.created_at },
             ...(ticket.human_response ? [{ id: `${ticket.id}-reply`, sender_type: 'staff' as const, body: ticket.human_response, created_at: ticket.created_at }] : []),
           ]
-          return <article key={ticket.id} className="bg-white rounded-2xl border border-outline-variant/60 overflow-hidden shadow-[0_8px_30px_rgba(25,28,29,0.035)]">
-            <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant/40 bg-surface-container-low/50"><div><p className="font-mono text-[10px] uppercase tracking-[0.16em] text-on-surface-variant/75">Request #{ticket.id.slice(0, 8).toUpperCase()}</p><p className="font-mono text-[10px] text-on-surface-variant/55 mt-1">{new Date(ticket.created_at).toLocaleString()}</p></div><span className={`font-mono text-[10px] uppercase tracking-wider px-2.5 py-1.5 rounded-full border ${statusStyle[ticket.status] || statusStyle.open}`}>{statusLabel[ticket.status] || 'Received'}</span></div>
-            <div className="p-5 space-y-3">{conversation.map(item => <div key={item.id} className={`flex gap-3 ${item.sender_type === 'customer' ? '' : 'flex-row-reverse'}`}>
+          const expanded = expandedTicketId === ticket.id
+          const statusIcon = ticket.status === 'resolved' ? 'check_circle' : ticket.status === 'escalated' ? 'priority_high' : ticket.status === 'in_progress' ? 'support_agent' : 'schedule'
+          return <article key={ticket.id} className={`bg-white rounded-2xl border overflow-hidden transition-all duration-200 ${expanded ? 'border-primary/30 shadow-[0_12px_35px_rgba(25,28,29,0.08)]' : 'border-outline-variant/60 shadow-[0_8px_30px_rgba(25,28,29,0.035)]'}`}>
+            <button type="button" onClick={() => setExpandedTicketId(expanded ? null : ticket.id)} aria-expanded={expanded} className="w-full text-left flex items-center gap-4 px-5 py-4 bg-surface-container-low/50 hover:bg-surface-container-low transition-colors">
+              <span className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center ${ticket.status === 'resolved' ? 'bg-primary/10 text-primary' : ticket.status === 'escalated' ? 'bg-error-container text-error' : ticket.status === 'in_progress' ? 'bg-primary/10 text-primary' : 'bg-amber-50 text-amber-700'}`}><span className="material-symbols-outlined text-[19px] icon-filled">{statusIcon}</span></span>
+              <span className="min-w-0 flex-1"><span className="block font-mono text-[10px] uppercase tracking-[0.16em] text-on-surface-variant/75">Request #{ticket.id.slice(0, 8).toUpperCase()}</span><span className="block truncate font-body text-[14px] font-medium text-on-surface mt-1">{ticket.query}</span><span className="block font-mono text-[10px] text-on-surface-variant/55 mt-1">{new Date(ticket.created_at).toLocaleString()} · {conversation.length} {conversation.length === 1 ? 'message' : 'messages'}</span></span>
+              <span className="flex shrink-0 items-center gap-2"><span className={`font-mono text-[10px] uppercase tracking-wider px-2.5 py-1.5 rounded-full border ${statusStyle[ticket.status] || statusStyle.open}`}>{statusLabel[ticket.status] || 'Received'}</span><span className={`material-symbols-outlined text-[20px] text-on-surface-variant/60 transition-transform ${expanded ? 'rotate-180' : ''}`}>expand_more</span></span>
+            </button>
+            {expanded && <>
+            <div className="p-5 space-y-3 border-t border-outline-variant/40">{conversation.map(item => <div key={item.id} className={`flex gap-3 ${item.sender_type === 'customer' ? '' : 'flex-row-reverse'}`}>
               <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center ${item.sender_type === 'customer' ? 'bg-surface-container text-on-surface-variant' : item.sender_type === 'staff' ? 'bg-primary text-white' : 'bg-tertiary-container text-tertiary'}`}><span className="material-symbols-outlined text-[16px]">{item.sender_type === 'customer' ? 'person' : item.sender_type === 'staff' ? 'support_agent' : 'auto_awesome'}</span></div>
               <div className={`max-w-[88%] rounded-2xl border px-4 py-3 ${item.sender_type === 'customer' ? 'bg-surface-container-low border-outline-variant/40' : item.sender_type === 'staff' ? 'bg-primary/5 border-primary-container/30' : 'bg-tertiary-container/20 border-tertiary/20'}`}><div className="flex items-center justify-between gap-4 mb-1.5"><p className="font-mono text-[10px] uppercase tracking-wider text-primary">{item.sender_type === 'customer' ? 'You' : item.sender_type === 'staff' ? 'Support team' : 'AI assistant'}</p><span className="font-mono text-[9px] text-on-surface-variant/50">{new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div><p className="font-body text-[13px] leading-5 text-on-surface whitespace-pre-wrap">{cleanReply(item.body)}</p></div>
-            </div>)}</div>
+             </div>)}</div>
             {ticket.status !== 'resolved' ? <div className="px-5 pb-5 flex gap-2">
               <input value={drafts[ticket.id] ?? ''} onChange={e => setDrafts(current => ({ ...current, [ticket.id]: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); sendFollowUp(ticket.id) } }} maxLength={2000} placeholder="Reply to support…" className="min-w-0 flex-1 border border-outline-variant rounded-xl px-3 py-2.5 font-body text-[13px] text-on-surface focus:outline-none focus:border-primary-container" />
               <button type="button" disabled={sendingTicketId === ticket.id} onClick={() => sendFollowUp(ticket.id)} className="shrink-0 rounded-xl bg-primary px-4 font-body text-[13px] font-medium text-on-primary disabled:opacity-60">{sendingTicketId === ticket.id ? 'Sending…' : 'Reply'}</button>
             </div> : <div className="px-5 pb-5"><div className="rounded-xl bg-surface-container-low border border-outline-variant/40 px-4 py-3 font-body text-[12px] text-on-surface-variant">This conversation is closed. Start a new request if you need more help.</div></div>}
+            </>}
           </article>
         })}
       </div>}
