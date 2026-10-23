@@ -11,7 +11,7 @@ const getReports = async (req, res, next) => {
     // Keep career applications visible in the HR reports view. The sync is
     // idempotent and also backfills applications screened before this bridge.
     try {
-      await syncAllJobApplicationsToHrReports();
+      await syncAllJobApplicationsToHrReports(req.user.id);
     } catch (syncError) {
       console.warn('[HR] Could not sync career applications:', syncError.message);
     }
@@ -87,7 +87,6 @@ const createReport = async (req, res, next) => {
         candidate_name,
         job_title: resolvedJobTitle,
         ai_score: aiResult.ai_score,
-        confidence: aiResult.confidence,
         recommendation: aiResult.recommendation,
         narrative_summary: aiResult.narrative_summary,
         score_breakdown: aiResult.score_breakdown,
@@ -282,7 +281,6 @@ const uploadCV = async (req, res, next) => {
         candidate_name,
         job_title: resolvedJobTitle,
         ai_score: aiResult.ai_score,
-        confidence: aiResult.confidence,
         recommendation: aiResult.recommendation,
         narrative_summary: aiResult.narrative_summary,
         score_breakdown: aiResult.score_breakdown,
