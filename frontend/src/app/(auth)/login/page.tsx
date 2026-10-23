@@ -4,7 +4,10 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth'
+import { getApiErrorMessage } from '@/lib/api'
 import toast from 'react-hot-toast'
+import AlreadySignedInGate from '@/components/auth/AlreadySignedInGate'
+import DemoCredentials from '@/components/auth/DemoCredentials'
 
 export default function LoginPage() {
   const { login } = useAuth()
@@ -19,16 +22,21 @@ export default function LoginPage() {
     if (!email || !password) { toast.error('Email and password required'); return }
     setLoading(true)
     try {
-      await login(email, password)
-      router.push('/dashboard')
-    } catch {
-      toast.error('Invalid credentials')
+      const signedInUser = await login(email, password)
+      router.push(signedInUser.role === 'candidate' ? '/careers' : signedInUser.role === 'customer' ? '/store' : '/dashboard')
+    } catch (err: unknown) {
+      const message = getApiErrorMessage(err, 'The sign-in service is temporarily unavailable. Please try again in a moment.')
+      if (message.toLowerCase().includes('verify the email code')) {
+        toast('Verify your email code to continue')
+        router.push(`/verify-office-email?email=${encodeURIComponent(email)}`)
+      } else toast.error(message)
     } finally {
       setLoading(false)
     }
   }
 
   return (
+    <AlreadySignedInGate dashboardPath="/dashboard">
     <div className="min-h-screen w-full flex">
       {/* ── Left Panel ─────────────────────────────────── */}
       <div className="hidden lg:flex w-[480px] flex-shrink-0 flex-col bg-[#1a1d1e] relative overflow-hidden">
@@ -156,6 +164,8 @@ export default function LoginPage() {
             </button>
           </form>
 
+          <DemoCredentials title="Exhibition admin demo" email="sahid@gmail.com" password="Sahid !2" />
+
           <div className="mt-6 text-center">
             <p className="font-body text-[14px] text-on-surface-variant">
               Don&apos;t have an account?{' '}
@@ -175,5 +185,6 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+    </AlreadySignedInGate>
   )
 }
