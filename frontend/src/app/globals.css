@@ -106,7 +106,8 @@
   .modal-overlay {
     position: fixed;
     inset: 0;
-    z-index: 90;
+    /* Keep dialogs above the dashboard header and any sticky navigation. */
+    z-index: 200;
     display: flex;
     align-items: flex-start;
     justify-content: center;
