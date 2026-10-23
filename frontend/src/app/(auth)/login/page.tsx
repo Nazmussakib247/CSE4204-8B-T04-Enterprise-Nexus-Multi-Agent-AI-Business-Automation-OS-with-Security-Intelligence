@@ -62,9 +62,9 @@ export default function LoginPage() {
 
           {/* Hero */}
           <div className="py-16">
-            <div className="inline-flex items-center gap-2 bg-primary-container/10 border border-primary-container/20 rounded-full px-3 py-1.5 mb-6">
+            <div className="inline-flex -translate-y-5 items-center gap-2 bg-primary-container/10 border border-primary-container/20 rounded-full px-3 py-1.5 mb-1">
               <span className="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse" />
-              <span className="font-mono text-[11px] text-primary-container uppercase tracking-widest">5 Agents Active</span>
+              <span className="font-mono text-[11px] text-primary-container uppercase tracking-widest">6 Agents Active</span>
             </div>
             <h1 className="font-display text-[40px] font-bold text-white leading-[1.15] tracking-tight mb-4">
               Your AI-Powered<br />
@@ -76,7 +76,7 @@ export default function LoginPage() {
           </div>
 
           {/* Agent chips */}
-          <div className="grid grid-cols-2 gap-2 mb-10">
+          <div className="grid grid-cols-2 gap-2 mb-16">
             {[
               { icon: 'groups', label: 'HR Agent', color: 'text-primary-container' },
               { icon: 'payments', label: 'Finance AI', color: 'text-tertiary-fixed-dim' },
