@@ -40,7 +40,11 @@ export default function AgentTaskModal({ open, onClose }: Props) {
     })
     try {
       if (mode === 'parallel') await Promise.all(selected.map(create))
-      else for (const [index, agent] of selected.entries()) await create(agent, index)
+      else {
+        for (let index = 0; index < selected.length; index += 1) {
+          await create(selected[index], index)
+        }
+      }
       toast.success(`${selected.length} agent task${selected.length > 1 ? 's' : ''} queued`)
       setSelected([]); setInstructions(''); setPriority('normal'); setMode('sequential')
       onClose()
