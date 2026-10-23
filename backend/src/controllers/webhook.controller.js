@@ -206,11 +206,15 @@ const saveStoreReviewAnalysis = async (req, res, next) => {
 const saveStoreSupportAnalysis = async (req, res, next) => {
   try {
     const { ticket_id, sentiment, urgency, intent, confidence, ai_response } = req.body;
+    const cleanSupportResponse = (value) => String(value || '')
+      .replace(/\[\$price\]|\$\[price\]|\[price\]|\$\{price\}|\{price\}/gi, 'the current listed price')
+      .trim();
+    const safeResponse = cleanSupportResponse(ai_response);
     if (!ticket_id) return res.status(400).json({ error: 'ticket_id is required' });
     if (!['positive', 'neutral', 'negative'].includes(sentiment) || !['low', 'medium', 'high'].includes(urgency)) {
       return res.status(400).json({ error: 'sentiment and urgency have invalid values' });
     }
-    if (typeof intent !== 'string' || !intent.trim() || typeof ai_response !== 'string' || ai_response.trim().length < 3 || ai_response.length > 2000) {
+    if (typeof intent !== 'string' || !intent.trim() || typeof ai_response !== 'string' || safeResponse.length < 3 || safeResponse.length > 2000) {
       return res.status(400).json({ error: 'intent and ai_response are required' });
     }
     const requiresHuman = urgency === 'high';
@@ -221,7 +225,7 @@ const saveStoreSupportAnalysis = async (req, res, next) => {
         urgency,
         intent: intent.trim(),
         confidence: Number.isFinite(Number(confidence)) ? Number(confidence) : null,
-        ai_response: ai_response.trim(),
+        ai_response: safeResponse,
         ai_status: 'completed',
         escalated: requiresHuman,
         human_intervention_required: requiresHuman,
@@ -237,7 +241,7 @@ const saveStoreSupportAnalysis = async (req, res, next) => {
     const { error: messageError } = await supabase.from('support_messages').insert({
       ticket_id: data.id,
       sender_type: 'ai',
-      body: ai_response.trim(),
+      body: safeResponse,
     });
     if (messageError) throw messageError;
     res.json({ message: 'Store support analysis saved', data });
