@@ -36,12 +36,12 @@ export default function AgentTaskModal({ open, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+    <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="agent-task-modal-title">
+      <div className="modal-backdrop" onClick={onClose} />
+      <div className="modal-panel max-w-md overflow-hidden">
         <div className="flex items-center justify-between px-6 py-5 border-b border-outline-variant/30">
           <div>
-            <h2 className="font-display text-[16px] font-semibold text-on-surface">New Agent Task</h2>
+            <h2 id="agent-task-modal-title" className="font-display text-[16px] font-semibold text-on-surface">New Agent Task</h2>
             <p className="font-body text-[12px] text-on-surface-variant mt-0.5">Select an AI agent to queue a task</p>
           </div>
           <button onClick={onClose} className="text-on-surface-variant hover:text-on-surface transition-colors">

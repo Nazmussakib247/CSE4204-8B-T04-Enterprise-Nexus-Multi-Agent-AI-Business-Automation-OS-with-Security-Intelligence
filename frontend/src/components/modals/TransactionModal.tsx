@@ -73,13 +73,13 @@ export default function TransactionModal({ open, onClose, onCreated, editRecord 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+    <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="transaction-modal-title">
+      <div className="modal-backdrop" onClick={onClose} />
 
-      <div className="relative bg-white rounded-2xl border border-outline-variant/50 w-full max-w-md shadow-2xl">
+      <div className="modal-panel max-w-md">
         <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/30">
           <div>
-            <h2 className="font-display text-[16px] font-semibold text-on-surface">
+            <h2 id="transaction-modal-title" className="font-display text-[16px] font-semibold text-on-surface">
               {isEdit ? 'Edit Transaction' : 'Add Transaction'}
             </h2>
             <p className="font-mono text-[10px] text-on-surface-variant mt-0.5 uppercase tracking-wider">

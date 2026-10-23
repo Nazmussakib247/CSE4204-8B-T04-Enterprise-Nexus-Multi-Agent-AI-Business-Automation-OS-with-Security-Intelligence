@@ -25,9 +25,9 @@ export default function LogoutConfirmModal({ open, onCancel, onConfirm }: Logout
     try { await onConfirm() } finally { setBusy(false) }
   }
 
-  return <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="logout-dialog-title">
-    <button type="button" aria-label="Close logout confirmation" className="absolute inset-0 bg-slate-950/45 backdrop-blur-sm animate-fade-in" onClick={() => !busy && onCancel()} />
-    <div className="relative w-full max-w-[390px] overflow-hidden rounded-2xl border border-outline-variant/50 bg-white shadow-2xl animate-modal-in">
+  return <div className="modal-overlay z-[100]" role="dialog" aria-modal="true" aria-labelledby="logout-dialog-title">
+    <button type="button" aria-label="Close logout confirmation" className="modal-backdrop" onClick={() => !busy && onCancel()} />
+    <div className="modal-panel max-w-[390px] overflow-hidden">
       <div className="h-1 bg-gradient-to-r from-primary via-primary-container to-tertiary" />
       <div className="p-6">
         <div className="flex items-start gap-3.5">

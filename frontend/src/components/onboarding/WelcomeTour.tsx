@@ -88,13 +88,14 @@ export default function WelcomeTour() {
   return (
     /* Backdrop */
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      className="modal-overlay"
       role="dialog"
       aria-modal="true"
       aria-label="Welcome tour"
     >
+      <button type="button" aria-label="Close welcome tour" className="modal-backdrop" onClick={dismiss} />
       {/* Card */}
-      <div className="relative w-full max-w-md bg-surface rounded-2xl shadow-2xl overflow-hidden">
+      <div className="modal-panel max-w-md overflow-hidden bg-surface">
 
         {/* Progress bar */}
         <div className="h-1 bg-surface-container-high">
@@ -128,7 +129,7 @@ export default function WelcomeTour() {
           </div>
 
           {/* Text */}
-          <h2 className="text-title-large font-semibold text-on-surface mb-3">
+          <h2 id="welcome-tour-title" className="text-title-large font-semibold text-on-surface mb-3">
             {current.title}
           </h2>
           <p className="text-body-medium text-on-surface-variant leading-relaxed">

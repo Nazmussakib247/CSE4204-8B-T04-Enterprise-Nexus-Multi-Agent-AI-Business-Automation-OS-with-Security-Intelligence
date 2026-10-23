@@ -75,9 +75,9 @@ export default function CVUploadModal({ open, onClose, onCreated }: Props) {
     if (!failed) { reset(); onClose() }
   }
 
-  return <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="cv-screening-title">
-    <div className="absolute inset-0 bg-slate-950/55 backdrop-blur-sm" onClick={close} />
-    <div className="relative max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[24px] border border-white/70 bg-white shadow-[0_28px_80px_rgba(15,23,42,0.32)]">
+  return <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="cv-screening-title">
+    <div className="modal-backdrop" onClick={close} />
+    <div className="modal-panel max-w-2xl overflow-y-auto rounded-[24px] border-white/70 shadow-[0_28px_80px_rgba(15,23,42,0.32)]">
       <header className="relative overflow-hidden border-b border-outline-variant/30 bg-gradient-to-br from-slate-950 via-[#073c39] to-[#007c6b] px-7 py-6 text-white">
         <div className="absolute -right-12 -top-16 h-48 w-48 rounded-full bg-primary-container/20 blur-2xl" />
         <div className="relative flex items-start justify-between gap-5"><div className="flex gap-4"><div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/20"><span className="material-symbols-outlined icon-filled">person_search</span></div><div><p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary-fixed">Talent intelligence</p><h2 id="cv-screening-title" className="mt-1 font-display text-xl font-bold">AI candidate screening</h2><p className="mt-1 text-[13px] text-white/75">Match one or many CVs against a published role.</p></div></div><button type="button" onClick={close} disabled={loading} aria-label="Close dialog" className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/20 disabled:opacity-50"><span className="material-symbols-outlined">close</span></button></div>

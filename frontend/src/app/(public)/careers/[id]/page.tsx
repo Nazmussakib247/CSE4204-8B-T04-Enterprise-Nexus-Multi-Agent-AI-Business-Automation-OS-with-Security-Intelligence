@@ -106,9 +106,9 @@ export default function JobDetailPage() {
         </div>
       )}
     </div>
-    {showSuccess && <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="application-success-title">
-      <button type="button" aria-label="Close application confirmation" className="absolute inset-0 bg-slate-950/45 backdrop-blur-sm animate-fade-in" onClick={() => setShowSuccess(false)} />
-      <div className="relative w-full max-w-[420px] overflow-hidden rounded-2xl border border-primary/20 bg-white shadow-2xl animate-modal-in">
+    {showSuccess && <div className="modal-overlay z-[100]" role="dialog" aria-modal="true" aria-labelledby="application-success-title">
+      <button type="button" aria-label="Close application confirmation" className="modal-backdrop" onClick={() => setShowSuccess(false)} />
+      <div className="modal-panel max-w-[420px] overflow-hidden border-primary/20">
         <div className="h-1 bg-gradient-to-r from-primary via-primary-container to-tertiary" />
         <div className="p-7 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary"><span className="material-symbols-outlined text-[30px] icon-filled">check_circle</span></div>

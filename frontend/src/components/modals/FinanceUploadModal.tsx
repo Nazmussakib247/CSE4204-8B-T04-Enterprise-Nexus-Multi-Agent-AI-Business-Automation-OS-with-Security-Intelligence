@@ -68,14 +68,14 @@ export default function FinanceUploadModal({ open, onClose, onCreated }: Props) 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={handleClose} />
+    <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="finance-upload-modal-title">
+      <div className="modal-backdrop" onClick={handleClose} />
 
-      <div className="relative bg-white rounded-2xl border border-outline-variant/50 w-full max-w-lg shadow-2xl">
+      <div className="modal-panel max-w-lg">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/30">
           <div>
-            <h2 className="font-display text-[16px] font-semibold text-on-surface">Import Expenses</h2>
+            <h2 id="finance-upload-modal-title" className="font-display text-[16px] font-semibold text-on-surface">Import Expenses</h2>
             <p className="font-mono text-[10px] text-on-surface-variant mt-0.5 uppercase tracking-wider">Gemini AI extracts and analyses each expense</p>
           </div>
           <button onClick={handleClose} className="w-8 h-8 rounded-xl hover:bg-surface-container flex items-center justify-center transition-colors">
