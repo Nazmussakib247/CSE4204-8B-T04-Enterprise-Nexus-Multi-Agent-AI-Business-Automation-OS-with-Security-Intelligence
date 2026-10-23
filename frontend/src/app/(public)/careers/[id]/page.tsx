@@ -21,6 +21,7 @@ export default function JobDetailPage() {
   const [applicantEmail, setApplicantEmail] = useState('')
   const [applying, setApplying] = useState(false)
   const [applied, setApplied] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
 
   useEffect(() => {
     jobsApi.get(id)
@@ -39,7 +40,7 @@ export default function JobDetailPage() {
       formData.append('cv', file)
       await jobsApi.apply(id, formData)
       setApplied(true)
-      toast.success('Application submitted — your CV is being screened')
+      setShowSuccess(true)
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Could not submit application'))
     } finally {
@@ -59,6 +60,7 @@ export default function JobDetailPage() {
   }
 
   return (
+    <>
     <div className="max-w-[700px] mx-auto px-6 py-10">
       <Link href="/careers" className="inline-flex items-center gap-1.5 font-body text-[13px] text-on-surface-variant hover:text-on-surface transition-colors mb-6">
         <span className="material-symbols-outlined text-[16px]">arrow_back</span>
@@ -104,5 +106,18 @@ export default function JobDetailPage() {
         </div>
       )}
     </div>
+    {showSuccess && <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="application-success-title">
+      <button type="button" aria-label="Close application confirmation" className="absolute inset-0 bg-slate-950/45 backdrop-blur-sm animate-fade-in" onClick={() => setShowSuccess(false)} />
+      <div className="relative w-full max-w-[420px] overflow-hidden rounded-2xl border border-primary/20 bg-white shadow-2xl animate-modal-in">
+        <div className="h-1 bg-gradient-to-r from-primary via-primary-container to-tertiary" />
+        <div className="p-7 text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary"><span className="material-symbols-outlined text-[30px] icon-filled">check_circle</span></div>
+          <h2 id="application-success-title" className="mt-4 font-display text-[22px] font-semibold text-on-surface">Thank you for applying!</h2>
+          <p className="mt-2 font-body text-[14px] leading-6 text-on-surface-variant">Your application for <span className="font-medium text-on-surface">{job.title}</span> was submitted successfully. Our team will review your CV and contact you if there is a next step.</p>
+          <button type="button" onClick={() => setShowSuccess(false)} className="mt-6 w-full rounded-xl bg-primary px-4 py-3 font-body text-[14px] font-medium text-on-primary transition-colors hover:bg-primary/90">OK</button>
+        </div>
+      </div>
+    </div>}
+    </>
   )
 }
