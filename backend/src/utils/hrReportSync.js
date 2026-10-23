@@ -5,6 +5,10 @@ const supabase = require('../config/supabase');
 const syncApplicationToHrReport = async (application) => {
   if (!application?.candidate_id || !application?.job_id) return null;
 
+  const confidenceValue = typeof application.ai_confidence === 'number'
+    ? Math.max(0, Math.min(1, application.ai_confidence))
+    : ({ high: 0.9, medium: 0.7, low: 0.4 }[application.ai_confidence] ?? null);
+
   const [{ data: job }, { data: candidate }] = await Promise.all([
     supabase.from('job_postings').select('title').eq('id', application.job_id).maybeSingle(),
     supabase.from('users').select('name').eq('id', application.candidate_id).maybeSingle(),
@@ -24,7 +28,7 @@ const syncApplicationToHrReport = async (application) => {
     candidate_name: String(candidate?.name || 'Applicant').trim().slice(0, 200),
     job_title: String(job?.title || 'Job application').trim().slice(0, 200),
     ai_score: Number.isInteger(application.ai_score) ? application.ai_score : null,
-    confidence: ['low', 'medium', 'high'].includes(application.ai_confidence) ? application.ai_confidence : null,
+    confidence: confidenceValue,
     recommendation: ['shortlist', 'review', 'reject'].includes(application.ai_recommendation) ? application.ai_recommendation : 'review',
     narrative_summary: application.narrative_summary || null,
     score_breakdown: Array.isArray(application.skill_scores) ? application.skill_scores : null,
