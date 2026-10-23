@@ -1,346 +1,433 @@
 # Enterprise NeXus
-### Multi-Agent AI Business Automation OS with Security Intelligence
 
----
+## Multi-Agent AI Business Automation OS with Security Intelligence
 
-## Team Information
+**Automate. Analyse. Secure. Empower.**
 
-| Field | Details |
-|---|---|
-| **Course Code** | CSE4204 |
-| **Section** | 8B |
-| **Team Number** | T04 |
-| **Official Team Name** | CSE4204-8B-T04 |
-| **Project Title** | Enterprise NeXus — Multi-Agent AI Business Automation OS with Security Intelligence |
+Enterprise NeXus is a business automation platform for startups, small businesses, and growing teams. It combines specialized AI agents, a shared orchestration layer, secure REST APIs, workflow automation, and a role-based dashboard in one system.
 
-## Team Members
+The platform helps a lean team screen candidates, monitor finance, answer customers, generate KPI reports, prepare executive briefings, and review security signals from one workspace.
 
-| Role | Name | Student ID |
+The system coordinates six specialized agents: HR, Finance, Support, Analytics, Security Intelligence, and Executive.
+
+## Project overview
+
+- **Project type:** Multi-agent AI business automation operating system
+- **Primary audience:** Startups, small businesses, growing teams, and exhibition reviewers
+- **Academic context:** CSE4204, Section 8B, Team T04
+- **Institution:** Northern University of Business and Technology, Khulna
+- **Department:** Department of Computer Science and Engineering
+- **Supervisor:** Md. Riaz Mahmud, Assistant Professor, Department of CSE
+
+## Team members
+
+| Responsibility | Member | Student ID |
 |---|---|---|
-| Team Leader & AI Integration Lead | [Nazmus Sakib](https://www.linkedin.com/in/nazmussakib247/) · [Portfolio](https://nazmussakib.tech/) | 11220320888 |
-| Database Manager & Frontend Developer — 2 | [Sabrina Ibrahim](https://www.linkedin.com/in/sabrina-ibrahim-khushbu-98a00338b/) | 11220320895 |
-| Backend Developer | [Shoeb Shariar Mashuk](https://www.linkedin.com/in/shoeb-shariar-masuk-b9a762326?utm_source=share_via&utm_content=profile&utm_medium=member_android) | 11220320878 |
-| Frontend Developer — 1 | [Most Sumiya Sanjida](https://bd.linkedin.com/in/shumaiya-shanjidah-65337b42b) | 11220320874 |
+| Team Leader and AI Integration Lead | [Nazmus Sakib](https://www.linkedin.com/in/nazmussakib247/) · [Portfolio](https://nazmussakib.tech/) | 11220320888 |
+| Backend Developer | [Shoeb Shariar Mashuk](https://www.linkedin.com/in/shoeb-shariar-masuk-b9a762326) | 11220320878 |
+| Frontend Developer | [Most Sumiya Sanjida](https://bd.linkedin.com/in/shumaiya-shanjidah-65337b42b) | 11220320874 |
+| UI and Frontend Developer | [Sabrina Ibrahim](https://www.linkedin.com/in/sabrina-ibrahim-khushbu-98a00338b/) | 11220320895 |
+
 ---
 
-## Project Links
+## Live system
 
-| Resource | Link |
+| Surface | Link |
 |---|---|
-| Live application | [enterprise-nexus-delta.vercel.app](https://enterprise-nexus-delta.vercel.app) |
-| Store | [enterprise-nexus-delta.vercel.app/store](https://enterprise-nexus-delta.vercel.app/store) |
-| Backend health check | [enterprise-nexus-backend.onrender.com/api/health](https://enterprise-nexus-backend.onrender.com/api/health) |
-| Promotional video | [Watch on YouTube](https://youtu.be/VXz9r8ys9jY?feature=shared) |
+| Main application | [enterprise-nexus-delta.vercel.app](https://enterprise-nexus-delta.vercel.app) |
+| Customer store | [enterprise-nexus-delta.vercel.app/store](https://enterprise-nexus-delta.vercel.app/store) |
+| Careers and applications | [enterprise-nexus-delta.vercel.app/careers](https://enterprise-nexus-delta.vercel.app/careers) |
+| Backend health endpoint | [enterprise-nexus-backend.onrender.com/api/health](https://enterprise-nexus-backend.onrender.com/api/health) |
+| Source repository | [GitHub](https://github.com/Nazmussakib247/CSE4204-8B-T04-Enterprise-Nexus-Multi-Agent-AI-Business-Automation-OS-with-Security-Intelligence) |
 
-## Project Posters
+- **Frontend:** Hosted on Vercel
+- **Backend API:** Hosted on Render
+- **Database, realtime data, and vector search:** Hosted on Supabase
+- **Workflow automation:** Hosted and operated through n8n
 
-<p align="center">
-  <img src="assets/posters/enterprise-nexus-poster-green.jpg" alt="Enterprise NeXus system architecture poster" width="48%" />
-  <img src="assets/posters/enterprise-nexus-poster-color.jpg" alt="Enterprise NeXus project overview poster" width="48%" />
-</p>
+### Promotional video
 
----
-
-## Project Description
-
-Enterprise NeXus is a Multi-Agent AI Business Automation Operating System designed to unify and intelligently automate core business functions for small and medium enterprises, startups, and growing organizations.
-
-The platform deploys six specialized agents — HR, Finance, Support, Analytics, Security Intelligence, and Executive — coordinated through a centralized orchestration layer. Each agent owns a defined operational domain, while the Executive Agent delegates cross-domain requests and composes the final response for the role-based dashboard.
+[Watch the Enterprise NeXus promotional video on YouTube](https://youtu.be/VXz9r8ys9jY?feature=shared).
 
 ---
 
-## Proposed Features
+## Project posters
 
-- Multi-Agent AI Orchestration (HR, Finance, Support, Analytics, Security Intelligence, Executive)
-- Intelligent CV Screening via the HR Agent
-- Financial Pattern Recognition and Anomaly Detection
-- Context-Aware Customer Support with RAG
-- Executive Synthesis — Cross-domain strategic summaries
-- Semantic Search with AI-generated embeddings
-- Security Intelligence and Threat Monitoring
-- Role-Based Unified Web Dashboard
-- Real-Time AI-Driven Insights and Reporting
-- Document and Policy Retrieval via Vector Search
+The green poster is the primary exhibition poster and summarises the architecture, agents, capabilities, technology stack, and team. A second visual poster is included for presentation and promotional use.
+
+<div align="center">
+  <img src="assets/posters/enterprise-nexus-poster-green.jpg" alt="Enterprise NeXus green exhibition poster" width="48%" />
+  <img src="assets/posters/enterprise-nexus-poster-color.jpg" alt="Enterprise NeXus alternate poster" width="48%" />
+</div>
+---
+
+## Why this project exists
+
+Early-stage businesses face a practical capacity problem:
+
+- Hiring separate HR, finance, support, analytics, and executive staff is expensive.
+- Important decisions are delayed when records are spread across different tools.
+- Manual CV review and financial review are inconsistent and time-consuming.
+- Customer questions need fast, contextual replies even when no specialist is available.
+- Owners need a concise view of business health instead of reading every file and ticket.
+- Security events can be missed when monitoring is disconnected from daily operations.
+
+Enterprise NeXus turns these recurring workflows into a coordinated, auditable operating layer while keeping human review available for decisions that need judgment.
 
 ---
 
-## Technology Stack
+## Product goals
 
-| Layer | Technology |
-|---|---|
-| **Frontend** | React.js / Next.js |
-| **Styling** | Tailwind CSS |
-| **Backend** | Node.js + Express.js |
-| **Authentication** | JWT + bcrypt |
-| **Workflow Automation** | n8n |
-| **Database** | PostgreSQL (Supabase) |
-| **Vector Search (RAG)** | Supabase pgvector (`documents` table + `match_documents` RPC) |
-| **Embeddings** | Gemini `text-embedding-004` (768-dim) |
-| **Core LLM** | Google Gemini (native JSON mode, hardened client) |
-| **AI Framework** | LangChain.js (`@langchain/google-genai`, tool-calling agents) |
-| **Multi-Agent Orchestration** | Custom Executive orchestrator (BaseAgent delegation + conversation memory) |
-| **Realtime** | Supabase Realtime (live agent activity, dashboard refresh) |
-| **Version Control** | GitHub |
+1. Provide practical automation for small teams with limited time and budget.
+2. Keep HR, finance, support, analytics, security, and executive reporting in one workspace.
+3. Use AI for structured analysis, retrieval, drafting, and prioritisation.
+4. Preserve human control through roles, audit logs, approvals, escalations, and fallbacks.
+5. Make the system deployable as a real web application with separate services.
 
 ---
 
-## AI Integration (Week 08)
+## Core capabilities
 
-Enterprise NeXus integrates AI as its core product layer — a multi-agent system that reasons over the user's own business data, not a bolt-on feature.
+### HR Agent
 
-**Selected AI Platform:** Google Gemini, configurable through the `GEMINI_MODEL` environment variable
-**AI Framework:** LangChain.js (`@langchain/google-genai`) with a custom `BaseAgent` tool-calling foundation
+- Publishes job openings to the careers portal.
+- Accepts PDF, DOCX, and TXT CVs.
+- Extracts candidate profile information.
+- Scores candidates against role-specific screening criteria.
+- Shows AI score, confidence, recommendation, skill breakdown, summary, strengths, and weaknesses.
+- Supports shortlist, review, reject, approval, notification, and application tracking.
 
-**AI Features Implemented**
-- **HR Agent** — Intelligent CV screening: AI score (0–100), confidence, shortlist/review/reject recommendation, per-dimension breakdown
-- **Finance Agent** — Financial anomaly detection (normal/medium/high/critical) with explanatory notes; automated invoice parsing
-- **Support Agent** — Context-aware ticket triage (intent, urgency, sentiment) with RAG-grounded reply drafting and auto-escalation
-- **Analytics Agent** — Cross-module KPI snapshots and AI-generated performance reports
-- **Security Intelligence Agent** — Role-based access, audit visibility, risk monitoring, and security event analysis
-- **Executive Agent** — Multi-agent orchestrator that delegates to the five specialist agents and produces daily cross-domain briefings
-- **Semantic Search / RAG** — Gemini `text-embedding-004` embeddings stored in Supabase pgvector, retrieved via the `match_documents` RPC (top-5 cosine similarity)
+### Finance Agent
 
-**AI Workflow**
-```mermaid
-flowchart TD
-    A[User Input] --> B[Frontend — Next.js]
-    B --> C[Backend API — Express]
-    C --> D[Agent — BaseAgent Tool Loop]
-    D --> E[Gemini — Native JSON Mode]
-    E --> F{Output Valid?<br/>Joi / Zod Schema}
-    F -->|Yes| G[Backend Processing<br/>Save + ai_status: success]
-    F -->|No / AI Unavailable| H[Graceful Degradation<br/>ai_status: pending/failed]
-    G --> I[Frontend Display]
-    H --> I
-```
+- Logs financial records and imports supported data.
+- Tracks spend, store revenue, orders, and categories.
+- Detects unusual transaction patterns.
+- Classifies anomaly severity and explains why a record was flagged.
+- Presents trend charts and record-level analysis.
 
-**Prompt Engineering:** Each agent uses a scoped system prompt that fixes its role/domain, forbids inventing data, enforces per-user data isolation, and requires strict JSON output via Gemini's native response-schema mode.
+### Support Agent
 
-**Response Handling & Reliability:** All Gemini calls go through a hardened client (`backend/src/ai/client.js`) — 30s per-attempt timeout, 2 retries with exponential backoff + jitter for transient errors, and a typed `AiUnavailableError` for permanent failures. If AI is unavailable, records save with `ai_status: "pending"`/`"failed"` and are retryable — the system never fabricates AI output.
+- Creates and manages customer support tickets.
+- Classifies intent, sentiment, and urgency.
+- Uses business context and retrieved knowledge to draft relevant replies.
+- Supports AI replies, staff replies, escalation, resolution, and customer follow-up.
+- Analyses product reviews, replies to positive reviews, and flags negative or high-urgency reviews.
+- Automatically closes inactive tickets after the configured customer inactivity window.
+
+### Analytics Agent
+
+- Combines cross-module operational data.
+- Produces KPI snapshots and trend summaries.
+- Supports queued report generation through the workflow layer.
+- Highlights backlog, revenue, hiring, support, and anomaly trends.
+
+### Executive Agent
+
+- Acts as the management-facing entry point.
+- Delegates questions to HR, Finance, Support, Analytics, and Security data.
+- Maintains conversation context.
+- Produces business briefings, risks, priorities, alerts, and recommended next actions.
+
+### Security Intelligence
+
+- Records security and authentication events.
+- Surfaces threat and anomaly signals.
+- Supports role-based access, account approval, activation, deactivation, protected deletion, session revocation, and audit logging.
+- Keeps queries scoped to the authenticated user or authorised office role.
+
+### Store and careers portal
+
+- Public customer store with product orders and order-specific reviews.
+- Customer-facing support conversations.
+- Public job listings and CV applications.
+- Connects customer and applicant actions to internal agents.
 
 ---
 
-## Objectives
+## Multi-agent orchestration
 
-1. **Automate Department-Level Operations** — Deploy six specialized agents to autonomously handle routine business workflows.
-2. **Deliver Intelligent Decision Support** — Leverage Google Gemini to generate data-driven insights, anomaly alerts, KPI narratives, and strategic briefings.
-3. **Centralize Business Intelligence** — Unify HR, financial, support, and operational data into a single platform with a real-time dashboard.
-4. **Ensure Enterprise-Grade Security** — Implement JWT-based authentication, RBAC, bcryptjs hashing, rate limiting, and input sanitisation.
-5. **Enable Scalable, Cloud-Native Deployment** — Build a production-ready system using Docker, GitHub Actions CI, Vercel, Render, and Supabase.
-6. **Demonstrate Full-Stack AI Engineering** — Produce a well-documented, end-to-end software system as a complete academic deliverable for CSE4204.
+The Executive Agent receives a request, identifies relevant domains, delegates to specialised agents, gathers structured outputs, and composes one response.
+
+~~~mermaid
+flowchart LR
+    U[Owner or staff member] --> UI[Next.js dashboard]
+    UI --> API[Express REST API]
+    API --> AUTH[JWT and RBAC middleware]
+    AUTH --> ORCH[Executive orchestration layer]
+    ORCH --> HR[HR Agent]
+    ORCH --> FIN[Finance Agent]
+    ORCH --> SUP[Support Agent]
+    ORCH --> ANA[Analytics Agent]
+    ORCH --> SEC[Security intelligence]
+    HR --> DB[(Supabase PostgreSQL)]
+    FIN --> DB
+    SUP --> DB
+    ANA --> DB
+    SEC --> DB
+    ORCH --> LLM[Gemini structured generation]
+    API --> N8N[n8n workflows]
+    N8N --> LLM
+    N8N --> API
+    DB --> OUT[Dashboard, reports, notifications]
+    ORCH --> OUT
+~~~
+
+### AI request lifecycle
+
+~~~mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant API
+    participant Agent
+    participant Gemini
+    participant Database
+
+    User->>Frontend: Submit request or record
+    Frontend->>API: Authenticated REST request
+    API->>Agent: Validate and scope the task
+    Agent->>Gemini: Structured prompt with relevant context
+    Gemini-->>Agent: JSON response
+    Agent->>API: Validate, normalise, and apply business rules
+    API->>Database: Save result and status
+    Database-->>Frontend: Updated operational view
+    Frontend-->>User: Analysis, recommendation, or next action
+~~~
+
+When AI is unavailable or returns invalid output, the backend stores an explicit pending or failed status and exposes a retry path. It does not fabricate a result.
 
 ---
 
-## Development Roadmap
+## AI design
 
-| Week | Development Phase | Main Activities |
+- **Primary model:** Google Gemini, configurable through GEMINI_MODEL.
+- **AI client:** Shared client with timeout, retry, backoff, and typed unavailable errors.
+- **Output control:** Native JSON response mode plus schema validation and normalisation.
+- **Retrieval:** Gemini embeddings stored in Supabase pgvector and queried through the match_documents RPC.
+- **Prompt boundaries:** Each agent has a scoped role prompt and avoids inventing facts.
+- **Workflow fallback:** n8n retries failed AI work and generates scheduled analytics and executive reports.
+
+---
+
+## Technology stack
+
+| Layer | Technology | Purpose |
 |---|---|---|
-| Week 06 | Backend Development | JWT auth, PostgreSQL migration, REST APIs, n8n workflow setup |
-| Week 07 | Frontend Development | Next.js screens, routing, backend API integration |
-| Week 08 | AI Integration | Gemini API, LangChain.js, multi-agent orchestration, pgvector, RAG setup |
-| Week 09 | Feature Completion | UI polish, Socket.io real-time, cross-agent communication |
-| Week 10 | Testing & Debugging | Functional, API, UI testing and bug fixes |
-| Week 11 | Deployment | Vercel, Render, Docker, production tests |
-| Week 12 | Documentation | Final report, user manual, API docs |
-| Week 13 | Presentation Prep | Slides, demo rehearsal, backup video |
-| Week 14 | Evaluation & Viva | Demo and viva |
+| Web application | Next.js 14, React 18, TypeScript | Dashboard, store, careers portal, responsive UI |
+| Styling | Tailwind CSS | Design system and responsive layouts |
+| Backend | Node.js 20+, Express.js | REST API, business logic, agent execution |
+| AI | Google Gemini, LangChain.js | Structured generation, tool-calling, orchestration |
+| Retrieval | Supabase pgvector | Embeddings and semantic knowledge retrieval |
+| Database | PostgreSQL on Supabase | Users, roles, records, tickets, reviews, reports, tasks |
+| Authentication | JWT, bcryptjs, HTTP-only cookies | Sign-in and session handling |
+| Workflow automation | n8n | Scheduled jobs, callbacks, retries, alerts |
+| Validation | Joi, Zod, custom normalisers | Request and AI output validation |
+| Security | Helmet, CORS, rate limiting, audit logs, Sentry | Hardening and traceability |
+| Hosting | Vercel, Render, Supabase | Frontend, API, database, realtime, vector search |
+| Version control | GitHub | Collaboration and deployment source |
 
 ---
 
-## Team Task Distribution
+## Hosting and deployment
 
-| Team Member | Role | Main Responsibilities |
+| Component | Hosted on | Responsibility |
 |---|---|---|
-| Nazmus Sakib | Team Leader & AI Integration Lead | System architecture, Gemini API, LangChain.js, custom multi-agent orchestration, n8n workflow automation, HR Agent, Finance Agent, Security Intelligence Agent |
-| Shoeb Shariar Mashuk | Backend Developer | REST APIs, JWT authentication, PostgreSQL, backend deployment |
-| Most Sumiya Sanjida | Frontend Developer | Next.js UI screens, routing, backend API integration, Support Agent, Executive Agent UI |
-| Sabrina Ibrahim | Frontend Developer | Figma design review, React frontend verification, responsive testing, and frontend contribution |
+| Next.js frontend | Vercel | Public dashboard, store, careers, and API rewrite |
+| Express backend | Render | API, agents, integrations, and health checks |
+| PostgreSQL and pgvector | Supabase | Relational data, embeddings, and realtime |
+| Workflow automation | n8n | Reports, retries, callbacks, and automation |
+| Monitoring | Render, UptimeRobot, Sentry | Availability and application monitoring |
+| Source and CI | GitHub | Branches, review, and deployment source |
+
+Backend health monitor:
+
+~~~text
+https://enterprise-nexus-backend.onrender.com/api/health
+~~~
+
+Health and readiness endpoints bypass the application rate limiter so monitoring does not create false 429 failures. See [DEPLOYMENT.md](DEPLOYMENT.md) for deployment instructions.
 
 ---
 
-## Repository Structure
+## Repository layout
 
-```
-├── assets/
-│   └── logo/
-│       ├── enterprise-nexus-icon-32.png
-│       ├── enterprise-nexus-icon-64.png
-│       ├── enterprise-nexus-icon-192.png
-│       ├── enterprise-nexus-icon-512.png
-│       ├── enterprise-nexus-icon.svg
-│       ├── enterprise-nexus-logo-dark.png
-│       ├── enterprise-nexus-logo-dark.svg
-│       ├── enterprise-nexus-logo-light.png
-│       ├── enterprise-nexus-logo-light.svg
-│       ├── enterprise-nexus-logo.png
-│       ├── enterprise-nexus-logo.svg
-│       └── favicon.ico
+~~~text
+.
 ├── backend/
-│   ├── migrations/
-│   │   ├── 002_audit_and_password_reset.sql
-│   │   ├── 003_notifications.sql
-│   │   └── 004_user_notification_prefs.sql
 │   ├── src/
-│   │   ├── agents/
-│   │   │   ├── tools/
-│   │   │   │   ├── retrieveKnowledge.js
-│   │   │   │   └── scopedQuery.js
-│   │   │   ├── analytics.agent.js
-│   │   │   ├── executive.agent.js
-│   │   │   ├── finance.agent.js
-│   │   │   ├── hr.agent.js
-│   │   │   ├── memory.js
-│   │   │   └── support.agent.js
-│   │   ├── ai/
-│   │   │   ├── BaseAgent.js
-│   │   │   ├── client.js
-│   │   │   ├── embeddings.js
-│   │   │   └── errors.js
-│   │   ├── config/
-│   │   │   └── supabase.js
-│   │   ├── controllers/
-│   │   │   ├── admin.controller.js
-│   │   │   ├── agents.controller.js
-│   │   │   ├── analytics.controller.js
-│   │   │   ├── auth.controller.js
-│   │   │   ├── executive.controller.js
-│   │   │   ├── finance.controller.js
-│   │   │   ├── hr.controller.js
-│   │   │   ├── notifications.controller.js
-│   │   │   ├── search.controller.js
-│   │   │   ├── security.controller.js
-│   │   │   ├── support.controller.js
-│   │   │   ├── task.controller.js
-│   │   │   └── webhook.controller.js
-│   │   ├── middleware/
-│   │   │   ├── auth.middleware.js
-│   │   │   ├── correlationId.middleware.js
-│   │   │   ├── error.middleware.js
-│   │   │   ├── upload.middleware.js
-│   │   │   └── validate.middleware.js
-│   │   ├── routes/
-│   │   │   ├── admin.routes.js
-│   │   │   ├── agents.routes.js
-│   │   │   ├── analytics.routes.js
-│   │   │   ├── auth.routes.js
-│   │   │   ├── executive.routes.js
-│   │   │   ├── finance.routes.js
-│   │   │   ├── hr.routes.js
-│   │   │   ├── notifications.routes.js
-│   │   │   ├── search.routes.js
-│   │   │   ├── security.routes.js
-│   │   │   ├── support.routes.js
-│   │   │   ├── task.routes.js
-│   │   │   └── webhook.routes.js
-│   │   ├── tests/
-│   │   │   ├── agents.api.test.js
-│   │   │   ├── ai.client.unit.test.js
-│   │   │   ├── ai.nofakedata.unit.test.js
-│   │   │   ├── api.integration.test.js
-│   │   │   ├── auth.unit.test.js
-│   │   │   ├── executive.orchestrator.test.js
-│   │   │   └── rag.search.test.js
-│   │   ├── utils/
-│   │   │   ├── audit.js
-│   │   │   ├── email.js
-│   │   │   ├── fileExtract.js
-│   │   │   ├── gemini.js
-│   │   │   ├── logger.js
-│   │   │   ├── pdf.js
-│   │   │   └── webhook.js
-│   │   ├── validators/
-│   │   │   ├── auth.validators.js
-│   │   │   ├── finance.validators.js
-│   │   │   ├── hr.validators.js
-│   │   │   └── support.validators.js
+│   │   ├── agents/          # HR, Finance, Support, Analytics, Security, Executive
+│   │   ├── ai/              # Base agent, Gemini client, embeddings, errors
+│   │   ├── controllers/     # REST controllers and business workflows
+│   │   ├── middleware/      # Auth, validation, uploads, errors
+│   │   ├── routes/           # API route modules
+│   │   ├── tests/            # Unit and integration tests
 │   │   └── server.js
-│   ├── .env.example
 │   ├── Dockerfile
 │   ├── package.json
 │   └── render.yaml
-├── documentation/
-│   ├── ai-integration/
-│   │   └── CSE4204-8B-T04_AIIntegrationReport.pdf
-│   ├── backend-progress/
-│   │   └── CSE-8B-T04-Backend-Development-&-Database-Implementation.pdf
-│   ├── diagram/
-│   │   ├── ai-workflow/
-│   │   ├── architecture/
-│   │   ├── er-diagram/
-│   │   ├── use-case-diagram/
-│   │   └── user-flow/
-│   ├── frontend-progress/
-│   │   └── CSE4204-8B-T04_FrontendProgress.pdf
-│   ├── proposal/
-│   │   └── CSE4204-8B-T04_Proposal.pdf
-│   ├── srs/
-│   │   └── CSE4204-8B-T04_SRS.pdf
-│   ├── system-design/
-│   │   └── CSE4204-8B-T04_SystemDesign.pdf
-│   └── ui-design/
-│       ├── screens/
-│       └── figma.md
 ├── frontend/
-│   ├── src/
-│   │   ├── app/
-│   │   │   └── (dashboard)/
-│   │   │       ├── admin/
-│   │   │       ├── analytics/
-│   │   │       ├── dashboard/
-│   │   │       ├── executive/
-│   │   │       ├── finance/
-│   │   │       ├── hr/
-│   │   │       ├── security/
-│   │   │       ├── settings/
-│   │   │       └── support/
-│   │   ├── components/
-│   │   │   ├── charts/
-│   │   │   ├── layout/
-│   │   │   ├── modals/
-│   │   │   ├── onboarding/
-│   │   │   └── ui/
-│   │   ├── constants/
-│   │   ├── contexts/
-│   │   ├── hooks/
-│   │   └── lib/
-│   ├── next.config.js
+│   ├── src/app/              # Public pages and dashboard modules
+│   ├── src/components/       # Shared UI, layout, charts, modals
+│   ├── src/lib/              # API clients, auth, shared utilities
 │   ├── package.json
-│   ├── tailwind.config.ts
-│   └── tsconfig.json
-├── postman/
-│   └── CSE4204-8B-T04_APICollection.json
-├── screenshots/
-│   └── 00-ui-screenshots/
-├── supabase/
-│   └── migrations/
-│       ├── 001_initial_schema.sql
-│       ├── 002_add_ai_status.sql
-│       ├── 003_agent_conversations.sql
-│       └── 004_pgvector_documents.sql
-├── .gitignore
-├── .prettierignore
+│   └── next.config.js
+├── supabase/migrations/      # Database schema and feature migrations
+├── database/                 # Database reference scripts
+├── n8n-workflows/             # Importable workflows and guide
+├── documentation/             # Proposal, SRS, reports, and diagrams
+├── screenshots/               # Product UI screenshots
+├── postman/                  # API collection
+├── assets/                   # Enterprise NeXus logos and icons
 ├── DEPLOYMENT.md
-├── LICENSE
-├── README.md
 ├── docker-compose.yml
-├── package.json
-├── start.bat
-└── stop.bat
-```
+└── README.md
+~~~
+
+---
+
+## Selected product screens
+
+### Dashboard
+
+![Enterprise NeXus dashboard](screenshots/00-ui-screenshots/4_dashboard.png)
+
+### HR Agent
+
+![HR Agent](screenshots/00-ui-screenshots/5.0_hr-agent.png)
+
+### Finance Agent
+
+![Finance Agent](screenshots/00-ui-screenshots/6.0_finance-agent.png)
+
+### Support Agent
+
+![Support Agent](screenshots/00-ui-screenshots/7.0_support-agent.png)
+
+### Executive Agent
+
+![Executive Agent](screenshots/00-ui-screenshots/9_executive-agent.png)
+
+More screens: [screenshots/00-ui-screenshots](screenshots/00-ui-screenshots).
+
+---
+
+## Getting started locally
+
+### Prerequisites
+
+- Node.js 20 or newer
+- npm
+- Supabase project with the required migrations
+- Google Gemini API key
+- Optional n8n instance for scheduled and retry workflows
+
+### Clone and install
+
+~~~bash
+git clone https://github.com/Nazmussakib247/CSE4204-8B-T04-Enterprise-Nexus-Multi-Agent-AI-Business-Automation-OS-with-Security-Intelligence.git
+cd CSE4204-8B-T04-Enterprise-Nexus-Multi-Agent-AI-Business-Automation-OS-with-Security-Intelligence
+
+cd backend
+npm install
+
+cd ../frontend
+npm install
+~~~
+
+### Configure environment
+
+Copy the example files and fill in local values. Never commit secrets.
+
+~~~powershell
+copy backend\.env.example backend\.env
+copy frontend\.env.example frontend\.env.local
+~~~
+
+Backend values include SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY, JWT_SECRET, GEMINI_API_KEY, FRONTEND_URL, N8N_WEBHOOK_URL, and N8N_SECRET.
+
+Frontend values include NEXT_PUBLIC_API_URL, NEXT_PUBLIC_SUPABASE_URL, and NEXT_PUBLIC_SUPABASE_ANON_KEY.
+
+Apply migrations from [supabase/migrations](supabase/migrations), then start the services:
+
+~~~bash
+cd backend
+npm run dev
+~~~
+
+In a second terminal:
+
+~~~bash
+cd frontend
+npm run dev
+~~~
+
+Local frontend: http://localhost:3000
+Local API: http://localhost:5000
+
+The repository also includes [docker-compose.yml](docker-compose.yml) for a local multi-service setup.
+
+---
+
+## n8n workflows
+
+The [n8n-workflows](n8n-workflows) directory contains importable definitions for:
+
+1. HR shortlist and CV screening
+2. Finance anomaly alerts
+3. Support auto-escalation
+4. Daily executive briefings
+5. Weekly analytics KPI reports
+6. Store review support replies
+7. Failed support AI retries
+8. Job application screening
+
+Inbound webhooks and backend callbacks use the shared N8N_SECRET. Read [n8n-workflows/README.md](n8n-workflows/README.md) for setup and testing instructions.
+
+---
+
+## Security and reliability
+
+- Role-based route authorisation for customer, candidate, employee, manager, and admin access.
+- Password hashing with bcryptjs.
+- HTTP-only cookies and server-side session revocation.
+- Helmet security headers, CORS policy, rate limiting, request validation, and correlation IDs.
+- Per-user data scoping in agent tools and database queries.
+- Audit logging for administrative changes and security-sensitive actions.
+- Upload validation for CV and document workflows.
+- AI timeout and retry handling with explicit failure states.
+- Health and readiness endpoints for Render and uptime monitoring.
+- Graceful degradation when Gemini or n8n is unavailable.
+- Manual escalation paths for support complaints and sensitive decisions.
 
 ---
 
 ## Documentation
 
-| Document | Link |
+| Resource | Link |
 |---|---|
-| **Project Proposal** | [CSE4204-8B-T04_Proposal.pdf](documentation/proposal/CSE4204-8B-T04_Proposal.pdf) |
-| **Software Requirements Specification** | [CSE4204-8B-T04_SRS.pdf](documentation/srs/CSE4204-8B-T04_SRS.pdf) |
-| **System Design** | [CSE4204-8B-T04_SystemDesign.pdf](documentation/system-design/CSE4204-8B-T04_SystemDesign.pdf) |
-| **Architecture Diagram** | [CSE4204-8B-T04_ArchitectureDiagram.pdf](documentation/diagram/architecture/CSE4204-8B-T04_ArchitectureDiagram.pdf) |
-| **ER Diagram** | [CSE4204-8B-T04_ERDiagram.pdf](documentation/diagram/er-diagram/CSE4204-8B-T04_ERDiagram.pdf) |
-| **Use Case Diagram** | [CSE4204-8B-T04_UseCaseDiagram.pdf](documentation/diagram/use-case-diagram/CSE4204-8B-T04_UseCaseDiagram.pdf) |
-| **UI Design Prototype** | [CSE4204-8B-T04_UIDesign.pdf](documentation/ui-design/CSE4204-8B-T04_UIDesign.pdf) |
-| **Figma Prototype** | [View on Figma](documentation/ui-design/figma.md) |
-| **AI Integration Report** | [CSE4204-8B-T04_AIIntegration.pdf](documentation/ai-integration/CSE4204-8B-T04_AIIntegration.pdf) |
-| **AI Workflow Diagrams** | [ai-workflow/](documentation/diagram/ai-workflow/) (10 diagrams — activity, deployment, module flows, pipeline, degradation) |
+| Proposal | [CSE4204-8B-T04_Proposal.pdf](documentation/proposal/CSE4204-8B-T04_Proposal.pdf) |
+| Software Requirements Specification | [CSE4204-8B-T04_SRS.pdf](documentation/srs/CSE4204-8B-T04_SRS.pdf) |
+| System design | [CSE4204-8B-T04_SystemDesign.pdf](documentation/system-design/CSE4204-8B-T04_SystemDesign.pdf) |
+| Architecture diagram | [CSE4204-8B-T04_ArchitectureDiagram.pdf](documentation/diagram/architecture/CSE4204-8B-T04_ArchitectureDiagram.pdf) |
+| Entity relationship diagram | [CSE4204-8B-T04_ERDiagram.pdf](documentation/diagram/er-diagram/CSE4204-8B-T04_ERDiagram.pdf) |
+| Use case diagram | [CSE4204-8B-T04_UseCaseDiagram.pdf](documentation/diagram/use-case-diagram/CSE4204-8B-T04_UseCaseDiagram.pdf) |
+| UI design report | [CSE4204-8B-T04_UIDesign_Report.pdf](documentation/ui-design/CSE4204-8B-T04_UIDesign_Report.pdf) |
+| AI integration report | [CSE4204-8B-T04_AIIntegrationReport.pdf](documentation/ai-integration/CSE4204-8B-T04_AIIntegrationReport.pdf) |
+| Backend progress report | [Backend and database report](documentation/backend-progress/CSE-8B-T04-Backend-Development-&-Database-Implementation.pdf) |
+| Frontend progress report | [CSE4204-8B-T04_FrontendProgress.pdf](documentation/frontend-progress/CSE4204-8B-T04_FrontendProgress.pdf) |
+| Feature completion report | [CSE4204-8B-T04_Week09Progress.pdf](documentation/feature-completion/CSE4204-8B-T04_Week09Progress.pdf) |
+| API collection | [Postman collection](postman/CSE4204-8B-T04_APICollection.json) |
+| Architecture images | [documentation/diagram](documentation/diagram) |
+| UI screenshots | [screenshots/00-ui-screenshots](screenshots/00-ui-screenshots) |
+
+---
+
+## Project status
+
+Enterprise NeXus is an academic exhibition project with a deployed demonstration environment. Core workflows are implemented across the dashboard, customer store, careers portal, AI agents, orchestration layer, workflow automation, and security controls. Production use should follow an environment-specific security review, data retention policy, and operational monitoring plan.
+
+---
+
+## License
+
+See [LICENSE](LICENSE).
